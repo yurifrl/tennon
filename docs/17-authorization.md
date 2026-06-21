@@ -126,4 +126,4 @@ relationship inheritance becomes dominant, a relationship backend can be revisit
 
 For a solo user there are typically no groups: policies bind directly to the user or a single
 service account. Adding a team is additive — share an MCP or bundle to a group — with no
-change to the model. See [Requirements](../specs/requirements.md) (design note).
+change to the model. See [Requirements](requirements.md) (design note).

@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+  envs:op:
+    desc: Process .env.op with 1Password CLI
+    generates:
+      - .env
+    cmds:
+      - op inject -f --account my.1password.com -i .env.op -o .env
+
+  docs:build:
+    desc: Build the single scrolling page (docs/_all.md) from docs/[0-9]*.md
+    cmd: uv run docs/_review/build_docs.py
+
+  docs:
+    desc: Build the single page, then serve at http://127.0.0.1:8800
+    deps: [docs:build]
+    cmd: uv run docs/_review/server.py

@@ -36,6 +36,30 @@ person, local development, or an embedded self-host deployment.
   whichever backend is configured; the same object can be created with `kubectl apply` on the
   Kubernetes backend or seeded via SQL/migration on the others.
 
+## One store, including audit — no separate events database
+
+Teleport splits storage in two: a **cluster-state backend** (users, roles, config) and a
+separate **audit-events backend**, because config is transactional while events are
+append-heavy time-series — `etcd`, for instance, can hold Teleport's state but not its audit
+log.
+
+MCPHub deliberately **does not** do this. There is **one** configured store, and it holds
+*everything*: the desired-state CRD objects **and** the audit/event records. Whichever backend
+you pick — Kubernetes, Postgres, or SQLite — is the single source of truth for both.
+
+Why diverge from Teleport here:
+
+- **Solo-to-team simplicity (R1).** A second database to provision, back up, and migrate
+  defeats the "one binary, one store" goal. One person on SQLite gets audit for free.
+- **Volume fits.** MCPHub audits tool calls and policy decisions, not high-frequency session
+  streams; a single relational/etcd-backed store handles that load without a time-series tier.
+- **Consistency.** Config and its audit trail share one transactional store, so an action and
+  the event recording it cannot diverge across two systems.
+
+> **ponytail:** single store until audit volume measurably strains it. If it ever does, the
+> upgrade path is Teleport's: split the events table onto its own backend behind the same
+> storage interface — not before.
+
 ## Secrets per backend
 
 - **Kubernetes:** native `Secret` objects, referenced by `secretKeyRef`.

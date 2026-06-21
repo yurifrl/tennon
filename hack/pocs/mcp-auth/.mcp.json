@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "glm": { "type": "http", "url": "http://localhost:8787/mcp" },
+    "kimi": { "type": "http", "url": "http://localhost:8000/mcp" },
+    "qwen": { "type": "http", "url": "http://localhost:3000/mcp" },
+    "claude": { "type": "http", "url": "http://localhost:8791/mcp" }
+  }
+}

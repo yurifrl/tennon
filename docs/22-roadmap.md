@@ -45,4 +45,5 @@ catalog, approvals, and the UI. Pre-1.0: APIs and CRD schemas may change.
 
 ## Beyond
 - Workflows, per-execution scratch storage, richer audit/usage analytics, and additional
-  trust types as needed. See design notes under [`specs/`](../specs/).
+  trust types as needed. See the design notes ([requirements](requirements.md),
+  [repository server](repository-server.md), [token & identity](token-identity-reference.md)).

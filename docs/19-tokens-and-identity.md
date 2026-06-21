@@ -87,6 +87,6 @@ token = (resources: MCPs / bundles / tags)
 
 ## Open design questions
 
-See the design note [token-identity-reference](../specs/token-identity-reference.md) for the
+See the design note [token-identity-reference](token-identity-reference.md) for the
 research these decisions are based on and remaining choices (bearer tokens vs mTLS certs,
 which trust types ship first, default TTLs).

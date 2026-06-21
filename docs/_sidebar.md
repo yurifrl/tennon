@@ -37,5 +37,12 @@
   - [Contributing](contributing.md)
   - [FAQ](faq.md)
 
+- Reference &amp; research
+  - [Requirements](requirements.md)
+  - [Repository Server](repository-server.md)
+  - [Tokens &amp; Identity (research)](token-identity-reference.md)
+  - [Executor feature spec](executor-feature-spec.md)
+  - [Prior art](prior-art.md)
+
 - Prototype
   - [<span class="mock-link">↗ UI Mockup</span>](_review/mock.html ":ignore target=_blank")

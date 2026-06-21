@@ -64,10 +64,14 @@ stdio bridge is just the CLI you already have — not a distinct component. See 
 Every object — `Mcp`, `McpBundle`, `McpPolicy`, `Token`, `ServiceAccount` — is defined as a
 CRD (schema, validation, versioning). Two layers of state:
 
-1. **Desired state — CRD objects in the configured store.** Created via `kubectl`, GitOps,
-   the API, or the web UI. **The UI and the CRD create each other:** anything created in the
-   UI is written as a CRD object, and any CRD applied out-of-band appears in the UI. They are
-   two faces of the same object, not a copy.
+1. **Desired state + audit — the configured store.** CRD objects (created via `kubectl`,
+   GitOps, the API, or the web UI) and the **audit/event records** live in the **same** store.
+   Like Teleport's Auth Service, the controller is the authority: every write goes through it
+   into the configured backend, which is the single source of truth. **The UI and the CRD
+   create each other:** anything created in the UI is written as a CRD object, and any CRD
+   applied out-of-band appears in the UI — two faces of the same object, not a copy. Unlike
+   Teleport, there is **no separate events database**; config and audit share one store (see
+   [Storage backends](storage.md)).
 2. **Runtime state — controller store.** Resolved routing tables, rendered (in-memory)
    secrets, live health, cached permissions, in-flight/paused executions. Rebuilt by
    reconciliation; never checked into Git.

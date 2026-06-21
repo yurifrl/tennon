@@ -1,0 +1,43 @@
+version: "3"
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  run:glm:
+    desc: Start the glm authenticated MCP server (OAuth-protected /mcp on :8787) with Google creds from ../../../../.env
+    dir: "{{.TASKFILE_DIR}}/glm"
+    dotenv:
+      - ../../../../.env
+    cmds:
+      - npm install
+      - npm start
+
+  run:qwen:
+    desc: Start the qwen authenticated MCP server (OAuth-protected /mcp on :3000)
+    dir: "{{.TASKFILE_DIR}}/qwen"
+    dotenv:
+      - ../../../../.env
+    cmds:
+      - npm install
+      - npm start
+
+  run:kimi:
+    desc: Start the kimi authenticated MCP server (OAuth-protected /mcp on :8000) with Google creds from ../../../../.env
+    dir: "{{.TASKFILE_DIR}}/kimi"
+    dotenv:
+      - ../../../../.env
+    cmds:
+      - npm install
+      - npm run dev
+
+  run:claude:
+    desc: Start the claude authenticated MCP server (OAuth-protected /mcp on :8791) with Google creds from claude/.env
+    dir: "{{.TASKFILE_DIR}}/claude"
+    dotenv:
+      - ../../../../.env
+    cmds:
+      - npm install
+      - npm start

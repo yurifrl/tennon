@@ -10,9 +10,9 @@ we follow, and how to propose changes.
 - `mcphub` — Go CLI.
 - `mcphub` CLI — Go; also ships an embedded **MCP server** (`mcphub mcp serve`) as the local
   stdio bridge for clients that launch a command.
-- `docs/` — these docs.
-- `specs/` — design notes and research (requirements, authorization, token/identity, the UI
-  mockup).
+- `docs/` — these docs, plus the design/research notes (requirements, repository-server,
+  token-identity-reference, executor-feature-spec, prior-art) and the UI mockup
+  (`mockup.html`).
 
 ## Development setup
 
@@ -37,8 +37,8 @@ Build, run, and test commands live in the `Makefile` / package scripts; run `mak
 ## Proposing changes
 
 1. Open an issue describing the problem and approach (link any relevant design note in
-   `specs/`).
-2. For non-trivial design, add or update a note in `specs/` and reference it.
+   `docs/`).
+2. For non-trivial design, add or update a design note in `docs/` and reference it.
 3. Keep PRs focused; include tests for behavior changes.
 4. Update the relevant page in `docs/` when you change user-visible behavior.
 

@@ -1,0 +1,15 @@
+{
+  "name": "mcp-auth-glm",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2",
+    "google-auth-library": "^9.15.1",
+    "jose": "^5.9.6"
+  }
+}

@@ -11,7 +11,7 @@ identities (CI, agents) use [`ServiceAccount`/`Token`](tokens-and-identity.md) i
 ## First access: the bootstrap token
 
 On a fresh store there are no users yet, so the controller mints a one-time **bootstrap admin
-token** and prints it on startup (see [Features §7](../specs/features.md)):
+token** and prints it on startup (see [Features §7](features.md)):
 
 ```
 No users found — first-run bootstrap.
