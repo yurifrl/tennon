@@ -70,6 +70,36 @@ CRD (schema, validation, versioning). Two layers of state:
 See [Storage backends](storage.md) for how desired state is persisted (Kubernetes/etcd,
 Postgres, or SQLite) without changing what the objects are.
 
+## Runtime backends (where MCP servers run)
+
+The controller reconciles each MCP into a real running workload. The runtime mirrors the
+environment:
+
+- **Local / single host:** MCP servers run as **Docker containers** (Podman works too). The
+  controller starts/stops containers, mounts volumes, and applies the sandbox/egress config
+  directly to them. This is the mode for a solo user on the SQLite/Postgres backends — no
+  cluster needed.
+- **Kubernetes:** MCP servers run as **Pods**, driven by the `Mcp`/`McpConnection` CRDs.
+  The controller creates the Pods (with `runtimeClass`, securityContext, NetworkPolicy, and
+  KubeArmor policy) and reconciles them like any operator.
+
+Either way the model is identical — the same objects, the same proxy, the same isolation
+knobs (see [Runtime & Isolation](runtime-isolation.md)); only the thing that runs the
+container differs (Docker engine vs the kube scheduler).
+
+## Everything is API-driven
+
+There is one **controller** exposing one **API**, and every surface is a client of it:
+
+- the **web UI** is a client (it calls the API),
+- the **CLI** ([`mcphub`](cli.md)) is a client,
+- your own automation/CI is a client,
+- on Kubernetes, `kubectl`/GitOps is an additional path that writes the same CRD objects.
+
+No surface has a private side door: creating an MCP, minting a token, or editing a policy is
+the same API call (and the same resulting object) regardless of who initiates it, so
+validation, policy, and audit are uniform. See [API](api.md).
+
 ## Request paths
 
 ```mermaid

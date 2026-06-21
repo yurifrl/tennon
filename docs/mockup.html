@@ -76,10 +76,35 @@
         <div id="pgSub" class="text-[#6b7587] text-xs truncate">Cluster overview</div>
       </div>
       <div class="flex-1"></div>
-      <button onclick="go('newtoken')" class="bg-[#00c29f] text-[#04121a] font-semibold rounded-lg px-3 sm:px-4 py-2 text-[13px] hover:bg-[#1ed4b2] whitespace-nowrap">+ New Token</button>
     </header>
 
     <main class="flex-1 px-4 sm:px-6 py-5 w-full max-w-[1100px] mx-auto" id="content"></main>
+  </div>
+
+  <!-- Connect integration modal -->
+  <div id="connectModal" class="hidden fixed inset-0 z-50 grid place-items-center px-4">
+    <div onclick="closeConnect()" class="absolute inset-0 bg-black/60"></div>
+    <div class="relative w-full max-w-lg bg-[#141821] border border-[#28303f] rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-start gap-2">
+        <div><h3 class="m-0 text-lg font-semibold">Connect an integration</h3>
+          <p class="m-0 mt-0.5 text-[#6b7587] text-xs">Search the preset library, or paste a URL to auto-detect.</p></div>
+        <button onclick="closeConnect()" class="ml-auto text-[#6b7587] hover:text-[#e6e9ef] text-lg leading-none">×</button>
+      </div>
+      <input placeholder="Search or paste a URL…" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2.5 mt-4 outline-none focus:border-[#00c29f]">
+      <div class="text-[#6b7587] text-xs mt-3 mb-1.5">Or add manually</div>
+      <div class="flex gap-2">
+        <button class="border border-[#28303f] bg-[#1b212d] rounded-lg px-3 py-1.5 text-xs font-semibold hover:border-[#3a4658]">OpenAPI</button>
+        <button class="border border-[#28303f] bg-[#1b212d] rounded-lg px-3 py-1.5 text-xs font-semibold hover:border-[#3a4658]">MCP</button>
+        <button class="border border-[#28303f] bg-[#1b212d] rounded-lg px-3 py-1.5 text-xs font-semibold hover:border-[#3a4658]">GraphQL</button>
+      </div>
+      <div class="text-[#6b7587] text-xs mt-4 mb-1.5">Popular integrations</div>
+      <div class="flex flex-col gap-1.5">
+        <button onclick="closeConnect();go('mcpdetail')" class="flex items-center gap-3 text-left border border-[#28303f] rounded-lg px-3 py-2 hover:border-[#3a4658] bg-[#0d0f14]"><span class="w-7 h-7 shrink-0 rounded-lg grid place-items-center font-bold bg-[#1b212d] text-[#4c8dff]">G</span><span class="flex-1 min-w-0"><b class="text-[13px]">Google</b><span class="block text-[#6b7587] text-xs truncate">Gmail, Calendar, Drive, Docs and more</span></span><span class="tag tag-blue">openapi</span></button>
+        <button onclick="closeConnect();go('mcpdetail')" class="flex items-center gap-3 text-left border border-[#28303f] rounded-lg px-3 py-2 hover:border-[#3a4658] bg-[#0d0f14]"><span class="w-7 h-7 shrink-0 rounded-lg grid place-items-center font-bold bg-[#1b212d] text-[#a06bff]">S</span><span class="flex-1 min-w-0"><b class="text-[13px]">Stripe</b><span class="block text-[#6b7587] text-xs truncate">Payments, subscriptions, customers, invoices</span></span><span class="tag tag-blue">openapi</span></button>
+        <button onclick="closeConnect();go('mcpdetail')" class="flex items-center gap-3 text-left border border-[#28303f] rounded-lg px-3 py-2 hover:border-[#3a4658] bg-[#0d0f14]"><span class="w-7 h-7 shrink-0 rounded-lg grid place-items-center font-bold bg-[#1b212d] text-[#e6e9ef]">◓</span><span class="flex-1 min-w-0"><b class="text-[13px]">GitHub REST</b><span class="block text-[#6b7587] text-xs truncate">Repos, issues, pull requests, actions</span></span><span class="tag tag-blue">openapi</span></button>
+        <button onclick="closeConnect();go('mcpdetail')" class="flex items-center gap-3 text-left border border-[#28303f] rounded-lg px-3 py-2 hover:border-[#3a4658] bg-[#0d0f14]"><span class="w-7 h-7 shrink-0 rounded-lg grid place-items-center font-bold bg-[#1b212d] text-[#f5a623]">▲</span><span class="flex-1 min-w-0"><b class="text-[13px]">Vercel</b><span class="block text-[#6b7587] text-xs truncate">Deployments, domains, projects, edge config</span></span><span class="tag tag-blue">openapi</span></button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -88,13 +113,13 @@
 const NAV = [
   {g:'Catalog'},
   {k:'dashboard', ic:'▣', t:'Dashboard'},
-  {k:'mcps', ic:'⬡', t:'MCPs'},
+  {k:'mcps', ic:'⬡', t:'Integrations'},
   {k:'bundles', ic:'❏', t:'Bundles'},
-  {k:'catalog', ic:'⚲', t:'Tool Catalog'},
-  {g:'Access'},
+    {g:'Access'},
   {k:'tokens', ic:'⚷', t:'Tokens'},
   {k:'serviceaccounts', ic:'⚿', t:'Service Accounts'},
-  {k:'policies', ic:'▤', t:'Policies'},
+  {k:'secrets', ic:'🗝', t:'Secrets'},
+  {k:'policies', ic:'▤', t:'Global Policies'},
   {k:'approvals', ic:'✋', t:'Approvals', badge:'2'},
   {g:'Admin'},
   {k:'identity', ic:'⧉', t:'Identity Providers'},
@@ -104,16 +129,16 @@ const NAV = [
 ];
 const TITLES = {
   dashboard:['Dashboard','Cluster overview'],
-  mcps:['MCPs','Registered Mcp resources'],
-  mcpdetail:['github','Mcp detail'],
+  mcps:['Integrations','Tool providers — MCP, OpenAPI & GraphQL'],
+  mcpdetail:['github','Integration detail'],
   bundles:['Bundles','Composed tool endpoints'],
-  catalog:['Tool Catalog','Search across all MCPs'],
   tokens:['Tokens','Granular service tokens'],
   newtoken:['New Token','Authentication & permission builder'],
   serviceaccounts:['Service Accounts','Machine identities & trust'],
   identity:['Identity Providers','OIDC & machine trust'],
   storage:['Storage','Pluggable CRD backend'],
-  policies:['Policies','McpPolicy resources'],
+  secrets:['Secrets','Pluggable credential providers'],
+  policies:['Global Policies','Org-wide guardrails & defaults'],
   approvals:['Approvals','Human-in-the-loop queue'],
 };
 
@@ -135,11 +160,11 @@ const PAGES = {};
 
 PAGES.dashboard = () => `
   <div class="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-4">
-    ${[['7','MCPs registered','● 6 Ready · 1 Degraded','#00c29f'],['3','Bundles','38 tools exposed','#6b7587'],['12','Active tokens','2 expiring soon','#6b7587'],['2','Pending approvals','needs attention','#f5a623']]
+    ${[['7','Integrations','● 6 Ready · 1 Degraded','#00c29f'],['3','Bundles','38 tools exposed','#6b7587'],['12','Active tokens','2 expiring soon','#6b7587'],['2','Pending approvals','needs attention','#f5a623']]
       .map(([n,l,d,c])=>card(`<div class="p-4"><div class="text-2xl sm:text-3xl font-bold">${n}</div><div class="text-[#6b7587] text-xs mt-0.5">${l}</div><div class="text-[11px] mt-2" style="color:${c}">${d}</div></div>`)).join('')}
   </div>
   <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-    ${card(cardHd('MCP Health')+wrapTable(`<table class="w-full border-collapse">
+    ${card(cardHd('Integration Health')+wrapTable(`<table class="w-full border-collapse">
       ${[['github','42 tools','green','Ready'],['jira','18 tools','green','Ready'],['slack','9 tools','green','Ready'],['internal-deploy','4 tools','amber','Degraded']]
         .map(([n,t,c,s])=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">${td(`${dot(c)} <b class="ml-1">${n}</b>`)}${td(`<span class="text-[#6b7587] mono">${t}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':'tag-amber'}">${s}</span>`)}</tr>`).join('')}
     </table>`))}
@@ -149,26 +174,26 @@ PAGES.dashboard = () => `
     </table>`))}
   </div>`;
 
-PAGES.mcps = () => pagehead('MCPs','Each MCP is a custom resource. Config lives in state, not a file.', btnPri('+ Add MCP')) +
+PAGES.mcps = () => pagehead('Integrations','Tool providers available in this workspace — MCP servers, OpenAPI & GraphQL services.', btnPri('+ Connect','openConnect()')) +
   card(wrapTable(`<table class="w-full border-collapse">
-    <thead><tr>${th('Name')}${th('Transport')}${th('Tools')}${th('Tags')}${th('Status')}</tr></thead><tbody>
-    ${[['github','stdio','18 / 42',['code','prod'],'green','Ready'],
-       ['jira','streamable-http','12 / 18',['tickets'],'green','Ready'],
-       ['slack','streamable-http','9 / 9',['chat'],'green','Ready'],
-       ['weather','sse','3 / 3',['public'],'green','Ready'],
-       ['internal-deploy','stdio','4 / 4',['infra','sensitive'],'amber','Degraded']]
-      .map(([n,tr,to,tags,c,s])=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">
-        ${td(`<b>${n}</b>`)}${td(`<span class="mono text-[#9aa4b5]">${tr}</span>`)}${td(to)}
+    <thead><tr>${th('Name')}${th('Kind')}${th('Connections')}${th('Tools')}${th('Tags')}${th('Status')}</tr></thead><tbody>
+    ${[['github','mcp','blue','2','18 / 42',['code','prod'],'green','Ready'],
+       ['google','openapi','purple','1','38 / 214',['productivity'],'green','Ready'],
+       ['jira','mcp','blue','1','12 / 18',['tickets'],'green','Ready'],
+       ['linear','graphql','amber','1','9 / 47',['tickets'],'green','Ready'],
+       ['internal-deploy','mcp','blue','1','4 / 4',['infra','sensitive'],'amber','Degraded']]
+      .map(([n,kind,kc,conns,to,tags,c,s])=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">
+        ${td(`<b>${n}</b>`)}${td(`<span class="tag tag-${kc}">${kind}</span>`)}${td(`<span class="mono text-[#9aa4b5]">${conns}</span>`)}${td(to)}
         ${td(tags.map(t=>`<span class="tag ${t==='sensitive'?'tag-red':''}">${t}</span>`).join(' '))}
         ${td(`<span class="tag ${c==='green'?'tag-green':'tag-amber'}">${s}</span>`)}</tr>`).join('')}
     </tbody></table>`));
 
 PAGES.mcpdetail = () => `
-  <div class="text-[#6b7587] text-[13px] mb-1"><a onclick="go('mcps')" class="cursor-pointer text-[#6b7587]">MCPs</a> / github</div>
-  ${pagehead('github <span class="tag tag-green align-middle">● Ready</span>','Proxied at <span class="mono">/mcp/github</span> · 42 discovered · 18 exposed', btn('Refresh')+' '+btn('Delete','!text-[#f25c5c] !border-[#4a2a2f]'))}
+  <div class="text-[#6b7587] text-[13px] mb-1"><a onclick="go('mcps')" class="cursor-pointer text-[#6b7587]">Integrations</a> / github</div>
+  ${pagehead('github <span class="tag tag-blue align-middle">mcp</span> <span class="tag tag-green align-middle">● Ready</span>','Proxied at <span class="mono">/mcp/github</span> · 42 discovered · 18 exposed', btn('Edit')+' '+btn('Rebuild tools')+' '+btn('Delete','!text-[#f25c5c] !border-[#4a2a2f]'))}
   <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
     ${card(cardHd('Configuration', btn('Edit'))+`<div class="p-4">
-      ${sumBox(sumRow('Runtime','<span class="tag tag-blue">container</span>')+sumRow('Image','<span class="mono text-[#9aa4b5] break-all">ghcr.io/github/github-mcp-server:latest</span>')+sumRow('Transport','<span class="tag">stdio</span>')+sumRow('Prefix','<span class="mono">github_</span>')+sumRow('Tags','<span class="tag">code</span> <span class="tag">prod</span>'))}
+      ${sumBox(sumRow('Kind','<span class="tag tag-blue">mcp</span>')+sumRow('Runtime','<span class="tag tag-blue">container</span>')+sumRow('Image','<span class="mono text-[#9aa4b5] break-all">ghcr.io/github/github-mcp-server:latest</span>')+sumRow('Transport','<span class="tag">stdio → streamable-http</span>')+sumRow('Spec','<span class="mono text-[#6b7587]">sha256:1f3c…</span>')+sumRow('Prefix','<span class="mono">github_</span>')+sumRow('Tags','<span class="tag">code</span> <span class="tag">prod</span>'))}
       <div class="h-px bg-[#28303f] my-4"></div>
       <div class="font-semibold mb-2">Tool exposure rules</div>
       <div class="flex gap-2 items-center mb-2 flex-wrap"><span class="text-[#6b7587] w-14 text-xs">Allow</span><span class="tag tag-green">search_*</span><span class="tag tag-green">get_*</span><span class="tag tag-green">list_*</span></div>
@@ -179,20 +204,57 @@ PAGES.mcpdetail = () => `
       <p class="text-[#6b7587] text-xs mt-3">Resolved from <span class="mono">github-credentials</span> and injected into the server. Never shown in API responses, status, logs, or this UI.</p>
     </div>`)}
   </div>
+  ${card(cardHd('Connections', btn('+ Add connection'))+`<div class="p-4">
+    <p class="text-[#6b7587] text-xs mt-0">A connection is a credentialed instance — same provider, different account or scope. Each MCP connection gets its own proxied URL.</p>
+    ${[['github-read','API key · read-only token','green','<span class="mono text-[#6b7587]">/mcp/github-read</span> · allow get_*, list_*'],['github-write','OAuth · app: github-acme','amber','<span class="mono text-[#6b7587]">/mcp/github-write</span> · writes need approval']]
+      .map(([n,auth,c,meta])=>card(`<div class="p-3 flex flex-col sm:flex-row sm:items-center gap-2"><span class="flex-1 min-w-0"><b>${n}</b> <span class="tag ${c==='green'?'tag-green':'tag-amber'}">${auth}</span><div class="text-[#6b7587] text-xs">${meta}</div></span>${btn('Edit')}</div>`,'mb-2')).join('')}
+  </div>`,'mt-4')}
   ${card(cardHd('Exposed tools (18)')+wrapTable(`<table class="w-full border-collapse">
     ${[['github_search_repositories','green','allow'],['github_get_issue','green','allow'],['github_create_pull_request','amber','require approval'],['github_list_commits','green','allow']]
       .map(([t,c,l])=>`<tr>${td(`<span class="mono">${t}</span>`)}${td(`<span class="tag tag-${c}">${l}</span>`)}</tr>`).join('')}
-  </table>`),'mt-4')}`;
+  </table>`),'mt-4')}
+  ${card(cardHd('Access &amp; sharing', btnPri('Share'))+`<div class="p-4">
+    <p class="text-[#6b7587] text-xs mt-0">Who may use <b>this</b> MCP, and which of its tools. This is the MCP's <b>local policy</b> — it lives here, with the server. Org-wide guardrails (set in Global Policies) can only tighten it.</p>
+    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-purple">group: okta:observability</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag tag-green">all exposed</span><span class="ml-auto tag tag-green">allow</span></div>`,'mb-2')}
+    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag">token: ci-runner</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag">get_*</span><span class="ml-auto tag tag-green">allow</span></div>`,'mb-2')}
+    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-purple">you (owner)</span><span class="ml-auto tag tag-green">full</span></div>`)}
+    <div class="flex gap-2 items-center flex-wrap mt-3"><span class="text-[#6b7587] text-xs w-20">Approval</span><span class="tag tag-amber">create_pull_request</span><span class="text-[#6b7587] text-xs">+ global: tag:sensitive</span></div>
+  </div>`,'mt-4')}
+  ${card(cardHd('Sandbox &amp; capabilities', '<span class="tag tag-green">✓ Fully enforced</span>')+`<div class="p-4">
+    <p class="text-[#6b7587] text-xs mt-0">What this container is allowed to do. Everything not listed is blocked. You list intent; MCPHub enforces it with the cluster (Cilium for network, here).</p>
+    ${sumBox(
+      sumRow('Sandbox','<span class="tag tag-blue">Strong</span> <span class="text-[#6b7587] text-xs">isolated runtime</span>')+
+      sumRow('Can reach','<div class="flex flex-wrap gap-1"><span class="tag">api.github.com:443</span> <span class="tag">dns</span></div>')+
+      sumRow('Can touch','<div class="flex flex-wrap gap-1"><span class="tag">/etc/github read</span> <span class="tag">repo:notes → /vault rw</span></div>')+
+      sumRow('Can run','<div class="flex flex-wrap gap-1"><span class="tag">supergateway</span> <span class="tag">github-mcp</span></div>')+
+      sumRow('Enforcement','<span class="tag tag-amber">Require</span> <span class="text-[#6b7587] text-xs">refuse to run if it can\'t be enforced</span>')
+    )}
+    <div class="flex gap-2 mt-3 flex-wrap items-center">
+      <span class="text-[#6b7587] text-xs">Profile</span><span class="tag tag-blue">github-jail</span>
+      <span class="ml-auto"></span>${btn('Edit access')}
+    </div>
+    <p class="text-[#6b7587] text-xs mt-3">Status per plane: network <span class="tag tag-green">enforced · cilium</span> · process/file <span class="tag tag-green">enforced · kubearmor</span> · sandbox <span class="tag tag-green">enforced · gvisor</span></p>
+  </div>`,'mt-4')}`;
 
 PAGES.bundles = () => pagehead('Bundles','A bundle composes curated tools from many MCPs behind one endpoint.', btnPri('+ New Bundle')) + `
+  ${card(cardHd('Connect an agent','<span class="tag tag-green">streamable HTTP</span>')+`<div class="p-4">
+    <p class="text-[#6b7587] text-xs mt-0">Point any MCP client at a bundle endpoint. Auth is the gate — pass a token in the header.</p>
+    <div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 mb-3">
+      <button class="bg-[#00c29f] text-[#04121a] rounded-md px-3 py-1.5 font-semibold text-[13px]">Remote HTTP</button>
+      <button class="text-[#9aa4b5] px-3 py-1.5 font-semibold text-[13px]">Standard I/O</button>
+    </div>
+    <div class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2.5 mono text-xs text-[#9aa4b5] overflow-x-auto whitespace-nowrap">npx add-mcp https://mcphub.example.com/bundle/devtools --transport http --name devtools --header 'Authorization: Bearer mh_svc_…'</div>
+  </div>`,'mb-4')}
   <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
     ${card(cardHd('devtools','<span class="tag tag-green">/bundle/devtools</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Core tools for platform engineering. 9 tools from 3 MCPs.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">github → gh_*</span><span class="tag tag-blue">jira → jira_*</span><span class="tag tag-blue">internal-deploy → rollback,status</span></div></div>`)}
     ${card(cardHd('support','<span class="tag tag-green">/bundle/support</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Help-desk read tools. 6 tools from 2 MCPs.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">slack → read</span><span class="tag tag-blue">jira → search,get</span></div></div>`)}
+    ${card(cardHd('code-tools','<span class="tag tag-green">/bundle/code-tools</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Auto-composed from every MCP tagged <span class="tag">code</span>. Membership updates as MCPs are tagged.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-purple">tag: code</span><span class="tag tag-blue">github</span><span class="tag tag-blue">gitlab</span></div></div>`)}
   </div>
   ${card(cardHd('Composition — devtools', btn('+ Add source'))+`<div class="p-4">
-    <p class="text-[#6b7587] text-xs mt-0">Pick tools from any MCP, optionally rename them, and flag which need approval. Saved automatically.</p>
-    ${[['github',['search_*','get_*','list_*'],'gh_‹tool›','green'],['jira',['create_issue','get_issue','search'],'jira_‹tool›','green'],['internal-deploy',['status','rollback'],'—','mix']]
-      .map(([src,tools,rename,c])=>card(`<div class="p-3 flex flex-col sm:flex-row gap-3 sm:items-center">
+    <p class="text-[#6b7587] text-xs mt-0">Add a source by picking a specific MCP, or by <b>tag</b> to include every MCP carrying it. Optionally rename tools and flag which need approval. Saved automatically.</p>
+    ${[['mcp','github',['search_*','get_*','list_*'],'gh_‹tool›','green'],['mcp','jira',['create_issue','get_issue','search'],'jira_‹tool›','green'],['tag','tag: code',['*'],'—','mix']]
+      .map(([kind,src,tools,rename,c])=>card(`<div class="p-3 flex flex-col sm:flex-row gap-3 sm:items-center">
+        <select class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-1.5 sm:w-40"><option>${kind==='tag'?'By tag':'By MCP'}</option></select>
         <select class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-1.5 sm:w-40"><option>${src}</option></select>
         <div class="flex-1 min-w-0"><span class="text-[#6b7587] text-xs">tools</span><div class="flex flex-wrap gap-1.5">${tools.map(t=>`<span class="tag ${t==='rollback'?'tag-amber':'tag-green'}">${t}</span>`).join('')}</div></div>
         <div><span class="text-[#6b7587] text-xs">rename</span><div>${rename==='—'?'<span class="text-[#6b7587]">—</span>':`<span class="tag tag-blue">${rename}</span>`}</div></div>
@@ -200,14 +262,6 @@ PAGES.bundles = () => pagehead('Bundles','A bundle composes curated tools from m
     <div class="h-px bg-[#28303f] my-3"></div>
     <div class="flex gap-2 items-center flex-wrap"><span class="text-[#6b7587] w-20 text-xs">Approval</span><span class="tag tag-amber">jira_create_issue</span><span class="tag tag-amber">rollback</span></div>
   </div>`,'mt-4')}`;
-
-PAGES.catalog = () => pagehead('Tool Catalog','Search every tool across every MCP by intent.') + `
-  <input type="text" placeholder="🔎  Search by intent — e.g. &quot;open a pull request&quot;" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-4 py-3 mb-4 outline-none focus:border-[#00c29f]">
-  ${card(wrapTable(`<table class="w-full border-collapse">
-    <thead><tr>${th('Tool')}${th('MCP')}${th('Tags')}${th('Match')}${th('')}</tr></thead><tbody>
-    ${[['github_create_pull_request','github','code','0.94','green'],['github_search_repositories','github','code','0.82','green'],['jira_create_issue','jira','tickets','0.61','blue'],['slack_post_message','slack','chat','0.55','blue']]
-      .map(([t,m,tag,s,c])=>`<tr>${td(`<span class="mono">${t}</span>`)}${td(m)}${td(`<span class="tag">${tag}</span>`)}${td(`<span class="tag tag-${c}">${s}</span>`)}${td(btn('Inspect schema'))}</tr>`).join('')}
-  </tbody></table>`))}`;
 
 PAGES.tokens = () => pagehead('Tokens','Granular service tokens. Scope each to MCPs, tools, groups, or tags.', btnPri('+ New Token','go(\'newtoken\')')) +
   card(wrapTable(`<table class="w-full border-collapse">
@@ -256,20 +310,33 @@ PAGES.storage = () => pagehead('Storage','Every object is a CRD. The schema is f
       .map(([t,d])=>card(`<div class="p-4"><b>${t}</b><p class="text-[#6b7587] text-xs">${d}</p></div>`)).join('')}
   </div>`;
 
-PAGES.policies = () => pagehead('Policies','A policy maps subjects (groups, tokens, tags) to allowed MCPs and tools.', btnPri('+ New Policy')) +
-  card(wrapTable(`<table class="w-full border-collapse">
-    <thead><tr>${th('Policy')}${th('Subjects')}${th('Grants')}${th('Approval')}</tr></thead><tbody>
-    ${[['sre-team','<span class="tag tag-purple">group:sre@example.com</span>','<span class="tag tag-blue">bundle:devtools</span>','<span class="tag tag-amber">rollback</span>'],
-       ['org-defaults','<span class="tag">domain:example.com</span>','<span class="tag tag-blue">mcp:weather</span> <span class="tag tag-blue">tag:public</span>','—'],
-       ['data-readonly','<span class="tag tag-purple">group:data@example.com</span>','<span class="tag tag-blue">tools:get_*,list_*</span>','—']]
-      .map(([n,su,gr,ap])=>`<tr>${td(`<b>${n}</b>`)}${td(su)}${td(gr)}${td(ap)}</tr>`).join('')}
+PAGES.secrets = () => pagehead('Secrets','Where a connection’s credential values live — the default in-cluster store for pasted values, or an external backend.', btnPri('+ Add Provider')) + `
+  ${card(cardHd('Default store','<span class="tag tag-green">active</span>')+`<div class="p-4 flex flex-wrap items-center gap-3"><span class="flex-1 min-w-0 text-[#9aa4b5]">Pasted values are sealed and rendered in-cluster at call time. Never shown in API responses, status, logs, or this UI.</span><span class="tag tag-blue">in-cluster</span></div>`,'mb-4')}
+  ${card(cardHd('External backends')+wrapTable(`<table class="w-full border-collapse">
+    ${[['Keychain','keychain','OS keychain on the node','green','enabled'],['Local file','file','Encrypted file on disk','green','enabled'],['1Password','onepassword','Resolve from a 1Password vault','','configure'],['HashiCorp Vault','vault','Resolve from a Vault path','','configure']]
+      .map(([n,id,d,c,s])=>`<tr>${td(`<b>${n}</b> <span class="mono text-[#6b7587] text-xs">${id}</span>`)}${td(`<span class="text-[#6b7587] text-xs">${d}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':''}">${s}</span>`)}${td(c==='green'?btn('Configure'):btnPri('Add'))}</tr>`).join('')}
+  </table>`),'mb-0')} `;
+
+PAGES.policies = () => pagehead('Global Policies','Org-wide <b>general</b> rules only. Sharing a specific MCP with a person or group lives on that MCP\'s Access panel — not here.', btnPri('+ New Global Rule')) +
+  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>This page is for guardrails &amp; defaults that span everything (domain/tag defaults, mandatory approvals, blanket denies). To grant a team access to one MCP, open that MCP → <b>Access &amp; sharing</b>. Global rules can only <b>tighten</b> a local grant, never loosen it.</span></div>`,'mb-4') +
+  card(cardHd('Org-wide rules','<span class="tag">guardrails tighten, never loosen</span>')+wrapTable(`<table class="w-full border-collapse">
+    <thead><tr>${th('Rule')}${th('Applies to')}${th('Where')}${th('Effect')}</tr></thead><tbody>
+    ${[['org-defaults','<span class="tag">domain: example.com</span>','<span class="tag tag-blue">tag: public</span>','<span class="tag tag-green">grant all</span>'],
+       ['sensitive-approval','<span class="text-[#6b7587] text-xs">everyone</span>','<span class="tag tag-amber">tag: sensitive</span>','<span class="tag tag-amber">require approval</span>'],
+       ['contractor-deny','<span class="tag tag-purple">group: contractors</span>','<span class="tag tag-red">tag: internal</span>','<span class="tag tag-red">block</span>']]
+      .map(([n,ap,wh,ef])=>`<tr>${td(`<b>${n}</b>`)}${td(ap)}${td(wh)}${td(ef)}</tr>`).join('')}
   </tbody></table>`),'mb-4') +
-  card(cardHd('sre-team', btn('Edit'))+`<div class="p-4">
-    <div class="font-semibold mb-2">Subjects</div>
-    <div class="flex flex-wrap gap-1.5 mb-3.5"><span class="tag tag-purple">group: sre@example.com</span> <span class="tag">token: ci-runner</span></div>
-    <div class="font-semibold mb-2">Grants</div>
-    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-blue">bundle: devtools</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag tag-green">all</span><span class="ml-auto tag tag-green">allow</span></div>`,'mb-2')}
-    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-blue">tag: infra</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag">status</span><span class="tag tag-amber">rollback</span><span class="ml-auto tag tag-amber">rollback needs approval</span></div>`)}
+  card(cardHd('Global approval defaults','<span class="tag">most restrictive wins</span>')+`<div class="p-4">
+    <p class="text-[#6b7587] text-xs mt-0">Default approve/block behavior by tool-name pattern, applied everywhere. Pattern = exact id, trailing wildcard, or <span class="mono">*</span> (e.g. <span class="mono">*_delete_*</span>). <b>Blocked</b> tools are hidden from catalog search and fail at invoke. A specific MCP can be stricter, never looser.</p>
+    <div class="flex flex-col sm:flex-row gap-2 mb-3">
+      <input value="*_delete_*" class="flex-1 bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 mono outline-none focus:border-[#00c29f]">
+      <select class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"><option>Require approval</option><option>Always run</option><option>Block</option></select>
+      ${btnPri('Add rule')}
+    </div>
+    ${wrapTable(`<table class="w-full border-collapse">
+      ${[['*','green','Always run','default'],['*_create_*','amber','Require approval',''],['*delete*','red','Block',''],['*','amber','Require approval','where tag: sensitive']]
+        .map(([p,c,a,note])=>`<tr>${td(`<span class="mono">${p}</span>`)}${td(`<span class="tag tag-${c}">${a}</span>`)}${td(`<span class="text-[#6b7587] text-xs">${note}</span>`)}</tr>`).join('')}
+    </table>`)}
   </div>`);
 
 PAGES.approvals = () => pagehead('Approvals','Sensitive tool calls pause here for human sign-off (human-in-the-loop).') +
@@ -400,6 +467,8 @@ function go(p){
 /* ---------------- sidebar (mobile) ---------------- */
 function openSidebar(){ document.getElementById('sidebar').classList.remove('-translate-x-full'); document.getElementById('backdrop').classList.remove('hidden'); }
 function closeSidebar(){ if(window.innerWidth<768){ document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('backdrop').classList.add('hidden'); } }
+function openConnect(){ document.getElementById('connectModal').classList.remove('hidden'); }
+function closeConnect(){ document.getElementById('connectModal').classList.add('hidden'); }
 
 /* ---------------- auth ---------------- */
 function signIn(){ document.getElementById('login').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); renderNav(); go('dashboard'); }

@@ -81,6 +81,58 @@ spec:
     exposePrefix: "weather_"
 ```
 
+## Profiles
+
+A single `Mcp` can expose several **profiles** — named variants of the same upstream
+server that differ in their **params** (env values) and **secrets** (`secretKeyRef`s).
+The fields at the top of `spec` form the **default profile**; entries under
+`spec.profiles` add named variants that override `env` and `headers` by `name`.
+
+```yaml
+apiVersion: mcphub.io/v1alpha1
+kind: Mcp
+metadata:
+  name: github
+spec:
+  runtime:
+    type: container
+    image: ghcr.io/github/github-mcp-server:latest
+  transport: stdio
+
+  # Default profile: used when a binding names no profile.
+  env:
+    - name: GITHUB_PERSONAL_ACCESS_TOKEN
+      valueFrom:
+        secretKeyRef: { name: github-readonly, key: token }
+
+  profiles:
+    - name: admin
+      # Different secret (a higher-privilege token).
+      env:
+        - name: GITHUB_PERSONAL_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef: { name: github-admin, key: token }
+    - name: enterprise
+      # Different params + a different secret.
+      env:
+        - name: GITHUB_HOST
+          value: github.acme.internal
+        - name: GITHUB_PERSONAL_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef: { name: github-enterprise, key: token }
+```
+
+Rules:
+
+- An entry in a profile's `env`/`headers` **replaces** the default entry with the same
+  `name`; names absent from the profile fall through to the default.
+- A profile changes only params and secrets — `runtime`, `transport`, and the `tools`
+  surface come from the base spec.
+- Bindings select a profile by name (`mcp: github`, `profile: admin`). Omitting it uses
+  the default profile. See [bundles.md](bundles.md) and
+  [authentication-flow.md](authentication-flow.md).
+- Secret rendering (below) runs per resolved profile; profiles never inline secret values.
+
 ## Secret rendering
 
 The controller is responsible for turning secret references into the values the upstream

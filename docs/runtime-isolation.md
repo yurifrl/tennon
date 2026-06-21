@@ -23,6 +23,21 @@ writing a bridge per server, MCPHub runs each stdio server behind
 So a container's shape is: `supergateway (Streamable HTTP :8000) → stdio MCP server`, and the
 MCPHub proxy is the only client allowed to reach it.
 
+## Where MCPs run (Docker locally, Pods in Kubernetes)
+
+The isolation tools below apply in both environments; only the thing that launches the
+container differs:
+
+- **Local / single host:** MCP servers are **Docker containers** the controller starts and
+  stops (gVisor runtime, `--read-only`, `--cap-drop ALL`, seccomp/AppArmor, an egress proxy
+  or firewall rules). This is the solo / SQLite-Postgres mode — no cluster.
+- **Kubernetes:** MCP servers are **Pods** created from the `Mcp`/`McpConnection` CRDs
+  (`runtimeClass` for gVisor/Kata, `securityContext`, NetworkPolicy/Cilium, KubeArmor
+  policy). The controller reconciles them like any operator.
+
+The capability config you write is the same; the controller compiles it to Docker flags
+locally or to Pod settings + policy CRDs in Kubernetes.
+
 ## Container isolation ("tightly jailed")
 
 MCP code is untrusted, so containers are hardened in layers. All of this is config-driven per
@@ -49,16 +64,17 @@ like **nsjail** / **bubblewrap** for stdio servers.
 - no service-account token mounted; no host network/PID/IPC.
 
 ### Network egress control (what it can reach)
-Default **deny all egress**, then allowlist per MCP. Options, increasing in power:
+Default **deny all egress**, then allowlist per MCP. **We standardize on Cilium to start**,
+with fallbacks where it isn't present:
 
-- **Kubernetes NetworkPolicy** — allow egress only to specific CIDRs/namespaces/ports
-  (e.g. the upstream API and DNS); deny everything else, including reaching other MCPs.
-- **Cilium** (or other L7 CNI) — **FQDN/L7 egress policy**, e.g. allow only
-  `api.github.com:443`; domain-level allowlists map cleanly onto config.
-- **Egress proxy** (Envoy/Squid) — force all traffic through a proxy that enforces a domain
-  allowlist; works on non-Kubernetes hosts too.
+- **Cilium (default)** — **FQDN/L7 egress policy**, e.g. allow only `grafana.example.com:443`.
+  Profiles are written as domains, so an FQDN-aware layer is what enforces them faithfully.
+- **Kubernetes NetworkPolicy** (fallback) — egress to resolved CIDRs/ports; coarser, no
+  domain awareness.
+- **Egress proxy** (Envoy/Squid) — domain allowlist off-cluster or where no CNI policy.
 
-Ingress is locked down to just the MCPHub proxy.
+Ingress is locked down to just the MCPHub proxy. How a profile chooses among these (and what
+the status reports) is the [Capability Enforcement design](capability-architecture.md).
 
 ### Filesystem access (what it can see/write)
 - Read-only root; only declared mounts are present.

@@ -9,17 +9,20 @@
   - [Architecture](architecture.md)
   - [Custom Resources (CRDs)](crds.md)
   - [Runtime &amp; Isolation](runtime-isolation.md)
+  - [Capability Enforcement (design)](capability-architecture.md)
   - [Storage backends](storage.md)
 
 - Using MCPHub
   - [The MCP Proxy](proxy.md)
   - [Bundles](bundles.md)
   - [Web UI](web-ui.md)
+  - [API](api.md)
   - [CLI](cli.md)
 
 - Access &amp; security
   - [Authentication](authentication.md)
   - [Authorization](authorization.md)
+  - [Sandbox &amp; Access](capability-profiles.md)
   - [Tokens &amp; Identity](tokens-and-identity.md)
   - [Security model](security.md)
 

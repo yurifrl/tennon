@@ -22,28 +22,48 @@ Every tool call resolves to one of:
 Defaults are sensible: read-only tools tend to allow; destructive tools tend to block or
 require approval. The `sensitive` tag forces approval. You can tune any tool.
 
-## Authoring: McpPolicy
+## Where policies live: local vs global
 
-You author authorization as [`McpPolicy`](crds.md#mcppolicy) resources (via the UI's
-click-driven policy builder, the CLI, or GitOps). A policy maps **subjects** (users, groups,
-email domains, service tokens, service accounts) to **rules** targeting a `connection`, `mcp`
-(all connections of a definition), `bundle`, or `tag` with a `tools` glob list, plus optional
-approval requirements. Because a credential lives on the connection, granting
-`connection: grafana-read` vs `connection: grafana-write` is how you separate read and write
-access to the same upstream server.
+Authorization comes from **two tiers**, and most policy lives at the *local* tier:
 
-Resolution:
+### Local policy — on the MCP / connection
+Most sharing and grants live **with the thing they govern**. An `Mcp` (and each
+[`McpConnection`](crds.md#mcpconnection)) carries an `access` block: which subjects may use
+*this* server, which of *its* tools, and which tools require approval. This is where
+day-to-day decisions live — "share the `grafana-read` connection with the Okta
+`observability` group, with deletes requiring approval" is a property of that connection, set
+by its owner. It stays next to the credential and tool scope it relates to.
+
+### Global policy — org-wide general rules only
+A small number of **`McpPolicy`** objects hold rules that span many MCPs: org guardrails and
+defaults. Examples: "anyone in `example.com` may use `tag:public` MCPs," "every tool tagged
+`sensitive` requires approval everywhere," "contractors can never touch `tag:internal`."
+Global policy is intentionally *general* — it should not enumerate individual MCP grants;
+those belong on the MCP.
+
+> Rule of thumb: **grant access on the MCP/connection; set org-wide guardrails and defaults
+> globally.** If a rule names one specific MCP's tools for one team, it's local.
+
+## Resolution
+
+The effective decision for a call combines both tiers:
 
 1. Resolve the caller's subject and groups (from OIDC claims or the token/service account).
-2. Gather all matching policies (cached in-memory; watched, not re-read per request).
-3. Combine matches **additively**.
-4. Most-restrictive outcome wins (an org `block` beats a user `allow`).
+2. Gather the **local** `access` rules on the target MCP/connection **and** all matching
+   **global** `McpPolicy` rules (cached in-memory; watched, not re-read per request).
+3. Combine matches **additively** (a subject is granted if local or global grants it).
+4. **Most-restrictive outcome wins** — a global `block` or `require-approval` guardrail
+   overrides a local `allow`. Global guardrails can only tighten, never loosen.
 5. If the resolved outcome is require-approval, pause; else allow or deny.
+
+So an MCP owner shares their server freely at the local tier, while the org retains a global
+backstop that can force approval or deny across everything.
 
 ## Engine: compiled to Cedar
 
-`McpPolicy` is the authoring surface; the controller **compiles it to [Cedar](https://www.cedarpolicy.com/)**
-and evaluates Cedar **in-process** on each call. This gives:
+Both tiers are the authoring surface; the controller **compiles them to [Cedar](https://www.cedarpolicy.com/)**
+(local `access` blocks and global `McpPolicy` together) and evaluates Cedar **in-process** on
+each call. This gives:
 
 - **RBAC today** — subjects → resources → tools.
 - **ABAC when needed** — conditions on request context (arguments, time, rate).

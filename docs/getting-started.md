@@ -59,19 +59,22 @@ proxy**; they never receive the token.
 
 ## 3. Share it with an Okta team
 
-From the web UI: **Policies → New Policy**, choose subject **Group → Okta → `observability`**,
-grant the `grafana` MCP (or a subset of tools), save.
+Sharing is a **local** decision on the connection — not a separate global policy. From the
+web UI: open the `grafana` MCP → **Access & sharing** → **Share**, pick subject **Group →
+Okta → `observability`**, choose which tools, save.
 
 From the CLI:
 
 ```bash
-mcphub policy create share-grafana \
-  --subject "group:okta:observability" \
-  --grant "mcp:grafana:grafana_get_*,grafana_search_*,grafana_list_*"
+mcphub connection share grafana-read \
+  --to "group:okta:observability" \
+  --tools "grafana_get_*,grafana_search_*,grafana_list_*"
 ```
 
 Membership resolves from the Okta `groups` claim at request time — people joining or leaving
-the Okta team gain or lose access automatically, with no policy edit.
+the Okta team gain or lose access automatically, with no edit. Org-wide guardrails (e.g.
+"`sensitive` tools always require approval") live separately in Global Policies and can only
+tighten this grant.
 
 ## 4. Connect an agent
 

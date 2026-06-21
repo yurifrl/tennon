@@ -31,6 +31,7 @@ spec:
   description: "Core tools for the platform engineering team"
   tools:
     - from: github
+      profile: admin             # optional; omit for the Mcp's default profile
       select: ["search_*", "get_*", "list_*"]
       as: "gh_{{ .tool }}"        # optional rename template
     - from: jira
