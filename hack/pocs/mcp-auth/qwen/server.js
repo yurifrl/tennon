@@ -43,6 +43,7 @@ app.get('/.well-known/oauth-authorization-server', (req, res) => {
     authorization_endpoint: req.protocol + '://' + req.get('host') + '/oauth/authorize',
     token_endpoint: req.protocol + '://' + req.get('host') + '/oauth/token',
     registration_endpoint: req.protocol + '://' + req.get('host') + '/oauth/register',
+    callback_endpoint: req.protocol + '://' + req.get('host') + '/oauth/callback',
     code_challenge_methods_supported: ['S256'],
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code', 'refresh_token'],
@@ -107,7 +108,7 @@ app.get('/oauth/authorize', (req, res) => {
   }
   
   // In a real implementation, we would redirect to Google's OAuth endpoint here
-  // For this POC, we'll simulate the authorization
+  // For this POC, we'll simulate the authorization by redirecting to our callback endpoint
   
   // Generate authorization code
   const code = uuidv4();
@@ -122,8 +123,41 @@ app.get('/oauth/authorize', (req, res) => {
     code_challenge_method
   });
   
+  // Redirect to our callback endpoint
+  const callbackUrl = new URL(req.protocol + '://' + req.get('host') + '/oauth/callback');
+  callbackUrl.searchParams.set('code', code);
+  if (state) {
+    callbackUrl.searchParams.set('state', state);
+  }
+  
+  res.redirect(callbackUrl.toString());
+});
+
+/**
+ * OAuth Callback endpoint - handles the redirect from the authorization server
+ */
+app.get('/oauth/callback', (req, res) => {
+  const { code, state } = req.query;
+  
+  // In a real implementation, this would process the callback from Google
+  // For this POC, we'll just redirect back to the client's redirect_uri
+  
+  if (!code) {
+    return res.status(400).json({ error: 'invalid_request' });
+  }
+  
+  const authCode = authCodes.get(code);
+  if (!authCode) {
+    return res.status(400).json({ error: 'invalid_grant' });
+  }
+  
+  if (authCode.expires_at < Date.now()) {
+    authCodes.delete(code);
+    return res.status(400).json({ error: 'invalid_grant' });
+  }
+  
   // Redirect back to client with authorization code
-  const redirectUrl = new URL(redirect_uri);
+  const redirectUrl = new URL(authCode.redirect_uri);
   redirectUrl.searchParams.set('code', code);
   if (state) {
     redirectUrl.searchParams.set('state', state);

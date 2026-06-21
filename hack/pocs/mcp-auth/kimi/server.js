@@ -3,8 +3,12 @@ import http from 'http';
 import url from 'url';
 import crypto from 'crypto';
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8787;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+// Google OAuth redirect URI - can be configured separately from BASE_URL
+// This allows using a pre-registered redirect URI while the server runs on a different port
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || `${BASE_URL}/oauth/callback`;
 
 // Google OAuth config
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -67,7 +71,7 @@ async function exchangeGoogleCode(code) {
       code,
       client_id: GOOGLE_CLIENT_ID,
       client_secret: GOOGLE_CLIENT_SECRET,
-      redirect_uri: `${BASE_URL}/oauth/callback`,
+      redirect_uri: GOOGLE_REDIRECT_URI,
       grant_type: 'authorization_code'
     })
   });
@@ -201,7 +205,7 @@ const server = http.createServer(async (req, res) => {
           client_id: GOOGLE_CLIENT_ID,
           response_type: 'code',
           scope: 'openid email profile',
-          redirect_uri: `${BASE_URL}/oauth/callback`,
+          redirect_uri: GOOGLE_REDIRECT_URI,
           state: internalCode,
           access_type: 'offline', prompt: 'consent'
         });

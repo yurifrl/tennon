@@ -4,7 +4,7 @@
 //   client --(1)--> /mcp                 -> 401 + WWW-Authenticate: resource_metadata
 //   client --(2)--> /.well-known/...     -> discovery (RFC 9728 + 8414)
 //   client --(3)--> /register            -> DCR (RFC 7591), public client, no secret
-//   client --(4)--> /authorize           -> 302 to Google -> /callback -> 302 back with ?code
+//   client --(4)--> /authorize           -> 302 to Google -> /oauth/callback -> 302 back with ?code
 //   client --(5)--> /token               -> access_token (JWT, ~1h) + refresh_token (30d, rotated)
 //   client --(6)--> /mcp w/ Bearer       -> verified, tool call returns the real user email
 //
@@ -25,7 +25,7 @@ const PORT = Number(process.env.PORT ?? 8787);
 const ISSUER = (process.env.ISSUER ?? `http://localhost:${PORT}`).replace(/\/$/, "");
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI ?? `${ISSUER}/callback`;
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI ?? `${ISSUER}/oauth/callback`;
 
 const ACCESS_TTL = 60 * 60; // 1h, like Notion
 const REFRESH_TTL = 30 * 24 * 60 * 60; // 30d absolute, non-sliding
@@ -43,6 +43,9 @@ const refreshGrants = new Map(); // jti -> { grantId, active }; grantId -> Set<j
 const secret = crypto.createSecretKey(crypto.randomBytes(32));
 
 const app = express();
+// OAuth token requests are application/x-www-form-urlencoded (RFC 6749 §4.1.3);
+// DCR is JSON. Accept both.
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // --- helpers --------------------------------------------------------------
@@ -187,7 +190,7 @@ app.get("/authorize", (req, res) => {
   }
   // TEST_STUB_IDP=1: skip Google and mint an auth code directly. Lets the
   // self-check (check.mjs) exercise PKCE/token/refresh/reuse with no live IdP.
-  // The real Google identity path is /authorize -> Google -> /callback below.
+  // The real Google identity path is /authorize -> Google -> /oauth/callback below.
   if (process.env.TEST_STUB_IDP === "1") return issueAuthCode(res, {
     client_id, redirect_uri, code_challenge, state, scope: scope ?? client.scope,
   }, "tester@example.com");
@@ -223,7 +226,7 @@ function issueAuthCode(res, pending, email) {
   res.redirect(back.toString());
 }
 
-app.get("/callback", async (req, res) => {
+app.get("/oauth/callback", async (req, res) => {
   const { code, state, error } = req.query;
   if (error) return res.status(400).send(`Google error: ${error}`);
   const pending = pick(loginStates, state);
@@ -240,7 +243,7 @@ app.get("/callback", async (req, res) => {
 // --- token endpoint -------------------------------------------------------
 
 app.post("/token", async (req, res) => {
-  const { grant_type } = req.body;
+  const grant_type = req.body?.grant_type;
   try {
     if (grant_type === "authorization_code") {
       const { code, redirect_uri, code_verifier, client_id } = req.body;

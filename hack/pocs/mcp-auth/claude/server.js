@@ -6,6 +6,7 @@
 // we only implement the OAuthServerProvider hooks and a Google callback route.
 
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import express from 'express';
 import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -13,6 +14,12 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { mcpAuthRouter, getOAuthProtectedResourceMetadataUrl } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
 import { z } from 'zod';
+
+// Load mcphub/.env (Google creds) if not already in the environment, so the server
+// works no matter how it's launched (task, bare `node server.js`, etc.).
+if (!process.env.GOOGLE_CLIENT_ID) {
+  try { process.loadEnvFile(new URL('../../../../.env', import.meta.url)); } catch {}
+}
 
 const PORT = Number(process.env.PORT || 8000);
 const PUBLIC_URL = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
@@ -24,7 +31,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || crypto.ran
 
 const ISSUER = new URL(PUBLIC_URL);
 const RESOURCE = new URL('/mcp', PUBLIC_URL);
-const GOOGLE_REDIRECT = `${PUBLIC_URL}/google/callback`;
+const GOOGLE_REDIRECT = `${PUBLIC_URL}/oauth/callback`;
 const ACCESS_TTL = '1h';
 const REFRESH_TTL = '30d'; // ponytail: absolute, no sliding window for a POC
 
@@ -34,8 +41,11 @@ function required(name) {
   return v;
 }
 
-// ponytail: in-memory state, fine for a single-instance POC; swap for Redis if it ever scales.
+// ponytail: persist registered clients to disk so restarts don't invalidate cached client_ids.
+const CLIENTS_FILE = new URL('./clients.json', import.meta.url);
 const clients = new Map();      // client_id -> OAuthClientInformationFull
+try { for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(CLIENTS_FILE, 'utf8')))) clients.set(k, v); } catch {}
+const saveClients = () => fs.writeFileSync(CLIENTS_FILE, JSON.stringify(Object.fromEntries(clients), null, 2));
 const logins = new Map();       // loginId -> { clientRedirectUri, clientState, codeChallenge, clientId }
 const authCodes = new Map();    // code -> { email, codeChallenge, clientId, redirectUri }
 
@@ -76,6 +86,7 @@ const provider = {
     getClient: (id) => clients.get(id),
     registerClient: (client) => {
       clients.set(client.client_id, client);
+      saveClients();
       return client;
     }
   },
@@ -175,7 +186,7 @@ app.post('/dev/login', express.urlencoded({ extended: false }), (req, res) => {
 });
 
 // Google federation callback: exchange code -> id_token -> email, then mint our auth code.
-app.get('/google/callback', async (req, res) => {
+app.get('/oauth/callback', async (req, res) => {
   try {
     const login = logins.get(String(req.query.state));
     if (!login) return res.status(400).send('unknown login state');

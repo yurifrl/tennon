@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 
 const PORT = 8899;
@@ -41,6 +42,7 @@ function challenge(verifier) {
 }
 
 try {
+  assert.match(readFileSync(new URL('server.js', import.meta.url), 'utf8'), /\/oauth\/callback/);
   await waitForServer();
 
   const pr = await req('/.well-known/oauth-protected-resource');

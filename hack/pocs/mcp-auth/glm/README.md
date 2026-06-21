@@ -113,7 +113,7 @@ loopback isn't sufficient, follow the existing GitOps pattern
    syncs the chart; the cluster `support` chart attaches an istio VirtualService
    giving a public host (e.g. `mcp.syscd.live`).
 
-Set `ISSUER=https://<public-host>` and `GOOGLE_REDIRECT_URI=https://<public-host>/callback`,
+Set `ISSUER=https://<public-host>` and `GOOGLE_REDIRECT_URI=https://<public-host>/oauth/callback`,
 register that redirect URI in the Google client, and source
 `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` from the secret store (External
 Secrets / 1Password) — never the repo.

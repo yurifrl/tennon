@@ -71,9 +71,9 @@ async function main() {
     console.log('\n4. Simulating authorization flow...');
     
     // In a real implementation, we would:
-    // 1. Redirect user to authorization_endpoint
-    // 2. User logs in and grants permission
-    // 3. User agent redirects to redirect_uri with authorization code
+    // 1. Redirect user to authorization_endpoint (/oauth/authorize)
+    // 2. Server redirects to callback_endpoint (/oauth/callback) with authorization code
+    // 3. Callback endpoint redirects back to client's redirect_uri with authorization code
     // 4. Client exchanges code for tokens at token_endpoint
     
     // For this test, we'll show what the flow would look like:
@@ -88,7 +88,8 @@ async function main() {
     console.log('   Authorization URL would be:');
     console.log('   ', authUrl.toString());
     
-    console.log('   After user login, redirect would contain authorization code');
+    console.log('   After user login, server redirects to:', asMetadata.callback_endpoint || '/oauth/callback');
+    console.log('   Callback endpoint redirects back to client with authorization code');
     console.log('   Client would then exchange code for tokens at:', asMetadata.token_endpoint);
     
     // Step 5: Show what authenticated call would look like

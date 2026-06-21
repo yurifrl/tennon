@@ -15,7 +15,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || crypto.ran
 
 const ISSUER = new URL(PUBLIC_URL);
 const RESOURCE = new URL('/mcp', PUBLIC_URL);
-const GOOGLE_REDIRECT = `${PUBLIC_URL}/google/callback`;
+const GOOGLE_REDIRECT = `${PUBLIC_URL}/oauth/callback`;
 const clients = new Map();
 const logins = new Map();
 const authCodes = new Map();
@@ -143,7 +143,7 @@ app.post('/dev/login', express.urlencoded({ extended: false }), (req, res) => {
   completeLogin(login, String(req.body.email), res);
 });
 
-app.get('/google/callback', async (req, res) => {
+app.get('/oauth/callback', async (req, res) => {
   try {
     const login = logins.get(String(req.query.state));
     if (!login) return res.status(400).send('unknown login state');
