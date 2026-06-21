@@ -49,10 +49,11 @@ are scheduled as workloads.
   internal where possible.
 - **TTLs & limits:** default credential TTL (~1h) and org maximum token lifetime.
 
-## Agents (`mcphub-mcp`)
+## Agents
 
-Agents connect via the TypeScript MCP (`npx @mcphub/mcp`) or directly to `/mcp/<name>` /
-`/bundle/<name>` over streamable-HTTP. See [Getting Started](getting-started.md#4-connect-an-agent).
+Agents connect **directly** to `/mcp/<connection>` / `/bundle/<name>` over Streamable HTTP,
+or — for clients that launch a stdio command — via the CLI's MCP server (`mcphub mcp serve
+--transport stdio`). See [Getting Started](getting-started.md#4-connect-an-agent).
 
 ## Upgrades
 

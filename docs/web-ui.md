@@ -5,7 +5,9 @@ MCPHub. It is **click-driven**: you never write YAML. Every action translates to
 resource behind the scenes (see [CRDs](crds.md)), and resources created out-of-band
 (`kubectl`, GitOps) appear here too.
 
-A clickable mockup of the UI ships alongside these docs — open `mockup.html`.
+A clickable mockup of the UI ships alongside these docs — open `mockup-v2.html` (latest) or
+`mockup.html` (v1). Press <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd> anywhere for a command palette that
+searches integrations and tools and jumps between pages.
 
 ## Sign in
 
@@ -17,18 +19,24 @@ use the UI; they authenticate tokenless or with tokens.
 A collapsible sidebar (toggle with the button in the top bar) groups pages:
 
 ### Catalog
-- **Dashboard** — cluster overview: MCP health, bundles, active tokens, pending approvals,
-  recent activity.
-- **MCPs** — list and detail. Detail shows configuration (runtime, transport, prefix, tags),
-  rendered secrets (masked), tool exposure rules, and the exposed tool list. Click-driven,
-  no YAML.
-- **Bundles** — the composer: pick tools from MCPs, rename them, flag approvals.
-- **Tool Catalog** — search every tool across every MCP by intent; inspect schemas.
+- **Dashboard** — cluster overview: integration health, bundles, active tokens, pending
+  approvals, recent activity.
+- **Integrations** — list and detail. Each integration shows its `kind` (mcp / openapi /
+  graphql) and `runtime` (container image, **npx** package, **uvx** package, or **remote**
+  endpoint) — an MCP need not ship an image. Detail shows configuration, rendered secrets
+  (masked), tool exposure rules, connections, sandbox/capability status, and the exposed
+  tool list. Click-driven, no YAML.
+- **Tool Catalog** — search every tool across every integration by intent; inspect schemas
+  and the effective policy.
+- **Bundles** — the composer: pick tools from integrations, rename them, flag approvals.
 
 ### Access
 - **Tokens** — list and the granular token builder (see below).
 - **Service Accounts** — org-owned machine identities; tokenless trust or token.
-- **Policies** — the visual policy builder: subjects, grants, approvals.
+- **OAuth Apps** — reusable OAuth clients; register a provider once, connect many accounts.
+- **Secrets** — pluggable credential providers (in-cluster default, Keychain, file, 1Password,
+  Vault).
+- **Policies** — org-wide guardrails &amp; defaults; subjects, grants, approvals.
 - **Approvals** — the human-in-the-loop queue; approve or deny paused executions.
 
 ### Admin

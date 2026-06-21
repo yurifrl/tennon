@@ -9,10 +9,12 @@ write YAML; the UI and CLI translate clicks into resources.
 An **integration** is an upstream tool provider definition: how to reach it and where its
 tool catalog comes from. There are three `kind`s:
 
-- **`mcp`** — a Model Context Protocol server, run as a **container** (e.g.
-  `ghcr.io/github/github-mcp-server`) or reached **remote** over MCP **Streamable HTTP**.
-  Stdio-only servers are wrapped with [Supergateway](runtime-isolation.md) and exposed over
-  Streamable HTTP too — SSE is not used. Every MCP runs in a tightly jailed container.
+- **`mcp`** — a Model Context Protocol server. It need not ship a container image: a `runtime`
+  picks how it starts — a **container** image (e.g. `ghcr.io/github/github-mcp-server`), an
+  **npx** package (`npx @scope/mcp-server`), a **uvx** package (`uvx some-mcp`), or a
+  **remote** endpoint reached directly over MCP **Streamable HTTP**. Package (`npx`/`uvx`)
+  and stdio servers are wrapped with [Supergateway](runtime-isolation.md) and exposed over
+  Streamable HTTP too — SSE is not used. Every locally-run MCP runs in a tightly jailed container.
 - **`openapi`** — an OpenAPI/REST service, or a **bundle** of several (e.g. Google = Gmail +
   Calendar + Drive + Docs). Tools are compiled from the spec.
 - **`graphql`** — a GraphQL endpoint; tools are compiled from introspection.

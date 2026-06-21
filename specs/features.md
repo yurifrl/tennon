@@ -81,6 +81,36 @@ The Vite/React UI (served by `mcphub-web`) provides:
 - An approvals inbox for pending executions.
 - Audit/usage views.
 
+## 7. First-run bootstrap token
+
+The first time the controller starts against an empty store (no users, no identity provider
+configured yet), it mints a single-use **bootstrap admin token** and prints it to the
+process logs — there is no chicken-and-egg "configure OIDC before you can log in" problem.
+
+```
+mcphub-controller --store=sqlite --store-path=./mcphub.db ...
+
+  MCPHub control plane listening on :8080 (api) :8081 (proxy)
+  No users found — first-run bootstrap.
+
+  → Open:  http://localhost:3000/?token=mh_boot_8f3c1d9a7be240xZ
+  → Or run: mcphub open
+
+  This token grants temporary admin. It is shown once and expires in 1h
+  or as soon as the first User is created. Create a real account, then it dies.
+```
+
+- The token is a short-lived (default 1h) bearer stored as a hash in the backend; the
+  plaintext is only ever in that log line. It is invalidated the moment the first
+  [`User`](crds.md#user) is created, or on expiry, whichever comes first.
+- `mcphub open` reads the running server's bootstrap/auth token from local state and opens
+  the web UI already signed in (mirrors executor's `executor open`).
+- Same flow on the cluster backend: the bootstrap token is logged by the controller pod
+  (`kubectl logs deploy/mcphub-controller`).
+- After bootstrap you wire up an [identity provider](authentication.md) and/or create
+  [`User`](crds.md#user)/[`Role`](crds.md#role) resources; the bootstrap path is then
+  permanently closed for that store.
+
 ## Mapping to executor
 
 | Executor concept | MCPHub equivalent |

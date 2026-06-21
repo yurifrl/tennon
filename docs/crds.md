@@ -252,6 +252,115 @@ Global rules are evaluated together with each connection's local `access` (see
 kinds: `User`, `Group`, `EmailDomain`, `ServiceToken`, `ServiceAccount`. A rule's `where`
 matches by `tag`, `integration`, `connection`, or `bundle`.
 
+## User
+
+A human identity. Mirrors Teleport's model: users are stored in the backend **and** fully
+expressible as resources. **Local users** are created with `mcphub users add` or by applying
+the YAML; **SSO users** are created at login from an [identity provider](authentication.md) —
+their OIDC claims populate `spec.traits` and an entry under `spec.identities`. A user has no
+permissions of its own; everything comes from the [`Role`](#role)s in `spec.roles`.
+
+```yaml
+apiVersion: mcphub.io/v1alpha1
+kind: User
+metadata: { name: joe }
+spec:
+  roles: ["devtools-user"]        # assigned roles
+  traits:                         # key → list-of-values, used in role templating
+    email: ["joe@example.com"]
+    groups: ["sre@example.com"]    # from the OIDC groups claim for SSO users
+  identities:                     # SSO links (omitted for pure local users)
+    - connector: google           # an IdentityProvider name
+      subject: "joe@example.com"
+status:
+  locked: false                   # lock to instantly cut off access
+  lastLogin: "2026-06-21T09:00:00Z"
+```
+
+Locking a user (`status.locked: true`, set via `mcphub users lock joe`) terminates live
+sessions and blocks new ones without deleting the account. Machine identities use
+[`ServiceAccount`](#serviceaccount)/[`Token`](#token) instead of `User`.
+
+## Role
+
+What a subject may do — both **manage** control-plane resources and **call** tools. Modeled on
+Teleport's role: two condition sets, `spec.allow` and `spec.deny`, plus `spec.options`.
+**Deny always overrides allow.** Roles are assigned to `User`s, `ServiceAccount`s, and SSO
+groups; a subject's access is the union of its roles' `allow` minus the union of their
+`deny`.
+
+```yaml
+apiVersion: mcphub.io/v1alpha1
+kind: Role
+metadata: { name: devtools-user }
+spec:
+  options:
+    maxSessionTtl: 8h
+    lock: false                   # strict lock wins across roles
+  allow:
+    # Control-plane RBAC: which MCPHub resources this role may manage, and how.
+    rules:
+      - resources: [integration, connection, bundle]
+        verbs: [list, read]
+      - resources: [token]
+        verbs: [list, create, read, update, delete]
+    # Data-plane: which tools this role may call (the McpPolicy grant surface).
+    tools:
+      - bundle: devtools
+        tools: ["*"]
+      - tag: infra
+        tools: ["status"]
+    # Label selector over integrations (OR within a key, AND across keys; '*' = any).
+    integrationLabels:
+      tags: ["code", "tickets"]
+  deny:
+    tools:
+      - tools: ["*delete*"]        # nobody with this role calls a delete tool
+  # Templating: pull values from the subject's traits, e.g. grant tools by IdP group.
+  # tools: [{ tag: "{{external.groups}}", tools: ["*"] }]
+```
+
+Verbs are `list, create, read, update, delete` (or `*`); resource kinds include
+`integration, connection, bundle, role, user, token, serviceAccount, policy, secret,
+capabilityProfile`. Trait templating mirrors Teleport: `{{internal.<trait>}}` for local user
+traits and `{{external.<claim>}}` for SSO claims, interpolated into `tools`, label
+selectors, etc. The data-plane `tools` grants are exactly what [`McpPolicy`](#mcppolicy)
+expresses — a `Role` is the identity-side, Teleport-style packaging of them, while
+`McpPolicy` remains the standalone subject→tool mapping for cases that don't need a full
+role.
+
+**Just-in-time access** (optional): a role may grant the ability to *request* other roles for
+a bounded TTL.
+
+```yaml
+spec:
+  allow:
+    request:
+      roles: ["prod-admin"]        # may request these (wildcards ok: "prod-*")
+      maxDuration: 8h
+    reviewRequests:
+      roles: ["prod-admin"]        # may approve/deny others' requests
+```
+
+Requests become `AccessRequest` objects that pause until a reviewer approves; on approval the
+subject assumes the role only for `maxDuration`. The built-in `requester`/`reviewer` roles
+provide the basic flow.
+
+### Managing users & roles: two ways
+
+Like Teleport, identity is editable from either side and the two stay in sync through the
+backend:
+
+1. **CLI / API / GitOps** — `mcphub users add`, `mcphub create -f role.yaml`, or the web UI,
+   writing straight to the store.
+2. **Kubernetes Operator** — on the cluster backend, the controller reconciles
+   `mcphub.io/v1alpha1` `User`/`Role` CRs into the same store (Operator Pattern). Apply a
+   `Role` with `kubectl`/Argo and it becomes a live backend role; delete the CR and the
+   backend role is removed (a finalizer + `mcphub.io/keep` annotation control retention).
+
+Either way the schema is identical — the CRD *is* the resource. See
+[Users & Roles](users.md) for the guide.
+
 ## ServiceAccount
 
 An org-owned machine identity. Prefer a trusted relationship over a stored secret.

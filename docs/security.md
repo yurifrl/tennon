@@ -47,8 +47,9 @@ recorded with the acting subject. (Audit sink configuration is deployment-specif
 
 - `mcphub-web` holds no secrets and no business logic — safe to expose publicly while the
   controller/API stays internal.
-- `mcphub-mcp` (the TypeScript MCP) is a thin transport; it carries the caller's credential
-  but performs no authorization or secret rendering — those stay in the Go controller.
+- The CLI's MCP server (`mcphub mcp serve`) is a thin local stdio bridge; it carries the
+  caller's credential but performs no authorization or secret rendering — those stay in the
+  controller.
 
 ## Reporting vulnerabilities
 

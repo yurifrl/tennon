@@ -22,6 +22,7 @@
 - Access &amp; security
   - [Authentication](authentication.md)
   - [Authorization](authorization.md)
+  - [Users &amp; Roles](users.md)
   - [Sandbox &amp; Access](capability-profiles.md)
   - [Tokens &amp; Identity](tokens-and-identity.md)
   - [Security model](security.md)
@@ -33,4 +34,5 @@
   - [FAQ](faq.md)
 
 - Prototype
-  - [<span class="mock-link">↗ UI Mockup</span>](mockup.html ":ignore target=_blank")
+  - [<span class="mock-link">↗ UI Mockup (v2)</span>](mockup-v2.html ":ignore target=_blank")
+  - [<span class="mock-link">↗ UI Mockup (v1)</span>](mockup.html ":ignore target=_blank")

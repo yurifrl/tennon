@@ -22,11 +22,11 @@ mcphub-controller \
   --oidc-client-id=mcphub
 ```
 
-Team / cluster (Kubernetes backend):
+Team / cluster (Kubernetes backend) — self-contained, no repo checkout required:
 
 ```bash
-make install            # apply CRDs
-make deploy IMG=…       # deploy the controller
+# apply CRDs + controller straight from the release
+kubectl apply -f https://github.com/acme/mcphub/releases/latest/download/mcphub.yaml
 ```
 
 Then start the web server:
@@ -36,7 +36,17 @@ mcphub-web --listen=:3000 --api-url=http://localhost:8080 \
   --oidc-issuer=https://accounts.google.com --oidc-client-id=mcphub
 ```
 
-Open `http://localhost:3000` and sign in with Google or Okta.
+On an empty store the controller logs a one-time **bootstrap admin token** so you can get in
+before any identity provider is wired up:
+
+```
+No users found — first-run bootstrap.
+  → Open:  http://localhost:3000/?token=mh_boot_8f3c1d9a7be240xZ
+  → Or run: mcphub open
+```
+
+Open that URL (or run `mcphub open`), then create your first [User](users.md). The token
+expires in 1h or the moment the first user exists. After that, sign in with Google or Okta.
 
 ## 2. Add a credentialed MCP (Grafana)
 

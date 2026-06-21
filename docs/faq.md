@@ -53,9 +53,9 @@ additive — you share existing MCPs/bundles to a group — with no reconfigurat
 
 ### Which agents can connect?
 
-Any MCP-capable client (Claude Code, Cursor, OpenCode). Pi connects via a community bridge.
-Agents connect through `mcphub-mcp` (`npx @mcphub/mcp`) or directly to a `/mcp/...` or
-`/bundle/...` URL over streamable-HTTP.
+Any MCP-capable client (Claude Code, Cursor, OpenCode). Agents connect **directly** to a
+`/mcp/...` or `/bundle/...` URL over Streamable HTTP, or — for clients that launch a stdio
+command — via the CLI's MCP server (`mcphub mcp serve`).
 
 ### What happens when a tool needs approval?
 

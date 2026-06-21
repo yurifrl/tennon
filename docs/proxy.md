@@ -14,9 +14,10 @@ the upstream credential, route, and (if needed) pause for approval.
   The client sees a curated, possibly renamed surface spanning multiple MCPs. See
   [Bundles](bundles.md).
 
-Agents usually connect through `mcphub-mcp` (the TypeScript MCP, `npx @mcphub/mcp`), which
-presents these endpoints to the client and forwards to the proxy. You can also point an MCP
-client directly at a `/mcp/...` or `/bundle/...` URL over streamable-HTTP.
+Agents point an MCP client **directly** at a `/mcp/...` or `/bundle/...` URL over Streamable
+HTTP. For clients that can only launch a stdio command, the CLI's MCP server
+(`mcphub mcp serve --transport stdio`) presents these endpoints locally and forwards to the
+proxy.
 
 ## Per-request flow
 

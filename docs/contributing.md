@@ -17,7 +17,7 @@ we follow, and how to propose changes.
 ## Development setup
 
 - Go 1.24+ for the controller/CLI/web.
-- Node 20+ for the web UI and the TypeScript MCP.
+- Node 20+ for the web UI build.
 - For the Kubernetes backend: a local cluster (kind/minikube) and `kubectl`.
 - For local iteration without a cluster: run the controller with `--store=sqlite`.
 
