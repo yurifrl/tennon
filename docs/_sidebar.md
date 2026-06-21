@@ -4,15 +4,20 @@
   - [Introduction](README.md)
   - [Getting Started](getting-started.md)
 
-- Concepts &amp; design
+- Spec (what it must do)
   - [Concepts](concepts.md)
-  - [Architecture](architecture.md)
   - [Custom Resources (CRDs)](crds.md)
+  - [Sandbox &amp; Access](capability-profiles.md)
+
+- Design (how it's built)
+  - [Architecture](architecture.md)
+  - [Project Structure](project-structure.md)
+  - [Technologies](technologies.md)
   - [Runtime &amp; Isolation](runtime-isolation.md)
-  - [Capability Enforcement (design)](capability-architecture.md)
+  - [Capability Enforcement](capability-architecture.md)
   - [Storage backends](storage.md)
 
-- Using MCPHub
+- Usage (how it works)
   - [The MCP Proxy](proxy.md)
   - [Bundles](bundles.md)
   - [Web UI](web-ui.md)
@@ -23,7 +28,6 @@
   - [Authentication](authentication.md)
   - [Authorization](authorization.md)
   - [Users &amp; Roles](users.md)
-  - [Sandbox &amp; Access](capability-profiles.md)
   - [Tokens &amp; Identity](tokens-and-identity.md)
   - [Security model](security.md)
 
@@ -34,5 +38,4 @@
   - [FAQ](faq.md)
 
 - Prototype
-  - [<span class="mock-link">↗ UI Mockup (v2)</span>](mockup-v2.html ":ignore target=_blank")
-  - [<span class="mock-link">↗ UI Mockup (v1)</span>](mockup.html ":ignore target=_blank")
+  - [<span class="mock-link">↗ UI Mockup</span>](_review/mock.html ":ignore target=_blank")

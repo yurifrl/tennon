@@ -5,9 +5,9 @@ MCPHub. It is **click-driven**: you never write YAML. Every action translates to
 resource behind the scenes (see [CRDs](crds.md)), and resources created out-of-band
 (`kubectl`, GitOps) appear here too.
 
-A clickable mockup of the UI ships alongside these docs — open `mockup-v2.html` (latest) or
-`mockup.html` (v1). Press <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd> anywhere for a command palette that
-searches integrations and tools and jumps between pages.
+A clickable mockup of the UI ships alongside these docs — open `mock.html`. Press
+<kbd>⌘K</kbd> / <kbd>Ctrl K</kbd> anywhere for a command palette that searches integrations
+and tools and jumps between pages.
 
 ## Sign in
 

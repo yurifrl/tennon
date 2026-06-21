@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Static file server for docs/ + an append-only comment endpoint.
-GET: serves files from this directory (docs + mockup.html).
+GET: serves files from this directory (docs + mock.html).
 POST /api/comment: appends {original text, comment} to comments.md."""
 import json, os, datetime
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-COMMENTS = os.path.join(ROOT, "comments.md")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # serve docs/
+COMMENTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "comments.md")
 HOST, PORT = "127.0.0.1", 8800
 
 if not os.path.exists(COMMENTS):
