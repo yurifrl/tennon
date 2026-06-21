@@ -38,8 +38,10 @@ catalog, approvals, and the UI. Pre-1.0: APIs and CRD schemas may change.
 - Pause/resume executions (human-in-the-loop) for sensitive tools.
 - Click-driven Vite/React UI: catalog, bundle composer, policy builder, token/identity
   builder, approvals inbox, identity-provider and storage admin.
+- CLI with embedded MCP server for programmatic AI agent access.
 - **Done when:** a sensitive call pauses and waits for approval; the full lifecycle (add
-  source → bundle → policy → call → approve) is doable from the UI.
+  source → bundle → policy → call → approve) is doable from the UI; AI agents can connect
+  to the CLI's MCP server to perform operations programmatically.
 
 ## Beyond
 - Workflows, per-execution scratch storage, richer audit/usage analytics, and additional

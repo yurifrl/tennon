@@ -4,6 +4,9 @@
 with an OIDC token or a service token and never touches the store directly, so the same
 validation, policy, and audit apply as the UI.
 
+The CLI also **embeds an MCP server** that exposes CLI operations as tools, allowing AI
+agents to interact with MCPHub programmatically through the Model Context Protocol.
+
 > Command names below are indicative of the planned surface; run `mcphub --help` for the
 > authoritative list in your build.
 
@@ -74,6 +77,31 @@ mcphub tools describe github_create_pull_request
 mcphub call github_get_issue '{"owner":"acme","repo":"app","number":12}'
 mcphub resume --execution-id exec_123    # approve/continue a paused call
 ```
+
+## Embedded MCP Server
+
+The CLI embeds an MCP server that exposes CLI operations as tools, enabling AI agents to
+interact with MCPHub programmatically:
+
+```bash
+# Start the embedded MCP server
+mcphub mcp serve
+
+# Or run as a standalone MCP server
+mcphub mcp serve --transport stdio
+mcphub mcp serve --transport sse --port 8080
+
+# Available tools include:
+# - mcphub_mcp_list: List available MCPs and connections
+# - mcphub_mcp_create: Create a new MCP connection
+# - mcphub_secret_create: Create secrets
+# - mcphub_bundle_create: Create tool bundles
+# - mcphub_tool_call: Call tools through MCPHub
+# - mcphub_policy_manage: Manage access policies
+```
+
+This allows AI coding assistants (like Claude Code, Cursor, etc.) to connect to MCPHub
+and perform operations through the MCP protocol without manual CLI usage.
 
 ## Output
 

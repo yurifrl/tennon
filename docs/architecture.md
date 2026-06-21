@@ -44,8 +44,9 @@ One self-contained process, multiple responsibilities:
 ### `mcphub` CLI
 
 A standalone client over the API (authenticating with an OIDC token or service token). It
-never touches the store directly, so the same validation, policy, and audit apply. See
-[CLI](cli.md).
+never touches the store directly, so the same validation, policy, and audit apply. The CLI also
+**embeds an MCP server** that exposes CLI operations as tools for programmatic access by
+AI agents. See [CLI](cli.md).
 
 ### The MCP surface (no separate package)
 
