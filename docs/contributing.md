@@ -8,7 +8,8 @@ we follow, and how to propose changes.
 - `mcphub-controller` — Go: controller (Kubebuilder), API, and MCP proxy.
 - `mcphub-web` — Go server serving the Vite/React UI.
 - `mcphub` — Go CLI.
-- `mcphub-mcp` — TypeScript MCP surface (npm).
+- `mcphub` CLI — Go; also ships an embedded **MCP server** (`mcphub mcp serve`) as the local
+  stdio bridge for clients that launch a command.
 - `docs/` — these docs.
 - `specs/` — design notes and research (requirements, authorization, token/identity, the UI
   mockup).
@@ -25,7 +26,7 @@ Build, run, and test commands live in the `Makefile` / package scripts; run `mak
 ## Conventions
 
 - **Keep the planes separate.** Authorization, secret rendering, and routing live in the Go
-  controller. `mcphub-web` and `mcphub-mcp` are thin and hold no secrets.
+  controller. `mcphub-web` and the CLI's MCP bridge are thin and hold no secrets.
 - **CRDs are the source of truth.** UI and CLI actions must go through the API and result in
   CRD objects; do not add side channels that bypass reconciliation.
 - **No YAML in the UI.** The interface is click-driven; it translates to resources.

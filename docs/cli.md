@@ -84,12 +84,12 @@ The CLI embeds an MCP server that exposes CLI operations as tools, enabling AI a
 interact with MCPHub programmatically:
 
 ```bash
-# Start the embedded MCP server
+# Start the embedded MCP server (stdio — for clients that launch a command)
 mcphub mcp serve
-
-# Or run as a standalone MCP server
 mcphub mcp serve --transport stdio
-mcphub mcp serve --transport sse --port 8080
+
+# Or expose it over Streamable HTTP (SSE is not used anywhere in MCPHub)
+mcphub mcp serve --transport streamable-http --port 8080
 
 # Available tools include:
 # - mcphub_mcp_list: List available MCPs and connections

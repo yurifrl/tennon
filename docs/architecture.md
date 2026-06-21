@@ -48,12 +48,16 @@ never touches the store directly, so the same validation, policy, and audit appl
 **embeds an MCP server** that exposes CLI operations as tools for programmatic access by
 AI agents. See [CLI](cli.md).
 
-### The MCP surface (no separate package)
+### The MCP surface (proxy direct, or the CLI's MCP server)
 
 Agents connect **directly to the proxy** over streamable-HTTP at a connection or bundle URL
-(e.g. `/mcp/grafana-read`, `/bundle/devtools`), presenting their token. There is no
-MCPHub-specific agent package, npm install, or sidecar. Clients that can only launch a local
-command can use a generic streamable-HTTP MCP shim, but nothing MCPHub-specific is required.
+(e.g. `/mcp/grafana-read`, `/bundle/devtools`), presenting their token. There is no separate
+npm package or sidecar to install.
+
+For clients that can only launch a local **stdio** command (Claude Code, Cursor, etc.), the
+`mcphub` **CLI ships its own MCP server**: running `mcphub mcp serve` exposes an MCP endpoint
+locally that bridges to the hub (carrying your token, honoring policy and approvals). So the
+stdio bridge is just the CLI you already have — not a distinct component. See [CLI](cli.md).
 
 ## State model
 

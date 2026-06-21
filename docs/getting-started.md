@@ -81,14 +81,14 @@ tighten this grant.
 Tokenless (preferred, e.g. for CI/Hermes): configure a [trusted relationship](tokens-and-identity.md)
 and let the workload authenticate with its platform identity.
 
-With a token (any MCP client):
+With a token, via the CLI's MCP server (for clients that launch a stdio command):
 
 ```jsonc
 {
   "mcpServers": {
     "mcphub": {
-      "command": "npx",
-      "args": ["-y", "@mcphub/mcp"],
+      "command": "mcphub",
+      "args": ["mcp", "serve", "--transport", "stdio"],
       "env": {
         "MCPHUB_URL": "https://mcphub.example.com",
         "MCPHUB_TOKEN": "mh_svc_…"
