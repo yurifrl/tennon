@@ -41,11 +41,6 @@ are scheduled as workloads.
 
 ## Configuration essentials
 
-- **Container isolation:** install **KubeArmor** (operator on Kubernetes, systemd mode
-  off-cluster) so MCP `CapabilityProfile`s are enforced at runtime; optionally a sandbox
-  `runtimeClass` (gVisor/Kata) and Cilium for FQDN egress. See
-  [Runtime & Isolation](runtime-isolation.md).
-
 - **Identity providers:** OIDC issuer(s) and client IDs for Google and/or Okta; configure
   machine trust relationships (OIDC/K8s/SPIFFE/cloud) for tokenless auth.
 - **Secrets:** Kubernetes `Secret`s (Kubernetes backend) or an encryption key for the
