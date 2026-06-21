@@ -41,3 +41,13 @@ tasks:
     cmds:
       - npm install
       - npm start
+
+  run:gpt:
+    desc: Start the gpt authenticated MCP server (OAuth-protected /mcp on :8792)
+    dir: "{{.TASKFILE_DIR}}/gpt"
+    dotenv:
+      - .env
+      - ../../../../.env
+    cmds:
+      - npm install
+      - PORT=${PORT:-8792} PUBLIC_URL=${PUBLIC_URL:-http://localhost:8792} npm start
