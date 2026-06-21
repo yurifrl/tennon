@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stdio-mcp-bridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: stdio-mcp-bridge }
+  template:
+    metadata:
+      labels: { app: stdio-mcp-bridge }
+    spec:
+      containers:
+        - name: bridge
+          image: stdio-mcp-bridge:poc
+          imagePullPolicy: Never   # use locally built image (OrbStack shares Docker images)
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stdio-mcp-bridge
+spec:
+  type: LoadBalancer   # OrbStack exposes this on the host
+  selector: { app: stdio-mcp-bridge }
+  ports:
+    - port: 8000
+      targetPort: 8000

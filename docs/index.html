@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MCPHub Docs</title>
+<meta name="description" content="MCPHub — the Kubernetes-native MCP control plane. Documentation.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
+<style>
+  :root{
+    --theme-color:#00c29f;
+    --base-font-size:15.5px;
+    --sidebar-width:280px;
+    --content-max-width:900px;
+    --link-color:#4c8dff;
+    --sidebar-background:#141821;
+    --sidebar-nav-link-color--active:#00c29f;
+    --sidebar-nav-link-border-color--active:#00c29f;
+  }
+  body{background:#0d0f14}
+  .app-name-link{font-weight:800!important}
+  .sidebar .app-name{padding-top:14px}
+  .sidebar-nav .mock-link a{color:#00c29f!important;font-weight:600}
+  /* code blocks */
+  .markdown-section pre,.markdown-section pre>code{background:#090b10!important;border-radius:10px}
+  .markdown-section code{color:#e6c07b}
+  .markdown-section table{display:table;width:100%}
+  .markdown-section blockquote{border-left:4px solid #00c29f;background:rgba(0,194,159,.06)}
+  /* mermaid: keep raw fenced blocks readable if not rendered */
+  .markdown-section pre[data-lang="mermaid"]{background:#0d0f14!important;color:#9aa4b5;font-size:12px}
+</style>
+</head>
+<body>
+<div id="app">Loading the MCPHub docs…</div>
+<script>
+  window.$docsify = {
+    name: 'MCPHub',
+    nameLink: '#/',
+    repo: '',
+    loadSidebar: true,
+    auto2top: true,
+    subMaxLevel: 3,
+    homepage: 'README.md',
+    relativePath: true,
+    maxLevel: 4,
+    search: {
+      placeholder: 'Search the docs…',
+      noData: 'No results.',
+      depth: 4
+    },
+    alias: {
+      '/.*/_sidebar.md': '/_sidebar.md'
+    },
+    // render ```mermaid fenced blocks as diagrams
+    markdown: {
+      renderer: {
+        code(code, lang) {
+          if (lang === 'mermaid') {
+            return '<div class="mermaid">' + code + '</div>';
+          }
+          return this.origin.code.apply(this, arguments);
+        }
+      }
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify-copy-code@2/dist/docsify-copy-code.min.js"></script>
+<!-- mermaid diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    const render = () => {
+      document.querySelectorAll('.mermaid').forEach(el => {
+        if (el.getAttribute('data-processed')) return;
+        try { mermaid.init(undefined, el); } catch(e) {}
+      });
+    };
+    window.$docsify.plugins = [].concat(function(hook){
+      hook.doneEach(function(){ setTimeout(render, 50); });
+    }, window.$docsify.plugins || []);
+  }
+</script>
+<script src="annotate.js"></script>
+</body>
+</html>

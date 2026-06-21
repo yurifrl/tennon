@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MCPHub — UI Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'class' };
+</script>
+<style>
+  html,body{background:#0d0f14}
+  body{overflow-x:hidden}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#28303f;border-radius:6px}
+  /* tag helpers */
+  .tag{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;background:#1b212d;color:#9aa4b5;border:1px solid #28303f;white-space:nowrap}
+  .tag-green{background:rgba(0,194,159,.12);color:#00c29f;border-color:rgba(0,194,159,.3)}
+  .tag-blue{background:rgba(76,141,255,.12);color:#4c8dff;border-color:rgba(76,141,255,.3)}
+  .tag-amber{background:rgba(245,166,35,.12);color:#f5a623;border-color:rgba(245,166,35,.3)}
+  .tag-red{background:rgba(242,92,92,.12);color:#f25c5c;border-color:rgba(242,92,92,.3)}
+  .tag-purple{background:rgba(160,107,255,.12);color:#a06bff;border-color:rgba(160,107,255,.3)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+</head>
+<body class="text-[#e6e9ef] text-sm antialiased">
+
+<!-- ============ LOGIN ============ -->
+<div id="login" class="min-h-screen grid place-items-center px-4"
+     style="background:radial-gradient(900px 460px at 80% -10%,rgba(0,194,159,.10),transparent),radial-gradient(700px 460px at 10% 110%,rgba(76,141,255,.10),transparent),#0d0f14">
+  <div class="w-full max-w-sm bg-[#141821] border border-[#28303f] rounded-2xl p-8 text-center shadow-2xl">
+    <div class="w-13 h-13 mx-auto mb-4 rounded-2xl grid place-items-center font-extrabold text-2xl text-[#04121a]"
+         style="background:linear-gradient(135deg,#00c29f,#4c8dff);width:52px;height:52px">M</div>
+    <h1 class="text-2xl font-bold m-0">MCPHub</h1>
+    <p class="text-[#6b7587] mt-1 mb-7">The Kubernetes-native MCP control plane</p>
+    <button onclick="signIn()" class="w-full bg-white text-[#1f1f1f] rounded-xl py-3 font-semibold flex items-center justify-center gap-3 hover:bg-gray-100">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+    <button onclick="signIn()" class="w-full mt-2.5 bg-black text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-3 hover:bg-neutral-900">
+      <span class="font-extrabold text-lg">O</span> Continue with Okta
+    </button>
+    <div class="mt-4 inline-flex gap-1.5 items-center text-[#9aa4b5] text-xs bg-[#1b212d] px-3 py-1.5 rounded-full border border-[#28303f]">🔒 OIDC · @example.com</div>
+    <p class="mt-5 text-[#6b7587] text-xs leading-relaxed">Single sign-on via OIDC (Google &amp; Okta). Your IdP <b>groups</b> drive authorization.<br>Machines authenticate tokenless via a trusted relationship — no shared secret.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden min-h-screen">
+
+  <!-- Mobile backdrop -->
+  <div id="backdrop" onclick="closeSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-[#141821] border-r border-[#28303f] z-40 flex flex-col p-3 transform -translate-x-full md:translate-x-0 transition-transform duration-200">
+    <div class="flex items-center gap-2.5 px-2 py-2 font-bold text-base">
+      <span class="w-7 h-7 rounded-lg grid place-items-center text-[#04121a] font-extrabold" style="background:linear-gradient(135deg,#00c29f,#4c8dff)">M</span>
+      MCPHub
+    </div>
+    <nav class="flex flex-col gap-0.5 mt-2 overflow-y-auto flex-1" id="nav"></nav>
+    <div class="mt-auto border-t border-[#28303f] pt-3">
+      <button onclick="signOut()" class="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#1b212d] text-left">
+        <span class="w-7 h-7 rounded-full grid place-items-center text-white font-bold text-xs bg-[#a06bff]">YL</span>
+        <span class="leading-tight"><b class="text-[13px]">Yuri Lima</b><br><span class="text-[#6b7587] text-[11px]">yuri@example.com</span></span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="md:pl-64 min-h-screen flex flex-col">
+    <!-- Topbar -->
+    <header class="sticky top-0 z-20 bg-[#0d0f14]/85 backdrop-blur border-b border-[#28303f] px-4 sm:px-6 py-3 flex items-center gap-3">
+      <button onclick="openSidebar()" class="md:hidden w-9 h-9 grid place-items-center rounded-lg border border-[#28303f] text-lg">☰</button>
+      <div class="min-w-0">
+        <h1 id="pgTitle" class="text-base sm:text-lg font-semibold m-0 truncate">Dashboard</h1>
+        <div id="pgSub" class="text-[#6b7587] text-xs truncate">Cluster overview</div>
+      </div>
+      <div class="flex-1"></div>
+      <button onclick="go('newtoken')" class="bg-[#00c29f] text-[#04121a] font-semibold rounded-lg px-3 sm:px-4 py-2 text-[13px] hover:bg-[#1ed4b2] whitespace-nowrap">+ New Token</button>
+    </header>
+
+    <main class="flex-1 px-4 sm:px-6 py-5 w-full max-w-[1100px] mx-auto" id="content"></main>
+  </div>
+</div>
+
+<script>
+/* ---------------- data: nav ---------------- */
+const NAV = [
+  {g:'Catalog'},
+  {k:'dashboard', ic:'▣', t:'Dashboard'},
+  {k:'mcps', ic:'⬡', t:'MCPs'},
+  {k:'bundles', ic:'❏', t:'Bundles'},
+  {k:'catalog', ic:'⚲', t:'Tool Catalog'},
+  {g:'Access'},
+  {k:'tokens', ic:'⚷', t:'Tokens'},
+  {k:'serviceaccounts', ic:'⚿', t:'Service Accounts'},
+  {k:'policies', ic:'▤', t:'Policies'},
+  {k:'approvals', ic:'✋', t:'Approvals', badge:'2'},
+  {g:'Admin'},
+  {k:'identity', ic:'⧉', t:'Identity Providers'},
+  {k:'storage', ic:'⏻', t:'Storage'},
+  {g:'Help'},
+  {k:'__docs', ic:'❓', t:'Docs ↗', href:'index.html'},
+];
+const TITLES = {
+  dashboard:['Dashboard','Cluster overview'],
+  mcps:['MCPs','Registered Mcp resources'],
+  mcpdetail:['github','Mcp detail'],
+  bundles:['Bundles','Composed tool endpoints'],
+  catalog:['Tool Catalog','Search across all MCPs'],
+  tokens:['Tokens','Granular service tokens'],
+  newtoken:['New Token','Authentication & permission builder'],
+  serviceaccounts:['Service Accounts','Machine identities & trust'],
+  identity:['Identity Providers','OIDC & machine trust'],
+  storage:['Storage','Pluggable CRD backend'],
+  policies:['Policies','McpPolicy resources'],
+  approvals:['Approvals','Human-in-the-loop queue'],
+};
+
+/* ---------------- reusable bits ---------------- */
+const card = (inner, cls='') => `<div class="bg-[#141821] border border-[#28303f] rounded-xl ${cls}">${inner}</div>`;
+const cardHd = (title, right='') => `<div class="px-4 py-3 border-b border-[#28303f] flex items-center gap-2"><h3 class="m-0 text-sm font-semibold">${title}</h3>${right?`<div class="ml-auto">${right}</div>`:''}</div>`;
+const btn = (label, cls='', onclick='') => `<button ${onclick?`onclick="${onclick}"`:''} class="border border-[#28303f] bg-[#1b212d] rounded-lg px-3 py-1.5 text-xs font-semibold hover:border-[#3a4658] ${cls}">${label}</button>`;
+const btnPri = (label, onclick='') => `<button ${onclick?`onclick="${onclick}"`:''} class="bg-[#00c29f] text-[#04121a] font-semibold rounded-lg px-4 py-2 text-[13px] hover:bg-[#1ed4b2]">${label}</button>`;
+const dot = c => `<span class="inline-block w-2 h-2 rounded-full align-middle" style="background:${c==='green'?'#00c29f':c==='amber'?'#f5a623':'#f25c5c'}"></span>`;
+const wrapTable = inner => `<div class="overflow-x-auto">${inner}</div>`;
+const th = s => `<th class="text-left text-[#6b7587] text-[11px] uppercase tracking-wide font-semibold px-4 py-2.5 border-b border-[#28303f]">${s}</th>`;
+const td = (s,cls='') => `<td class="px-4 py-3 border-b border-[#28303f] align-middle ${cls}">${s}</td>`;
+const pagehead = (h,p,right='') => `<div class="flex flex-wrap items-start gap-3 mb-5"><div class="min-w-0"><h2 class="m-0 text-xl sm:text-2xl">${h}</h2><p class="m-0 mt-1 text-[#6b7587]">${p}</p></div><div class="flex-1"></div>${right}</div>`;
+const sumRow = (k,v) => `<div class="flex gap-2 py-1 items-baseline"><span class="w-[84px] shrink-0 text-[#6b7587] text-xs">${k}</span><span class="min-w-0">${v}</span></div>`;
+const sumBox = inner => `<div class="bg-[#0d0f14] border border-[#28303f] rounded-lg p-3.5">${inner}</div>`;
+
+/* ---------------- pages ---------------- */
+const PAGES = {};
+
+PAGES.dashboard = () => `
+  <div class="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-4">
+    ${[['7','MCPs registered','● 6 Ready · 1 Degraded','#00c29f'],['3','Bundles','38 tools exposed','#6b7587'],['12','Active tokens','2 expiring soon','#6b7587'],['2','Pending approvals','needs attention','#f5a623']]
+      .map(([n,l,d,c])=>card(`<div class="p-4"><div class="text-2xl sm:text-3xl font-bold">${n}</div><div class="text-[#6b7587] text-xs mt-0.5">${l}</div><div class="text-[11px] mt-2" style="color:${c}">${d}</div></div>`)).join('')}
+  </div>
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    ${card(cardHd('MCP Health')+wrapTable(`<table class="w-full border-collapse">
+      ${[['github','42 tools','green','Ready'],['jira','18 tools','green','Ready'],['slack','9 tools','green','Ready'],['internal-deploy','4 tools','amber','Degraded']]
+        .map(([n,t,c,s])=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">${td(`${dot(c)} <b class="ml-1">${n}</b>`)}${td(`<span class="text-[#6b7587] mono">${t}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':'tag-amber'}">${s}</span>`)}</tr>`).join('')}
+    </table>`))}
+    ${card(cardHd('Recent activity')+wrapTable(`<table class="w-full border-collapse">
+      ${[['call','github_create_pull_request','2m','blue'],['approval','rollback paused','8m','amber'],['token','ci-runner created','1h','green'],['mcp','slack reconciled','3h','purple']]
+        .map(([k,v,t,c])=>`<tr>${td(`<span class="tag tag-${c}">${k}</span>`)}${td(v)}${td(`<span class="text-[#6b7587]">${t} ago</span>`)}</tr>`).join('')}
+    </table>`))}
+  </div>`;
+
+PAGES.mcps = () => pagehead('MCPs','Each MCP is a custom resource. Config lives in state, not a file.', btnPri('+ Add MCP')) +
+  card(wrapTable(`<table class="w-full border-collapse">
+    <thead><tr>${th('Name')}${th('Transport')}${th('Tools')}${th('Tags')}${th('Status')}</tr></thead><tbody>
+    ${[['github','stdio','18 / 42',['code','prod'],'green','Ready'],
+       ['jira','streamable-http','12 / 18',['tickets'],'green','Ready'],
+       ['slack','streamable-http','9 / 9',['chat'],'green','Ready'],
+       ['weather','sse','3 / 3',['public'],'green','Ready'],
+       ['internal-deploy','stdio','4 / 4',['infra','sensitive'],'amber','Degraded']]
+      .map(([n,tr,to,tags,c,s])=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">
+        ${td(`<b>${n}</b>`)}${td(`<span class="mono text-[#9aa4b5]">${tr}</span>`)}${td(to)}
+        ${td(tags.map(t=>`<span class="tag ${t==='sensitive'?'tag-red':''}">${t}</span>`).join(' '))}
+        ${td(`<span class="tag ${c==='green'?'tag-green':'tag-amber'}">${s}</span>`)}</tr>`).join('')}
+    </tbody></table>`));
+
+PAGES.mcpdetail = () => `
+  <div class="text-[#6b7587] text-[13px] mb-1"><a onclick="go('mcps')" class="cursor-pointer text-[#6b7587]">MCPs</a> / github</div>
+  ${pagehead('github <span class="tag tag-green align-middle">● Ready</span>','Proxied at <span class="mono">/mcp/github</span> · 42 discovered · 18 exposed', btn('Refresh')+' '+btn('Delete','!text-[#f25c5c] !border-[#4a2a2f]'))}
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    ${card(cardHd('Configuration', btn('Edit'))+`<div class="p-4">
+      ${sumBox(sumRow('Runtime','<span class="tag tag-blue">container</span>')+sumRow('Image','<span class="mono text-[#9aa4b5] break-all">ghcr.io/github/github-mcp-server:latest</span>')+sumRow('Transport','<span class="tag">stdio</span>')+sumRow('Prefix','<span class="mono">github_</span>')+sumRow('Tags','<span class="tag">code</span> <span class="tag">prod</span>'))}
+      <div class="h-px bg-[#28303f] my-4"></div>
+      <div class="font-semibold mb-2">Tool exposure rules</div>
+      <div class="flex gap-2 items-center mb-2 flex-wrap"><span class="text-[#6b7587] w-14 text-xs">Allow</span><span class="tag tag-green">search_*</span><span class="tag tag-green">get_*</span><span class="tag tag-green">list_*</span></div>
+      <div class="flex gap-2 items-center flex-wrap"><span class="text-[#6b7587] w-14 text-xs">Deny</span><span class="tag tag-red">delete_*</span></div>
+    </div>`)}
+    ${card(cardHd('Secrets (rendered in-cluster)')+`<div class="p-4">
+      ${wrapTable(`<table class="w-full border-collapse"><tr>${td('<span class="mono">GITHUB_TOKEN</span>')}${td('<span class="mono text-[#6b7587]">•••••••• a91f</span>')}${td('<span class="tag tag-green">from secret</span>')}</tr></table>`)}
+      <p class="text-[#6b7587] text-xs mt-3">Resolved from <span class="mono">github-credentials</span> and injected into the server. Never shown in API responses, status, logs, or this UI.</p>
+    </div>`)}
+  </div>
+  ${card(cardHd('Exposed tools (18)')+wrapTable(`<table class="w-full border-collapse">
+    ${[['github_search_repositories','green','allow'],['github_get_issue','green','allow'],['github_create_pull_request','amber','require approval'],['github_list_commits','green','allow']]
+      .map(([t,c,l])=>`<tr>${td(`<span class="mono">${t}</span>`)}${td(`<span class="tag tag-${c}">${l}</span>`)}</tr>`).join('')}
+  </table>`),'mt-4')}`;
+
+PAGES.bundles = () => pagehead('Bundles','A bundle composes curated tools from many MCPs behind one endpoint.', btnPri('+ New Bundle')) + `
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    ${card(cardHd('devtools','<span class="tag tag-green">/bundle/devtools</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Core tools for platform engineering. 9 tools from 3 MCPs.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">github → gh_*</span><span class="tag tag-blue">jira → jira_*</span><span class="tag tag-blue">internal-deploy → rollback,status</span></div></div>`)}
+    ${card(cardHd('support','<span class="tag tag-green">/bundle/support</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Help-desk read tools. 6 tools from 2 MCPs.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">slack → read</span><span class="tag tag-blue">jira → search,get</span></div></div>`)}
+  </div>
+  ${card(cardHd('Composition — devtools', btn('+ Add source'))+`<div class="p-4">
+    <p class="text-[#6b7587] text-xs mt-0">Pick tools from any MCP, optionally rename them, and flag which need approval. Saved automatically.</p>
+    ${[['github',['search_*','get_*','list_*'],'gh_‹tool›','green'],['jira',['create_issue','get_issue','search'],'jira_‹tool›','green'],['internal-deploy',['status','rollback'],'—','mix']]
+      .map(([src,tools,rename,c])=>card(`<div class="p-3 flex flex-col sm:flex-row gap-3 sm:items-center">
+        <select class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-1.5 sm:w-40"><option>${src}</option></select>
+        <div class="flex-1 min-w-0"><span class="text-[#6b7587] text-xs">tools</span><div class="flex flex-wrap gap-1.5">${tools.map(t=>`<span class="tag ${t==='rollback'?'tag-amber':'tag-green'}">${t}</span>`).join('')}</div></div>
+        <div><span class="text-[#6b7587] text-xs">rename</span><div>${rename==='—'?'<span class="text-[#6b7587]">—</span>':`<span class="tag tag-blue">${rename}</span>`}</div></div>
+      </div>`,'mb-2.5')).join('')}
+    <div class="h-px bg-[#28303f] my-3"></div>
+    <div class="flex gap-2 items-center flex-wrap"><span class="text-[#6b7587] w-20 text-xs">Approval</span><span class="tag tag-amber">jira_create_issue</span><span class="tag tag-amber">rollback</span></div>
+  </div>`,'mt-4')}`;
+
+PAGES.catalog = () => pagehead('Tool Catalog','Search every tool across every MCP by intent.') + `
+  <input type="text" placeholder="🔎  Search by intent — e.g. &quot;open a pull request&quot;" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-4 py-3 mb-4 outline-none focus:border-[#00c29f]">
+  ${card(wrapTable(`<table class="w-full border-collapse">
+    <thead><tr>${th('Tool')}${th('MCP')}${th('Tags')}${th('Match')}${th('')}</tr></thead><tbody>
+    ${[['github_create_pull_request','github','code','0.94','green'],['github_search_repositories','github','code','0.82','green'],['jira_create_issue','jira','tickets','0.61','blue'],['slack_post_message','slack','chat','0.55','blue']]
+      .map(([t,m,tag,s,c])=>`<tr>${td(`<span class="mono">${t}</span>`)}${td(m)}${td(`<span class="tag">${tag}</span>`)}${td(`<span class="tag tag-${c}">${s}</span>`)}${td(btn('Inspect schema'))}</tr>`).join('')}
+  </tbody></table>`))}`;
+
+PAGES.tokens = () => pagehead('Tokens','Granular service tokens. Scope each to MCPs, tools, groups, or tags.', btnPri('+ New Token','go(\'newtoken\')')) +
+  card(wrapTable(`<table class="w-full border-collapse">
+    <thead><tr>${th('Name')}${th('Scope')}${th('Subject / Groups')}${th('Expires')}${th('Status')}${th('')}</tr></thead><tbody>
+    ${[['ci-runner','mh_svc_8f3c…','<span class="tag tag-blue">bundle:devtools</span>','<span class="tag tag-purple">group: sre@example.com</span>','in 90d','green','active'],
+       ['support-bot','mh_svc_2a71…','<span class="tag tag-blue">tag: chat</span> <span class="tag tag-blue">tools: 4</span>','<span class="tag">token subject</span>','in 7d','amber','expiring'],
+       ['readonly-analyst','mh_svc_b0c9…','<span class="tag tag-blue">tools: get_*, list_*</span>','<span class="tag tag-purple">group: data@example.com</span>','never','green','active']]
+      .map(([n,id,sc,su,e,c,s])=>`<tr>${td(`<b>${n}</b><div class="text-[#6b7587] text-xs mono">${id}</div>`)}${td(sc)}${td(su)}${td(e)}${td(`<span class="tag tag-${c}">${s}</span>`)}${td(btn('Revoke','!text-[#f25c5c] !border-[#4a2a2f]'))}</tr>`).join('')}
+  </tbody></table>`));
+
+PAGES.serviceaccounts = () => pagehead('Service Accounts','Org-owned identities that survive their creator. Prefer a <b>trusted relationship</b> over a stored secret.', btnPri('+ New','go(\'newtoken\')')) +
+  card(wrapTable(`<table class="w-full border-collapse">
+    <thead><tr>${th('Name')}${th('Auth method')}${th('Trust / credential')}${th('Grants')}${th('Status')}</tr></thead><tbody>
+    ${[['hermes','platform-team','tokenless','green','OIDC iss: token.actions…<br>sub: repo:acme/hermes:…','<span class="tag tag-blue">bundle:devtools</span> <span class="tag tag-blue">tag:observability</span>','active','green'],
+       ['ci-runner','platform-team','tokenless','green','K8s SA: ci/runner<br>aud: mcphub','<span class="tag tag-blue">bundle:devtools</span>','active','green'],
+       ['support-bot','support','fine-grained token','amber','mh_svc_2a71… · 1h TTL','<span class="tag tag-blue">tag:chat</span>','expiring','amber']]
+      .map(([n,o,m,mc,tr,gr,st,sc])=>`<tr>${td(`<b>${n}</b><div class="text-[#6b7587] text-xs">owner: ${o}</div>`)}${td(`<span class="tag tag-${mc}">${m}</span>`)}${td(`<span class="mono text-[#6b7587] text-xs">${tr}</span>`)}${td(gr)}${td(`<span class="tag tag-${sc}">${st}</span>`)}</tr>`).join('')}
+  </tbody></table>`)) +
+  card(cardHd('How machines authenticate')+`<div class="p-4 grid gap-4 grid-cols-1 sm:grid-cols-3">
+    <div><b>Tier 0 · Tokenless <span class="tag tag-green">preferred</span></b><p class="text-[#6b7587] text-xs">Service account + trusted relationship (OIDC, K8s SA, SPIFFE, cloud). Caller proves identity; MCPHub mints a ~1h credential. Nothing to leak.</p></div>
+    <div><b>Tier 1 · Fine-grained token</b><p class="text-[#6b7587] text-xs">Token = resources × tools × level × expiry × owner. Short-lived bearer, re-minted on expiry. When tokenless isn't possible.</p></div>
+    <div><b>Revocation</b><p class="text-[#6b7587] text-xs">Expiry is the default cutoff. Revoking kills all derived credentials; emergency lock terminates live sessions.</p></div>
+  </div>`,'mt-4');
+
+PAGES.identity = () => pagehead('Identity Providers','Pluggable OIDC for humans; trusted relationships for machines. IdP <b>groups</b> drive authorization.', btnPri('+ Add Provider')) + `
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    ${card(cardHd('Google Workspace','<span class="tag tag-green">enabled</span>')+`<div class="p-4">${sumBox(sumRow('Type','<span class="tag tag-blue">OIDC</span>')+sumRow('Domain','<span class="mono">example.com</span>')+sumRow('Claims','<span class="mono text-[#6b7587]">email, groups</span>')+sumRow('Flow','<span class="mono text-[#6b7587]">auth code + PKCE</span>'))}</div>`)}
+    ${card(cardHd('Okta','<span class="tag tag-green">enabled</span>')+`<div class="p-4">${sumBox(sumRow('Type','<span class="tag tag-blue">OIDC</span>')+sumRow('Issuer','<span class="mono text-[#6b7587]">acme.okta.com</span>')+sumRow('Groups','<span class="mono text-[#6b7587]">observability, sre, support</span>')+sumRow('Use','<span class="text-[#6b7587] text-xs">share MCPs with Okta groups</span>'))}</div>`)}
+  </div>
+  ${card(cardHd('Machine trust relationships','<span class="tag tag-green">tokenless</span>')+wrapTable(`<table class="w-full border-collapse">
+    ${[['GitHub Actions OIDC','iss token.actions.githubusercontent.com','trusted','green'],['Kubernetes ServiceAccounts','cluster OIDC · aud=mcphub','trusted','green'],['SPIFFE trust domain','spiffe://acme.internal','configure',''],['AWS IAM','arn:aws:iam::…:role/hermes','configure','']]
+      .map(([n,d,s,c])=>`<tr>${td(`<b>${n}</b>`)}${td(`<span class="mono text-[#6b7587] text-xs">${d}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':''}">${s}</span>`)}</tr>`).join('')}
+  </table>`),'mt-4')}`;
+
+PAGES.storage = () => pagehead('Storage','Every object is a CRD. The schema is fixed; where objects are <b>persisted</b> is pluggable. UI and CRD create each other.') + `
+  ${card(`<div class="p-4"><div class="font-semibold mb-2">Active backend</div>
+    <div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 flex-wrap">
+      <button class="bg-[#00c29f] text-[#04121a] rounded-md px-3.5 py-1.5 font-semibold text-[13px]">Kubernetes / etcd</button>
+      <button class="text-[#9aa4b5] px-3.5 py-1.5 font-semibold text-[13px]">Postgres</button>
+      <button class="text-[#9aa4b5] px-3.5 py-1.5 font-semibold text-[13px]">SQLite</button>
+    </div>
+    <p class="text-[#6b7587] text-xs mt-3">Switching backends changes <i>where</i> objects live, not <i>what</i> they are. The same types and reconcile loops run against any backend.</p>
+  </div>`,'mb-4')}
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-3">
+    ${[['Kubernetes / etcd','CRDs in-cluster via the API. Native kubectl + GitOps, RBAC, watches. For teams in a cluster.'],['Postgres','CRD objects as rows. Shared / HA external DB, runs outside a cluster.'],['SQLite','CRD objects in a local file. Single-node / one-person / embedded self-host.']]
+      .map(([t,d])=>card(`<div class="p-4"><b>${t}</b><p class="text-[#6b7587] text-xs">${d}</p></div>`)).join('')}
+  </div>`;
+
+PAGES.policies = () => pagehead('Policies','A policy maps subjects (groups, tokens, tags) to allowed MCPs and tools.', btnPri('+ New Policy')) +
+  card(wrapTable(`<table class="w-full border-collapse">
+    <thead><tr>${th('Policy')}${th('Subjects')}${th('Grants')}${th('Approval')}</tr></thead><tbody>
+    ${[['sre-team','<span class="tag tag-purple">group:sre@example.com</span>','<span class="tag tag-blue">bundle:devtools</span>','<span class="tag tag-amber">rollback</span>'],
+       ['org-defaults','<span class="tag">domain:example.com</span>','<span class="tag tag-blue">mcp:weather</span> <span class="tag tag-blue">tag:public</span>','—'],
+       ['data-readonly','<span class="tag tag-purple">group:data@example.com</span>','<span class="tag tag-blue">tools:get_*,list_*</span>','—']]
+      .map(([n,su,gr,ap])=>`<tr>${td(`<b>${n}</b>`)}${td(su)}${td(gr)}${td(ap)}</tr>`).join('')}
+  </tbody></table>`),'mb-4') +
+  card(cardHd('sre-team', btn('Edit'))+`<div class="p-4">
+    <div class="font-semibold mb-2">Subjects</div>
+    <div class="flex flex-wrap gap-1.5 mb-3.5"><span class="tag tag-purple">group: sre@example.com</span> <span class="tag">token: ci-runner</span></div>
+    <div class="font-semibold mb-2">Grants</div>
+    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-blue">bundle: devtools</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag tag-green">all</span><span class="ml-auto tag tag-green">allow</span></div>`,'mb-2')}
+    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-blue">tag: infra</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag">status</span><span class="tag tag-amber">rollback</span><span class="ml-auto tag tag-amber">rollback needs approval</span></div>`)}
+  </div>`);
+
+PAGES.approvals = () => pagehead('Approvals','Sensitive tool calls pause here for human sign-off (human-in-the-loop).') +
+  [['internal-deploy.rollback','ci-runner','{"service":"api","to":"v1.4.2"}','8m'],['jira_create_issue','support-bot','{"project":"OPS","title":"Disk full"}','21m']]
+    .map(([t,by,args,ago])=>card(`<div class="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+      <span class="tag tag-amber self-start">paused</span>
+      <div class="flex-1 min-w-0"><b class="mono">${t}</b><div class="text-[#6b7587] text-xs break-all">requested by <b>${by}</b> · args: <span class="mono">${args.replace(/</g,'&lt;')}</span> · ${ago} ago</div></div>
+      <div class="flex gap-2">${btn('Decline')}${btnPri('Approve')}</div>
+    </div>`,'mb-3.5')).join('');
+
+/* ---------------- New Token builder ---------------- */
+let issuance='tokenless', curMode='tools';
+PAGES.newtoken = () => `
+  <div class="text-[#6b7587] text-[13px] mb-1"><a onclick="go('tokens')" class="cursor-pointer text-[#6b7587]">Tokens</a> / new</div>
+  ${pagehead('Create granular token','Grant a token access to MCPs dynamically — by tools, groups, or tags.')}
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-[1.6fr_1fr] items-start">
+    ${card(`<div class="p-4">
+      <label class="block mb-4"><span class="block font-semibold mb-1.5 text-[13px]">Token name</span>
+        <input id="tkName" value="ci-runner" oninput="renderSummary()" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
+      <label class="block mb-4"><span class="block font-semibold mb-1.5 text-[13px]">Bound subject <span class="text-[#6b7587] font-normal text-xs">— who this token acts as</span></span>
+        <select id="tkSubject" onchange="renderSummary()" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"><option>service-account: ci-runner</option><option>service-account: support-bot</option><option>impersonate group: sre@example.com</option></select></label>
+      <div class="h-px bg-[#28303f] my-4"></div>
+
+      <div class="font-semibold mb-2 text-[13px]">Issuance method</div>
+      <div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 mb-3.5 flex-wrap">
+        <button id="im-tokenless" onclick="issueMode('tokenless')" class="rounded-md px-3 py-1.5 font-semibold text-[13px] bg-[#00c29f] text-[#04121a]">Tokenless · trusted relationship</button>
+        <button id="im-token" onclick="issueMode('token')" class="rounded-md px-3 py-1.5 font-semibold text-[13px] text-[#9aa4b5]">Fine-grained token</button>
+      </div>
+
+      <div id="issue-tokenless">
+        <p class="text-[#6b7587] text-xs mt-0">No secret is stored. The caller proves identity with a platform-signed document; MCPHub validates it against a trust rule and mints a short-lived credential at call time. Best for Hermes and CI agents.</p>
+        <label class="block mb-4"><span class="block font-semibold mb-1.5 text-[13px]">Trust type</span>
+          <select id="trustType" onchange="renderSummary()" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"><option>OIDC JWT (GitHub Actions / generic)</option><option>Kubernetes ServiceAccount token</option><option>SPIFFE / SVID</option><option>Cloud instance identity (AWS / GCP / Azure)</option></select></label>
+        <label class="block mb-4"><span class="block font-semibold mb-1.5 text-[13px]">Issuer <span class="text-[#6b7587] font-normal text-xs">(iss)</span></span>
+          <input value="https://token.actions.githubusercontent.com" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
+        <div class="grid gap-3 grid-cols-1 sm:grid-cols-2">
+          <label class="block mb-2"><span class="block font-semibold mb-1.5 text-[13px]">Audience <span class="text-[#6b7587] font-normal text-xs">(aud)</span></span><input value="mcphub" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
+          <label class="block mb-2"><span class="block font-semibold mb-1.5 text-[13px]">Subject match <span class="text-[#6b7587] font-normal text-xs">(sub)</span></span><input value="repo:acme/hermes:ref:refs/heads/main" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
+        </div>
+        <div class="flex items-center gap-2 border border-[#28303f] rounded-lg px-3 py-2 bg-[#0d0f14]"><span class="flex-1"><b class="text-[13px]">Minted credential</b><span class="block text-[#6b7587] text-xs">short-lived · ~1h · non-renewable · re-attest each call</span></span><span class="tag tag-green">no secret</span></div>
+        <div class="h-px bg-[#28303f] my-4"></div>
+      </div>
+
+      <div id="issue-token" class="hidden">
+        <div class="font-semibold mb-2 text-[13px]">Grant access by</div>
+        <div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 mb-4 flex-wrap">
+          <button id="sm-tools" onclick="scopeMode('tools')" class="rounded-md px-3 py-1.5 font-semibold text-[13px] bg-[#00c29f] text-[#04121a]">By MCP &amp; Tools</button>
+          <button id="sm-groups" onclick="scopeMode('groups')" class="rounded-md px-3 py-1.5 font-semibold text-[13px] text-[#9aa4b5]">By Group</button>
+          <button id="sm-tags" onclick="scopeMode('tags')" class="rounded-md px-3 py-1.5 font-semibold text-[13px] text-[#9aa4b5]">By Tag</button>
+        </div>
+        <div id="mode-tools">
+          <p class="text-[#6b7587] text-xs mt-0">Pick MCPs, then narrow to specific tools. The token can only call what you check.</p>
+          <select class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 mb-3 outline-none focus:border-[#00c29f]"><option>github</option><option>jira</option></select>
+          <div class="max-h-56 overflow-y-auto">
+            ${chk('github_search_repositories','read · allow','green','allow',true)}
+            ${chk('github_get_issue','read · allow','green','allow',true)}
+            ${chk('github_list_commits','read · allow','green','allow',false)}
+            ${chk('github_create_pull_request','write · needs approval','amber','approval',true)}
+            ${chk('github_delete_repo','destructive · blocked','red','blocked',false)}
+          </div>
+        </div>
+        <div id="mode-groups" class="hidden">
+          <p class="text-[#6b7587] text-xs mt-0">Access follows IdP groups. The token inherits whatever those groups are allowed.</p>
+          ${chk('sre@example.com','→ bundle:devtools, mcp:internal-deploy','purple','group',true)}
+          ${chk('data@example.com','→ tools: get_*, list_*','purple','group',false)}
+          ${chk('support@example.com','→ bundle:support','purple','group',false)}
+        </div>
+        <div id="mode-tags" class="hidden">
+          <p class="text-[#6b7587] text-xs mt-0">Grant every tool whose MCP carries a tag. New MCPs with that tag are included automatically.</p>
+          ${chk('code','github','','tag',true)}
+          ${chk('chat','slack','','tag',false)}
+          ${chk('tickets','jira','','tag',false)}
+          ${chk('infra','internal-deploy · sensitive','red','sensitive',false)}
+        </div>
+      </div>
+
+      <div class="h-px bg-[#28303f] my-4"></div>
+      <label class="block"><span class="block font-semibold mb-1.5 text-[13px]">Credential lifetime <span class="text-[#6b7587] font-normal text-xs">— short-lived by default, re-mint on expiry</span></span>
+        <select id="tkExp" onchange="renderSummary()" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"><option>1 hour (short-lived)</option><option>12 hours</option><option>7 days</option><option>90 days (max)</option></select></label>
+    </div>`)}
+
+    ${card(cardHd('<span id="previewTitle">Token preview</span>')+`<div class="p-4">
+      <div id="scopeSummary"></div>
+      <div class="font-semibold mt-4 mb-2 text-[13px]">What this allows</div>
+      <div id="plainSummary" class="bg-[#0d0f14] border border-[#28303f] rounded-lg p-3.5 text-[13px]"></div>
+      <button id="genBtn" onclick="generateToken()" class="w-full bg-[#00c29f] text-[#04121a] font-semibold rounded-lg py-2.5 mt-4 hover:bg-[#1ed4b2]">Generate token</button>
+      <div id="tokenOut" class="hidden mt-3.5">
+        <div class="bg-[#0d0f14] border border-dashed border-[#00c29f] rounded-lg p-3.5 flex items-center justify-between gap-3">
+          <span id="tokenStr" class="mono text-[#00c29f] text-[13px] break-all">mh_svc_8f3c1d9a7be240xZ</span>
+          ${btn('Copy','shrink-0','copyTok()')}
+        </div>
+        <p id="tokenNote" class="text-[#6b7587] text-xs mt-2">⚠ Shown once. Store it securely.</p>
+      </div>
+    </div>`)}
+  </div>`;
+
+function chk(title, sub, color, tagLabel, checked){
+  const tagCls = color?('tag-'+color):'';
+  return `<label class="flex items-center gap-2.5 border border-[#28303f] rounded-lg px-3 py-2 mb-1.5 cursor-pointer bg-[#0d0f14] hover:border-[#3a4658] ${checked?'!border-[#00c29f]':''}">
+    <input type="checkbox" ${checked?'checked':''} onchange="onChk(this)" class="w-4 h-4 accent-[#00c29f]">
+    <span class="flex-1 min-w-0"><b class="text-[13px]">${title}</b><span class="block text-[#6b7587] text-xs truncate">${sub}</span></span>
+    <span class="tag ${tagCls}">${tagLabel}</span></label>`;
+}
+
+/* ---------------- nav + routing ---------------- */
+function renderNav(){
+  document.getElementById('nav').innerHTML = NAV.map(item=>{
+    if(item.g) return `<div class="text-[#6b7587] text-[11px] uppercase tracking-wide px-2.5 pt-3.5 pb-1.5">${item.g}</div>`;
+    if(item.href) return `<a href="${item.href}" target="_blank" class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#4c8dff] hover:bg-[#1b212d] font-medium"><span class="w-4 text-center">${item.ic}</span> ${item.t}</a>`;
+    return `<a data-nav="${item.k}" onclick="go('${item.k}')" class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[#9aa4b5] hover:bg-[#1b212d] hover:text-[#e6e9ef] font-medium cursor-pointer">
+      <span class="w-4 text-center">${item.ic}</span> ${item.t} ${item.badge?`<span class="tag tag-amber ml-auto !px-1.5">${item.badge}</span>`:''}</a>`;
+  }).join('');
+}
+function go(p){
+  document.getElementById('content').innerHTML = (PAGES[p]||PAGES.dashboard)();
+  document.querySelectorAll('#nav a[data-nav]').forEach(a=>{
+    const on = a.getAttribute('data-nav')===(p==='newtoken'?'tokens':p==='mcpdetail'?'mcps':p);
+    a.classList.toggle('bg-[#1b212d]',on); a.classList.toggle('text-[#e6e9ef]',on);
+  });
+  const t = TITLES[p]||TITLES.dashboard;
+  document.getElementById('pgTitle').textContent=t[0];
+  document.getElementById('pgSub').textContent=t[1];
+  document.getElementById('content').scrollTo&&window.scrollTo(0,0);
+  closeSidebar();
+  if(p==='newtoken'){ issuance='tokenless'; curMode='tools'; renderSummary(); }
+}
+
+/* ---------------- sidebar (mobile) ---------------- */
+function openSidebar(){ document.getElementById('sidebar').classList.remove('-translate-x-full'); document.getElementById('backdrop').classList.remove('hidden'); }
+function closeSidebar(){ if(window.innerWidth<768){ document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('backdrop').classList.add('hidden'); } }
+
+/* ---------------- auth ---------------- */
+function signIn(){ document.getElementById('login').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); renderNav(); go('dashboard'); }
+function signOut(){ document.getElementById('app').classList.add('hidden'); document.getElementById('login').classList.remove('hidden'); }
+
+/* ---------------- token builder logic ---------------- */
+function issueMode(m){
+  issuance=m;
+  document.getElementById('im-tokenless').className=`rounded-md px-3 py-1.5 font-semibold text-[13px] ${m==='tokenless'?'bg-[#00c29f] text-[#04121a]':'text-[#9aa4b5]'}`;
+  document.getElementById('im-token').className=`rounded-md px-3 py-1.5 font-semibold text-[13px] ${m==='token'?'bg-[#00c29f] text-[#04121a]':'text-[#9aa4b5]'}`;
+  document.getElementById('issue-tokenless').classList.toggle('hidden',m!=='tokenless');
+  document.getElementById('issue-token').classList.toggle('hidden',m!=='token');
+  document.getElementById('previewTitle').textContent = m==='tokenless'?'Trust preview':'Token preview';
+  document.getElementById('genBtn').textContent = m==='tokenless'?'Save trusted relationship':'Generate token';
+  renderSummary();
+}
+function scopeMode(m){
+  curMode=m;
+  ['tools','groups','tags'].forEach(x=>{
+    document.getElementById('sm-'+x).className=`rounded-md px-3 py-1.5 font-semibold text-[13px] ${x===m?'bg-[#00c29f] text-[#04121a]':'text-[#9aa4b5]'}`;
+    document.getElementById('mode-'+x).classList.toggle('hidden',x!==m);
+  });
+  renderSummary();
+}
+function onChk(cb){ cb.closest('label').classList.toggle('!border-[#00c29f]',cb.checked); renderSummary(); }
+function checkedLabels(modeId){ return [...document.querySelectorAll('#mode-'+modeId+' input:checked')].map(i=>i.closest('label').querySelector('b').textContent); }
+function renderSummary(){
+  const name=document.getElementById('tkName').value||'unnamed';
+  const subj=document.getElementById('tkSubject').value;
+  const exp=document.getElementById('tkExp').value;
+  const ss=document.getElementById('scopeSummary'), plain=document.getElementById('plainSummary');
+  if(issuance==='tokenless'){
+    const trust=document.getElementById('trustType').value;
+    ss.innerHTML=sumBox(sumRow('Name',`<b class="mono">${name}</b>`)+sumRow('Method','<span class="tag tag-green">tokenless</span>')+sumRow('Trust',trust)+sumRow('Credential','<span class="text-[#6b7587] text-xs">minted per call · ~1h · no secret stored</span>'));
+    plain.innerHTML=`<div class="space-y-1.5"><div>✓ Callers proving the <b>${trust}</b> identity authenticate as <b>${name}</b>.</div><div>✓ No secret is shared or stored — a short-lived credential is minted each call.</div><div>✓ Access follows whatever <b>${name}</b> is granted in Policies.</div></div>`;
+    return;
+  }
+  let kind,items;
+  if(curMode==='tools'){items=checkedLabels('tools');kind='Tools';}
+  else if(curMode==='groups'){items=checkedLabels('groups');kind='Groups';}
+  else{items=checkedLabels('tags');kind='Tags';}
+  ss.innerHTML=sumBox(sumRow('Name',`<b class="mono">${name}</b>`)+sumRow('Method','<span class="tag tag-amber">fine-grained token</span>')+sumRow('Subject',subj)+sumRow('Grant by',`<span class="tag tag-blue">${kind}</span>`)+sumRow('Items',`<div class="flex flex-wrap gap-1">${items.map(i=>`<span class="tag">${i}</span>`).join('')||'<span class="text-[#6b7587] text-xs">none</span>'}</div>`)+sumRow('Lifetime',exp));
+  const noun = kind==='Tools'?'call these tools':(kind==='Groups'?'inherit access from these groups':'reach every MCP carrying these tags');
+  plain.innerHTML=`<div class="space-y-1.5"><div>✓ This token can <b>${noun}</b>: ${items.map(i=>`<span class="tag">${i}</span>`).join(' ')||'<span class="text-[#6b7587]">nothing yet</span>'}</div><div>✓ Expires in <b>${exp}</b> and can be revoked any time.</div><div>! Tools marked sensitive still pause for human approval.</div></div>`;
+}
+function generateToken(){
+  const out=document.getElementById('tokenOut');
+  if(issuance==='tokenless'){
+    document.getElementById('tokenStr').textContent='trust saved · no secret to copy';
+    document.getElementById('tokenNote').textContent='Callers authenticate with their platform identity. MCPHub mints a ~1h credential per call.';
+  } else {
+    document.getElementById('tokenStr').textContent='mh_svc_'+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,8);
+    document.getElementById('tokenNote').textContent='⚠ Shown once. Short-lived · re-mint on expiry. Store it securely.';
+  }
+  out.classList.remove('hidden');
+}
+function copyTok(){ navigator.clipboard && navigator.clipboard.writeText(document.getElementById('tokenStr').textContent); }
+window.addEventListener('resize',()=>{ if(window.innerWidth>=768){ document.getElementById('sidebar').classList.remove('-translate-x-full'); document.getElementById('backdrop').classList.add('hidden'); }});
+</script>
+<script src="annotate.js"></script>
+</body>
+</html>
