@@ -133,10 +133,7 @@ const NAV = [
   {k:'policies', ic:'▤', t:'Global Policies'},
   {k:'approvals', ic:'✋', t:'Approvals', badge:'2'},
   {g:'Admin'},
-  {k:'users', ic:'⚇', t:'Users'},
-  {k:'roles', ic:'⚖', t:'Roles'},
-  {k:'identity', ic:'⧉', t:'Identity Providers'},
-  {k:'storage', ic:'⏻', t:'Storage'},
+  {k:'config', ic:'⚙', t:'Config'},
   {g:'Help'},
   {k:'__docs', ic:'❓', t:'Docs ↗', href:'index.html'},
 ];
@@ -152,6 +149,7 @@ const TITLES = {
   oauthapps:['OAuth Apps','Reusable OAuth clients'],
   identity:['Identity Providers','OIDC & machine trust'],
   storage:['Storage','Pluggable CRD backend'],
+  config:['Config','Users, roles, identity & storage'],
   secrets:['Secrets','Pluggable credential providers'],
   users:['Users','Human identities — Teleport-style'],
   userdetail:['joe','User detail'],
@@ -345,6 +343,13 @@ PAGES.oauthapps = () => pagehead('OAuth Apps','A reusable OAuth client. Register
       .map(([n,p,cid,conns,sec,c,s])=>`<tr>${td(`<b>${n}</b>`)}${td(`<span class="tag tag-blue">${p}</span>`)}${td(`<span class="mono text-[#6b7587] text-xs break-all">${cid}</span>`)}${td(`<span class="mono">${conns}</span>`)}${td(`<span class="mono text-[#6b7587] text-xs">${sec}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':''}">${s}</span>`)}</tr>`).join('')}
   </tbody></table>`)) +
   card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>The client secret and minted tokens live in a Secrets provider, never inline. A connection references an app and adds its own account + scopes — so one Google app backs many credentialed connections.</span></div>`,'mt-3');
+
+PAGES.config = (tab='users') => {
+  const tabs = [['users','Users'],['roles','Roles'],['identity','Identity Providers'],['storage','Storage']];
+  const bar = `<div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 flex-wrap mb-5">${tabs.map(([k,t])=>`<button onclick="setConfigTab('${k}')" class="${k===tab?'bg-[#00c29f] text-[#04121a]':'text-[#9aa4b5] hover:text-[#e6e9ef]'} rounded-md px-3.5 py-1.5 font-semibold text-[13px]">${t}</button>`).join('')}</div>`;
+  return bar + PAGES[tab]();
+};
+function setConfigTab(tab){ document.getElementById('content').innerHTML = PAGES.config(tab); window.scrollTo(0,0); }
 
 PAGES.users = () => pagehead('Users','Human identities, Teleport-style: stored in the backend and editable as <span class="mono">User</span> resources. Permissions come entirely from assigned roles.', btnPri('+ Add User','toast(\'Add user\')')) +
   card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>On a fresh store, first run logs a one-time <b>bootstrap admin token</b> on the CLI — open <span class="mono">mcphub open</span> to sign in, create your account, and it dies the moment the first user exists.</span></div>`,'mb-4') +
@@ -575,7 +580,7 @@ function renderNav(){
 function go(p){
   document.getElementById('content').innerHTML = (PAGES[p]||PAGES.dashboard)();
   document.querySelectorAll('#nav a[data-nav]').forEach(a=>{
-    const on = a.getAttribute('data-nav')===(p==='newtoken'?'tokens':p==='mcpdetail'?'mcps':p==='userdetail'?'users':p==='roledetail'?'roles':p);
+    const on = a.getAttribute('data-nav')===(p==='newtoken'?'tokens':p==='mcpdetail'?'mcps':p==='userdetail'?'users':p==='roledetail'?'roles':['users','roles','identity','storage'].includes(p)?'config':p);
     a.classList.toggle('bg-[#1b212d]',on); a.classList.toggle('text-[#e6e9ef]',on);
   });
   const t = TITLES[p]||TITLES.dashboard;
