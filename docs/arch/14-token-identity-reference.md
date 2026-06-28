@@ -101,11 +101,10 @@ lifetime**.
 
 ## 4. The unifying principle
 
-GitHub OIDC, SPIFFE/SPIRE, and Kubernetes bound tokens all converge:
-
-> **Short-lived, audience-scoped, auto-rotated identity backed by a pre-established trust
-> relationship — not a copied shared secret.** The verifier trusts the platform's signing
-> keys; the workload proves *who/where it is*, not *what secret it holds*.
+GitHub OIDC, SPIFFE/SPIRE, and Kubernetes bound tokens all converge on the principle stated
+in [Tokens & Identity → Principle](tokens-and-identity.md#principle) — short-lived,
+audience-scoped, auto-rotated identity backed by a pre-established trust relationship, not a
+copied shared secret. How each system realizes it:
 
 - **OIDC federation**: workload presents a JWT; verifier pre-registers (issuer, audience,
   subject-match) and validates the signature via the issuer's JWKS.

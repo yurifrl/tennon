@@ -347,18 +347,10 @@ provide the basic flow.
 
 ### Managing users & roles: two ways
 
-Like Teleport, identity is editable from either side and the two stay in sync through the
-backend:
-
-1. **CLI / API / GitOps** — `mcphub users add`, `mcphub create -f role.yaml`, or the web UI,
-   writing straight to the store.
-2. **Kubernetes Operator** — on the cluster backend, the controller reconciles
-   `mcphub.io/v1alpha1` `User`/`Role` CRs into the same store (Operator Pattern). Apply a
-   `Role` with `kubectl`/Argo and it becomes a live backend role; delete the CR and the
-   backend role is removed (a finalizer + `mcphub.io/keep` annotation control retention).
-
-Either way the schema is identical — the CRD *is* the resource. See
-[Users & Roles](users.md) for the guide.
+The CRD *is* the resource: editing via `mcphub`/API/UI and applying `User`/`Role` CRs with the
+Kubernetes Operator converge on one backend store. The two paths, finalizer, and
+`mcphub.io/keep` retention are covered in
+[Users & Roles → Two ways to manage](users.md#two-ways-to-manage-just-like-teleport).
 
 ## ServiceAccount
 

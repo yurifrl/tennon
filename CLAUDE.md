@@ -9,7 +9,7 @@ Every feature is a new file that implements an existing seam, not a change that 
 across one. If your change makes package A know about package B that it didn't before, stop —
 you're coupling. Extract the shared thing into `domain` and depend on the interface.
 
-- **Packages only call down** (see `docs/05-project-structure.md`). `domain` at the bottom
+- **Packages only call down** (see `docs/arch/03-project-structure.md`). `domain` at the bottom
   imports nothing outward. Infra (`store`, `runtime`, `secret`, `auth`) implements `domain`
   ports. Delivery (`api`, `proxy`, `controller`, `cli`) calls down into ports, never sideways.
 - **Control flows up only through interfaces the lower layer owns.** The proxy needs an
@@ -36,7 +36,7 @@ implementations. The core packages must not import the auth/authz packages — t
 the `domain` ports. If turning auth off requires touching `proxy` or `runtime`, the seam is
 wrong.
 
-Default-deny (`docs/19-authorization.md`) is a property of the *real* `Authorizer`, not of
+Default-deny (`docs/09-authorization.md`) is a property of the *real* `Authorizer`, not of
 the proxy. The proxy asks; the injected authorizer answers. Swap the authorizer, swap the
 behavior.
 
@@ -77,6 +77,19 @@ same way: define the interface in `domain` next to its callers, default it to a 
 wire the real one in `cmd/`. A hook with one real implementation still earns its place
 *only* because the no-op keeps the core runnable without it; don't add hooks for hypothetical
 extension points (YAGNI).
+
+## Docs: `docs/` is the user guide, `docs/arch/` is the design
+
+`docs/*.md` (root, served at `/`) is for someone installing and using MCPHub: how to install,
+the concepts they touch, and how to use each feature (UI, CLI, API, connectors, auth, policies,
+tokens, CRDs reference, storage, deployment). No architecture or rationale.
+
+`docs/arch/*.md` (served at `/arch`) is for someone building MCPHub: requirements, architecture,
+project structure, technologies, internals (proxy, runtime isolation, capability/CRD design),
+roadmap, contributing, and research notes. Design decisions a user doesn't need go here.
+
+Adding a doc: pick the bucket, drop in an `NN-name.md`, run `task docs:build` (regenerates both
+`_all.md` pages). Cross-doc links use the un-numbered name (`](cli.md)`); the build rewrites them.
 
 ## Checklist before you call it done
 

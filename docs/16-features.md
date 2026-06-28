@@ -66,7 +66,7 @@ sequenceDiagram
 ## 5. Policy enforcement
 
 Authorization rules are `Policy` resources (see
-[authentication-flow.md](authentication-flow.md)). Approval requirements are a complementary
+[Authorization](authorization.md)). Approval requirements are a complementary
 control layered on connectors. Together they cover "may you call this at all" (policy) and
 "should a human confirm this specific call" (approval).
 
