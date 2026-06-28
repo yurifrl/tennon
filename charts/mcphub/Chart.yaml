@@ -1,0 +1,15 @@
+apiVersion: v2
+name: mcphub
+description: Kubernetes-native control plane and proxy for Model Context Protocol (MCP) servers.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/acme/mcphub
+sources:
+  - https://github.com/acme/mcphub
+keywords:
+  - mcp
+  - proxy
+  - control-plane
+maintainers:
+  - name: MCPHub maintainers

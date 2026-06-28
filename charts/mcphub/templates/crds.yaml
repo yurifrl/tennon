@@ -1,0 +1,70 @@
+{{- if .Values.crds.install }}
+{{- /*
+  CRD schemas are not yet authored in source (the project is pre-1.0; the controller is the
+  schema authority and can self-install). We ship structurally-valid CRDs with an open spec
+  (x-kubernetes-preserve-unknown-fields) so GitOps/kubectl works without fabricating exhaustive
+  validation. Replace `properties` here once the Go types generate real schemas.
+  ponytail: open schema until codegen exists; tighten when types land.
+*/ -}}
+{{- $defs := list
+  (dict "kind" "McpConnector"      "plural" "mcpconnectors"      "scope" "Namespaced" "categories" (list "connectors") "phase" true)
+  (dict "kind" "OpenApiConnector"  "plural" "openapiconnectors"  "scope" "Namespaced" "categories" (list "connectors") "phase" true)
+  (dict "kind" "GraphqlConnector"  "plural" "graphqlconnectors"  "scope" "Namespaced" "categories" (list "connectors") "phase" true)
+  (dict "kind" "OAuthApp"          "plural" "oauthapps"          "scope" "Namespaced" "categories" (list)             "phase" false)
+  (dict "kind" "CapabilityProfile" "plural" "capabilityprofiles" "scope" "Namespaced" "categories" (list)             "phase" false)
+  (dict "kind" "Policy"            "plural" "policies"           "scope" "Cluster"    "categories" (list)             "phase" false)
+  (dict "kind" "User"              "plural" "users"              "scope" "Cluster"    "categories" (list)             "phase" false)
+  (dict "kind" "Role"              "plural" "roles"              "scope" "Cluster"    "categories" (list)             "phase" false)
+  (dict "kind" "ServiceAccount"    "plural" "serviceaccounts"    "scope" "Cluster"    "categories" (list)             "phase" false)
+  (dict "kind" "Token"             "plural" "tokens"             "scope" "Cluster"    "categories" (list)             "phase" false)
+}}
+{{- range $defs }}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: {{ .plural }}.mcphub.io
+  labels:
+    {{- include "mcphub.labels" $ | nindent 4 }}
+  {{- if $.Values.crds.keep }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
+spec:
+  group: mcphub.io
+  scope: {{ .scope }}
+  names:
+    kind: {{ .kind }}
+    plural: {{ .plural }}
+    singular: {{ lower .kind }}
+    {{- with .categories }}
+    categories:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      {{- if .phase }}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: URL
+          type: string
+          jsonPath: .status.url
+      {{- end }}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+{{- end }}
+{{- end }}

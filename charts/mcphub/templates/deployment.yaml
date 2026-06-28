@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mcphub.fullname" . }}
+  labels:
+    {{- include "mcphub.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "mcphub.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mcphub.selectorLabels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "mcphub.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: mcphub
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          args:
+            - --store={{ .Values.store.backend }}
+            - --api-addr=:{{ .Values.service.apiPort }}
+            - --proxy-addr=:{{ .Values.service.proxyPort }}
+            {{- if .Values.oidc.issuer }}
+            - --oidc-issuer={{ .Values.oidc.issuer }}
+            - --oidc-client-id={{ .Values.oidc.clientId }}
+            {{- end }}
+            {{- with .Values.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          env:
+            {{- if eq .Values.store.backend "postgres" }}
+            - name: MCPHUB_STORE_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.store.existingSecret | default (printf "%s-store" (include "mcphub.fullname" .)) }}
+                  key: dsn
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: api
+              containerPort: {{ .Values.service.apiPort }}
+            - name: proxy
+              containerPort: {{ .Values.service.proxyPort }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: api
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: api
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

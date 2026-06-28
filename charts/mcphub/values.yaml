@@ -1,0 +1,86 @@
+# Default values for mcphub.
+
+# -- Container image for the mcphub server (controller + API + proxy + embedded UI).
+image:
+  repository: ghcr.io/acme/mcphub
+  # -- Overrides the image tag (defaults to .Chart.appVersion).
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# -- Controller replicas. >1 uses leader election (only one reconciles at a time).
+replicaCount: 1
+
+# Storage backend the controller persists CRD objects + audit into.
+store:
+  # -- kubernetes | postgres | sqlite. "kubernetes" stores objects as CRDs in this cluster.
+  backend: kubernetes
+  # -- DSN for the postgres backend. Provide via existingSecret instead of inline for real use.
+  postgresDsn: ""
+  # -- Name of a Secret holding key "dsn" for the postgres backend. Takes precedence over postgresDsn.
+  existingSecret: ""
+
+# OIDC user login (Google/Okta). Required for human sign-in.
+oidc:
+  issuer: ""
+  clientId: "mcphub"
+
+service:
+  type: ClusterIP
+  apiPort: 8080
+  proxyPort: 8081
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # The embedded UI + API + proxy are all served by the server; host routes to the API port.
+  host: mcphub.example.com
+  tls: []
+  # - secretName: mcphub-tls
+  #   hosts: [mcphub.example.com]
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+# Extra flags/env passed straight to the server, for anything not modeled above.
+extraArgs: []
+extraEnv: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+rbac:
+  create: true
+  # -- Grant permission over CiliumNetworkPolicy/KubeArmorPolicy so CapabilityProfiles can be enforced.
+  capabilityEnforcers: false
+
+crds:
+  # -- Install the mcphub.io CRDs with the chart. Disable if the controller self-installs them.
+  install: true
+  # -- Keep CRDs on `helm uninstall` (avoids deleting all stored connectors/policies).
+  keep: true
+
+podAnnotations: {}
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
