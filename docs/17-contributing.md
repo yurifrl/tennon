@@ -5,18 +5,17 @@ we follow, and how to propose changes.
 
 ## Repository layout
 
-- `mcphub-controller` — Go: controller (Kubebuilder), API, and MCP proxy.
-- `mcphub-web` — Go server serving the Vite/React UI.
-- `mcphub` — Go CLI.
-- `mcphub` CLI — Go; also ships an embedded **MCP server** (`mcphub mcp serve`) as the local
-  stdio bridge for clients that launch a command.
-- `docs/` — these docs, plus the design/research notes (requirements, repository-server,
-  token-identity-reference, executor-feature-spec, prior-art) and the UI mockup
-  (`mockup.html`).
+- `cmd/mcphub` — Go: the **server** binary (controller (Kubebuilder), API, MCP proxy, and the
+  embedded Vite/React web UI). One self-contained binary / container image.
+- `cmd/mcphubctl` — Go: the **client** CLI; also ships an embedded **MCP server**
+  (`mcphubctl mcp serve`) as the local stdio bridge for clients that launch a command.
+- `web/` — Vite/React UI sources, embedded into the server binary at build time.
+- `charts/mcphub` — the Helm chart.
+- `docs/` — the user guide; `docs/arch/` — the design/research notes.
 
 ## Development setup
 
-- Go 1.24+ for the controller/CLI/web.
+- Go 1.24+ for the server and CLI.
 - Node 20+ for the web UI build.
 - For the Kubernetes backend: a local cluster (kind/minikube) and `kubectl`.
 - For local iteration without a cluster: run the controller with `--store=sqlite`.
@@ -25,8 +24,8 @@ Build, run, and test commands live in the `Makefile` / package scripts; run `mak
 
 ## Conventions
 
-- **Keep the planes separate.** Authorization, secret rendering, and routing live in the Go
-  controller. `mcphub-web` and the CLI's MCP bridge are thin and hold no secrets.
+- **Keep the planes separate.** Authorization, secret rendering, and routing live in the
+  `mcphub` server. The embedded UI and the CLI's MCP bridge are thin and hold no secrets.
 - **CRDs are the source of truth.** UI and CLI actions must go through the API and result in
   CRD objects; do not add side channels that bypass reconciliation.
 - **No YAML in the UI.** The interface is click-driven; it translates to resources.

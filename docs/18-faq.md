@@ -54,12 +54,12 @@ additive — you share existing connectors to a group — with no reconfiguratio
 
 Any MCP-capable client (Claude Code, Cursor, OpenCode). Agents connect **directly** to a
 `/mcp/...` URL over Streamable HTTP, or — for clients that launch a stdio
-command — via the CLI's MCP server (`mcphub mcp serve`).
+command — via the CLI's MCP server (`mcphubctl mcp serve`).
 
 ### What happens when a tool needs approval?
 
 The execution pauses and appears in the **Approvals** queue. A human approves or denies it in
-the UI (or via `mcphub resume`), then it continues or is rejected. See
+the UI (or via `mcphubctl resume`), then it continues or is rejected. See
 [Authorization → Approvals](authorization.md#approvals).
 
 ### Why Cedar for policies?

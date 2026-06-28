@@ -23,7 +23,7 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 
 - New to MCPHub? Read [Getting Started](getting-started.md) and the [Concepts](concepts.md).
 - Building or contributing to MCPHub? The design, architecture, and internals live under
-  **[Architecture](arch/_all.md)** (`/arch`).
+  **[Architecture](arch/README.md)** (`/arch`).
 
 ## Documentation map
 
@@ -52,7 +52,7 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 - [Deployment](deployment.md)
 - [FAQ](faq.md)
 
-### Architecture & internals → [`/arch`](arch/_all.md)
+### Architecture & internals → [`/arch`](arch/README.md)
 Requirements, architecture, project structure, technologies, CRD lifecycle, connector
 extensibility, the proxy, runtime isolation, capability architecture, roadmap, contributing,
 and research notes.

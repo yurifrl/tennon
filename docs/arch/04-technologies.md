@@ -102,9 +102,9 @@ Humans never hold a long-lived secret. Login is OIDC against Okta:
 ```mermaid
 sequenceDiagram
   participant User
-  participant Web as mcphub-web
+  participant Web as mcphub (web UI)
   participant Okta
-  participant API as mcphub (controller)
+  participant API as mcphub (API)
   User->>Web: Open MCPHub
   Web->>Okta: Authorize (response_type=code, PKCE challenge)
   User->>Okta: Authenticate + consent

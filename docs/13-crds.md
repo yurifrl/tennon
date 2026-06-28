@@ -5,8 +5,8 @@ Every MCPHub object is a Kubernetes custom resource under the API group
 clicks and commands into these resources. The schemas are shown here for reference,
 GitOps, and automation.
 
-> How these CRDs are generated, installed, and versioned across backends is covered in
-> [CRD Lifecycle](crd-lifecycle.md).
+How these CRDs are generated, installed, and versioned across backends is covered in
+[CRD Lifecycle](crd-lifecycle.md).
 
 The CRD *schema* is fixed regardless of [storage backend](storage.md); on Postgres/SQLite
 the same objects are persisted as rows and behave identically.
@@ -254,7 +254,7 @@ subject (`{ kind: Group, provider: okta, match: observability }`). See
 ## User
 
 A human identity. Mirrors Teleport's model: users are stored in the backend **and** fully
-expressible as resources. **Local users** are created with `mcphub users add` or by applying
+expressible as resources. **Local users** are created with `mcphubctl users add` or by applying
 the YAML; **SSO users** are created at login from an [identity provider](authentication.md) —
 their OIDC claims populate `spec.traits` and an entry under `spec.identities`. A user has no
 permissions of its own; everything comes from the [`Role`](#role)s in `spec.roles`.
@@ -276,7 +276,7 @@ status:
   lastLogin: "2026-06-21T09:00:00Z"
 ```
 
-Locking a user (`status.locked: true`, set via `mcphub users lock joe`) terminates live
+Locking a user (`status.locked: true`, set via `mcphubctl users lock joe`) terminates live
 sessions and blocks new ones without deleting the account. Machine identities use
 [`ServiceAccount`](#serviceaccount)/[`Token`](#token) instead of `User`.
 

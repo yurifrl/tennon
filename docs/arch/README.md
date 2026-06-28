@@ -41,8 +41,8 @@ Requirements this implies:
   provider for team identity and groups.)
 - **Granular sharing.** Sharing can be the whole connector or a subset of its tools —
   scoped to the group, and optionally gated by approval for sensitive tools. It is
-  authored in a [`Policy`](../_all.md#policy) (connectors carry no access of their own). See
-  [Authorization](../_all.md#authorization).
+  authored in a [`Policy`](../README.md#policy) (connectors carry no access of their own). See
+  [Authorization](../README.md#authorization).
 
 ### Example shape
 
@@ -78,7 +78,7 @@ spec:
 
 In Cedar terms this becomes a `permit(principal in Group::"okta:observability", action ==
 Action::"call", resource in Connector::"grafana")` with the owner's credential resolved by the
-proxy at call time. See [Authentication](../_all.md#authentication) and [Authorization](../_all.md#authorization).
+proxy at call time. See [Authentication](../README.md#authentication) and [Authorization](../README.md#authorization).
 
 
 # Architecture
@@ -98,7 +98,7 @@ separate agent-side package to install.
 | Component | Language | Role |
 |-----------|----------|------|
 | `mcphub` (server) | Go | Controller + management API + MCP proxy + **embedded web UI**. One self-contained binary. |
-| `mcphub` (CLI) | Go | Operator/dev CLI: manage connectors/policies/tokens, discovery, resume |
+| `mcphubctl` (CLI) | Go | Operator/dev CLI: manage connectors/policies/tokens, discovery, resume. Separate binary, same repo. |
 
 The server is a single static binary (also shipped as a container image). The web UI is
 **embedded** into it, so a solo user runs one binary and gets the API, proxy, and UI. Larger
@@ -113,7 +113,7 @@ One self-contained process, multiple responsibilities:
 - **Controller.** Watches `McpConnector`, `Policy`, `Token`, and
   `ServiceAccount` objects. Reconciles them into runtime state: spawns/tears down MCP
   workloads, resolves and renders referenced secrets, keeps the proxy routing table current.
-  On the Kubernetes backend it **installs its own CRDs** on first run (or `mcphub install`),
+  On the Kubernetes backend it **installs its own CRDs** on first run (or `mcphubctl install`),
   so there is no `kubectl apply` of a repo manifest required.
 - **API.** REST/JSON used by the web UI, CLI, and automation. CRUD over all objects, tool
   discovery, execution control (pause/resume), token/identity management.
@@ -124,12 +124,12 @@ One self-contained process, multiple responsibilities:
 - **Web UI.** The Vite/React UI is **embedded** in the binary and served by it (can be
   disabled or fronted separately).
 
-### `mcphub` CLI
+### `mcphubctl` CLI
 
 A standalone client over the API (authenticating with an OIDC token or service token). It
 never touches the store directly, so the same validation, policy, and audit apply. The CLI also
 **embeds an MCP server** that exposes CLI operations as tools for programmatic access by
-AI agents. See [CLI](../_all.md#cli).
+AI agents. See [CLI](../README.md#cli).
 
 ### The MCP surface (proxy direct, or the CLI's MCP server)
 
@@ -138,9 +138,9 @@ Agents connect **directly to the proxy** over streamable-HTTP at a connector URL
 npm package or sidecar to install.
 
 For clients that can only launch a local **stdio** command (Claude Code, Cursor, etc.), the
-`mcphub` **CLI ships its own MCP server**: running `mcphub mcp serve` exposes an MCP endpoint
+`mcphubctl` **ships its own MCP server**: running `mcphubctl mcp serve` exposes an MCP endpoint
 locally that bridges to the hub (carrying your token, honoring policy and approvals). So the
-stdio bridge is just the CLI you already have — not a distinct component. See [CLI](../_all.md#cli).
+stdio bridge is just the CLI you already have — not a distinct component. See [CLI](../README.md#cli).
 
 ## State model
 
@@ -154,12 +154,12 @@ CRD (schema, validation, versioning). Two layers of state:
    create each other:** anything created in the UI is written as a CRD object, and any CRD
    applied out-of-band appears in the UI — two faces of the same object, not a copy. Unlike
    Teleport, there is **no separate events database**; config and audit share one store (see
-   [Storage backends](../_all.md#storage-backends)).
+   [Storage backends](../README.md#storage-backends)).
 2. **Runtime state — controller store.** Resolved routing tables, rendered (in-memory)
    secrets, live health, cached permissions, in-flight/paused executions. Rebuilt by
    reconciliation; never checked into Git.
 
-See [Storage backends](../_all.md#storage-backends) for how desired state is persisted (Kubernetes/etcd,
+See [Storage backends](../README.md#storage-backends) for how desired state is persisted (Kubernetes/etcd,
 Postgres, or SQLite) without changing what the objects are.
 
 ## Runtime backends (where MCP servers run)
@@ -184,13 +184,13 @@ container differs (Docker engine vs the kube scheduler).
 There is one **controller** exposing one **API**, and every surface is a client of it:
 
 - the **web UI** is a client (it calls the API),
-- the **CLI** ([`mcphub`](../_all.md#cli)) is a client,
+- the **CLI** ([`mcphubctl`](../README.md#cli)) is a client,
 - your own automation/CI is a client,
 - on Kubernetes, `kubectl`/GitOps is an additional path that writes the same CRD objects.
 
 No surface has a private side door: creating an MCP, minting a token, or editing a policy is
 the same API call (and the same resulting object) regardless of who initiates it, so
-validation, policy, and audit are uniform. See [API](../_all.md#api).
+validation, policy, and audit are uniform. See [API](../README.md#api).
 
 ## Request paths
 
@@ -198,7 +198,7 @@ validation, policy, and audit are uniform. See [API](../_all.md#api).
 graph TD
   Browser -->|HTTPS| UI[mcphub server: embedded web UI]
   UI -->|API| API[mcphub server: API]
-  CLI[mcphub CLI] -->|API + token| API
+  CLI[mcphubctl CLI] -->|API + token| API
   Agent[Agent / MCP client] -->|MCP over streamable-HTTP + OIDC/token/trust| Proxy[mcphub server: proxy]
   API --> Store[(runtime state)]
   Proxy --> Store
@@ -297,7 +297,7 @@ Reading the diagram top-to-bottom, every arrow points **down**:
   `IdentityVerifier`). Imports nothing outward.
 - **Infrastructure (`store`, `runtime`, `secret`).** Concrete implementations of domain
   ports. `store` persists CRD objects (etcd/Postgres/SQLite — see
-  [Storage backends](../_all.md#storage-backends)). `runtime` starts/stops MCP workloads (Docker or Pods —
+  [Storage backends](../README.md#storage-backends)). `runtime` starts/stops MCP workloads (Docker or Pods —
   see [Runtime & Isolation](#runtime--isolation)). `secret` resolves and renders
   credentials. Each imports `domain` only.
 - **Delivery / adapters (`api`, `proxy`, `controller`, `cli`).** Translate the outside world
@@ -410,7 +410,7 @@ Constraints every technology choice is measured against:
 1. **Single self-contained Go binary.** The server (controller + API + proxy + embedded UI)
    ships as one static binary and a container image. No runtime build step, no repo required.
 2. **Same model solo → team.** Must run on SQLite for one person and Kubernetes/Postgres for
-   a team without changing the object model (see [Storage backends](../_all.md#storage-backends)).
+   a team without changing the object model (see [Storage backends](../README.md#storage-backends)).
 3. **CRDs are the source of truth.** Objects are Kubernetes custom resources under
    `mcphub.io/v1alpha1`; the operator framework must own schema, validation, and
    reconciliation.
@@ -418,7 +418,7 @@ Constraints every technology choice is measured against:
    keep the [call-down-only rule](#the-dependency-rule) enforceable.
 5. **Short-lived, tokenless-first identity.** Auth tech must support OIDC (humans) and
    trust-based machine identity (K8s SA, SPIFFE, cloud), with fine-grained tokens only as a
-   fallback (see [Authentication](../_all.md#authentication)).
+   fallback (see [Authentication](../README.md#authentication)).
 6. **MCP over streamable-HTTP.** The proxy speaks MCP over streamable-HTTP; no SSE.
 
 ---
@@ -480,7 +480,7 @@ of a repo manifest.
 
 The same CRD *types* are reused on Postgres/SQLite — the store persists them as rows instead
 of going through the API server, but the schema and validation are identical (see
-[CRDs](../_all.md#custom-resources-crds) and [Storage backends](../_all.md#storage-backends)). Kubebuilder is confined to
+[CRDs](../README.md#custom-resources-crds) and [Storage backends](../README.md#storage-backends)). Kubebuilder is confined to
 `controller`; the rest of the code depends on `domain` types, not on controller-runtime.
 
 ---
@@ -496,9 +496,9 @@ Humans never hold a long-lived secret. Login is OIDC against Okta:
 ```mermaid
 sequenceDiagram
   participant User
-  participant Web as mcphub-web
+  participant Web as mcphub (web UI)
   participant Okta
-  participant API as mcphub (controller)
+  participant API as mcphub (API)
   User->>Web: Open MCPHub
   Web->>Okta: Authorize (response_type=code, PKCE challenge)
   User->>Okta: Authenticate + consent
@@ -515,11 +515,11 @@ sequenceDiagram
    **subject**, email, and **groups**.
 4. **Groups drive sharing.** A policy granted to an Okta group resolves membership from the
    claim at request time — joiners/leavers gain/lose access with no policy edit. See
-   [Authentication](../_all.md#authentication) and [Authorization](../_all.md#authorization).
+   [Authentication](../README.md#authentication) and [Authorization](../README.md#authorization).
 
 ### A service account uses a token (machine identity)
 
-Machines authenticate via a [`ServiceAccount`](../_all.md#serviceaccount). Tokenless trust is
+Machines authenticate via a [`ServiceAccount`](../README.md#serviceaccount). Tokenless trust is
 preferred; a fine-grained token is the fallback.
 
 **Tier 0 — tokenless (preferred).** The ServiceAccount carries a *trust rule*, not a secret.
@@ -543,7 +543,7 @@ Authorization: Bearer <oidc-access-token | minted-tokenless-credential | mh_svc_
 ```
 
 The proxy authenticates, resolves the subject, and hands off to
-[Authorization](../_all.md#authorization). See [Tokens & Identity](../_all.md#tokens--identity) for the
+[Authorization](../README.md#authorization). See [Tokens & Identity](../README.md#tokens--identity) for the
 full model.
 
 
@@ -551,7 +551,7 @@ full model.
 
 How MCPHub's `mcphub.io/v1alpha1` CRDs are **created** (schema authored), **delivered**
 (installed), and **updated** (evolved) — without breaking the "one binary, any backend"
-promise. For the schemas themselves, see [Custom Resources (CRDs)](../_all.md#custom-resources-crds).
+promise. For the schemas themselves, see [Custom Resources (CRDs)](../README.md#custom-resources-crds).
 
 This page follows the standard design-page shape: **Spec** (the rules), **Design** (how we
 meet them), **Usage** (day to day).
@@ -624,14 +624,14 @@ with the Go types, so the embedded CRDs can never rot.
 
 Cluster API ships a dedicated CLI (`clusterctl`) and an inter-provider "API contract" because
 it orchestrates many independent providers and bootstraps workload clusters from a management
-cluster. MCPHub is a single control plane, so neither applies — `mcphub install` / self-install
+cluster. MCPHub is a single control plane, so neither applies — `mcphubctl install` / self-install
 is the right-sized equivalent. Argo CD's pure-declarative model (no self-install, controller
 has zero CRD permissions) fits a Kubernetes-only tool; MCPHub also runs off-cluster, so
 self-install is the better default.
 
-> **ponytail:** webhooks stay out of the Helm chart until a real `v1beta1` exists. Everything
-> before that is CEL-in-schema plus in-code validation, delivered as a generated bundle and
-> self-installed.
+**ponytail:** webhooks stay out of the Helm chart until a real `v1beta1` exists. Everything
+before that is CEL-in-schema plus in-code validation, delivered as a generated bundle and
+self-installed.
 
 ---
 
@@ -648,23 +648,23 @@ self-install is the better default.
 
 ```bash
 # Self-install (default): just run the controller; it applies its embedded CRDs.
-helm install mcphub ./charts/mcphub -n mcphub --create-namespace
+helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace
 
 # GitOps: let the chart manage CRDs declaratively, controller stays out of the schema.
-helm install mcphub ./charts/mcphub --set crds.install=true --set crds.keep=true
+helm install mcphub oci://ghcr.io/acme/charts/mcphub --set crds.install=true --set crds.keep=true
 # (or apply the generated bundle: kubectl apply -f mcphub.yaml)
 ```
 
-> The chart currently ships **open-schema** CRDs (`x-kubernetes-preserve-unknown-fields`) as a
-> placeholder until `controller-gen` exists in the repo — the same shortcut Argo CD's
-> `Application` CRD ships in production. Replace with generated structural schemas once the Go
-> types land, then flip `crds.install=false` to make self-install the default.
+Note: the chart currently ships **open-schema** CRDs (`x-kubernetes-preserve-unknown-fields`) as a
+placeholder until `controller-gen` exists in the repo — the same shortcut Argo CD's
+`Application` CRD ships in production. Replace with generated structural schemas once the Go
+types land, then flip `crds.install=false` to make self-install the default.
 
 
 # Connector Extensibility (design note)
 
 > Design decision for how MCPHub supports new and provider-specific connectors. Captures the
-> options considered and the chosen path. See [Spec Connectors](../_all.md#spec-connectors-openapi--graphql) for the
+> options considered and the chosen path. See [Spec Connectors](../README.md#spec-connectors-openapi--graphql) for the
 > mechanics this builds on.
 
 ## The question
@@ -748,14 +748,14 @@ the upstream credential, route, and (if needed) pause for approval.
 
 ## Endpoints
 
-- **Per-connector URL** — every [`Connector`](../_all.md#mcpconnector) is reachable at
+- **Per-connector URL** — every [`Connector`](../README.md#mcpconnector) is reachable at
   `/mcp/<name>` (e.g. `/mcp/grafana-read`, `/mcp/grafana-write`). The client sees that
   connector's exposed, credentialed tool set. Several connectors can front the same provider
   with different credentials and scopes.
 
 Agents point an MCP client **directly** at a `/mcp/...` URL over Streamable
 HTTP. For clients that can only launch a stdio command, the CLI's MCP server
-(`mcphub mcp serve --transport stdio`) presents these endpoints locally and forwards to the
+(`mcphubctl mcp serve --transport stdio`) presents these endpoints locally and forwards to the
 proxy.
 
 ## Per-request flow
@@ -781,8 +781,8 @@ sequenceDiagram
 ```
 
 1. **Authenticate** the caller (OIDC token, tokenless-minted credential, or service token)
-   to a subject. See [Authentication](../_all.md#authentication).
-2. **Authorize** against the in-memory Cedar policy. See [Authorization](../_all.md#authorization).
+   to a subject. See [Authentication](../README.md#authentication).
+2. **Authorize** against the in-memory Cedar policy. See [Authorization](../README.md#authorization).
 3. **Render the upstream credential** in-cluster and inject it into the upstream MCP. The
    caller never sees it.
 4. **Route** the (possibly renamed) tool to the correct upstream MCP and forward.
@@ -795,8 +795,8 @@ sequenceDiagram
 ## Discovery
 
 The proxy also exposes a discovery surface so agents can find tools by intent at runtime
-(backed by the unified catalog). The same search is available in the [Web UI](../_all.md#web-ui) and
-[CLI](../_all.md#cli).
+(backed by the unified catalog). The same search is available in the [Web UI](../README.md#web-ui) and
+[CLI](../README.md#cli).
 
 ## Comparison with a direct MCP connection
 
@@ -917,7 +917,7 @@ Surfaced on the `McpConnector` spec (set via the UI, no YAML required):
 
 # Capability Enforcement (Design)
 
-Architectural design for how a [Capability Profile](../_all.md#sandbox--access-capability-profiles) — the user's
+Architectural design for how a [Capability Profile](../README.md#sandbox--access-capability-profiles) — the user's
 plain-language intent — becomes real enforcement on whatever the cluster provides. This is
 the **container capability plane**, distinct from request authorization (`Policy`).
 
@@ -1034,7 +1034,7 @@ no change to the profile vocabulary users write.
 ## Boundaries
 
 - This plane governs **what the container may do**. Who may call which tool is
-  [Authorization](../_all.md#authorization) (`Policy` → Cedar/OPA), enforced in the proxy.
+  [Authorization](../README.md#authorization) (`Policy` → Cedar/OPA), enforced in the proxy.
 - It complements, not replaces, the kernel sandbox: gVisor/Kata is the boundary the container
   runs inside; KubeArmor/Cilium constrain behavior within it.
 - See [Runtime & Isolation](#runtime--isolation) for the broader runtime picture and the
@@ -1068,7 +1068,7 @@ an `OAuthApp`.
 - `OAuthApp` + minted token rendered into the call; multiple accounts = multiple connectors.
 - **Done when:** a Google `OpenApiConnector` is registered, attached to an agent, and the agent
   calls a Gmail/Calendar tool using the OAuth credential. See
-  [Spec Connectors](../_all.md#spec-connectors-openapi--graphql).
+  [Spec Connectors](../README.md#spec-connectors-openapi--graphql).
 
 ## Phase 2 — Storage backends & authentication
 - Pluggable store: Kubernetes/etcd, Postgres, SQLite (same CRD types).
@@ -1102,65 +1102,6 @@ an `OAuthApp`.
 - Workflows, per-execution scratch storage, richer audit/usage analytics, and additional
   trust types as needed. See the design notes ([requirements](#mcphub--core-requirements),
   [repository server](#repository-server-obsidian-vault-as-a-structured-api--design-note), [token & identity](#token--identity--reference-and-ideas)).
-
-
-# Contributing
-
-Thanks for your interest in MCPHub. This document covers how to get set up, the conventions
-we follow, and how to propose changes.
-
-## Repository layout
-
-- `mcphub-controller` — Go: controller (Kubebuilder), API, and MCP proxy.
-- `mcphub-web` — Go server serving the Vite/React UI.
-- `mcphub` — Go CLI.
-- `mcphub` CLI — Go; also ships an embedded **MCP server** (`mcphub mcp serve`) as the local
-  stdio bridge for clients that launch a command.
-- `docs/` — these docs, plus the design/research notes (requirements, repository-server,
-  token-identity-reference, executor-feature-spec, prior-art) and the UI mockup
-  (`mockup.html`).
-
-## Development setup
-
-- Go 1.24+ for the controller/CLI/web.
-- Node 20+ for the web UI build.
-- For the Kubernetes backend: a local cluster (kind/minikube) and `kubectl`.
-- For local iteration without a cluster: run the controller with `--store=sqlite`.
-
-Build, run, and test commands live in the `Makefile` / package scripts; run `make help`.
-
-## Conventions
-
-- **Keep the planes separate.** Authorization, secret rendering, and routing live in the Go
-  controller. `mcphub-web` and the CLI's MCP bridge are thin and hold no secrets.
-- **CRDs are the source of truth.** UI and CLI actions must go through the API and result in
-  CRD objects; do not add side channels that bypass reconciliation.
-- **No YAML in the UI.** The interface is click-driven; it translates to resources.
-- **Short-lived by default.** Prefer tokenless trust; never introduce long-lived shared
-  secrets.
-- **Secrets never leak.** No credential value in responses, status, logs, or UI.
-
-## Proposing changes
-
-1. Open an issue describing the problem and approach (link any relevant design note in
-   `docs/`).
-2. For non-trivial design, add or update a design note in `docs/` and reference it.
-3. Keep PRs focused; include tests for behavior changes.
-4. Update the relevant page in `docs/` when you change user-visible behavior.
-
-## Commit & PR hygiene
-
-- Clear, descriptive commits; reference issues.
-- CI must pass (build, lint, type-check, tests) before review.
-
-## Security disclosures
-
-Please report vulnerabilities privately (see the repository's security policy) rather than
-opening a public issue. We aim to acknowledge promptly and coordinate a fix and disclosure.
-
-## License
-
-By contributing you agree your contributions are licensed under the Apache License 2.0.
 
 
 # Repository Server (Obsidian vault as a structured API) — Design Note
@@ -1349,7 +1290,7 @@ gateway/security efforts.
 | Aggregation | One proxy endpoint | One catalog | Per-MCP URLs |
 | Secrets | Env from config | Keychain | `Connector` `secretKeyRef`, rendered in-cluster |
 | Approvals | — | Pause/resume | Pause/resume on sensitive tools |
-| UI | Roadmap | React dashboard | Vite/React (`mcphub-web`) |
+| UI | Roadmap | React dashboard | Vite/React (embedded in `mcphub`) |
 | Runtime | K8s containers | QuickJS sandbox | K8s containers + remote MCPs |
 
 
@@ -1457,7 +1398,7 @@ lifetime**.
 ## 4. The unifying principle
 
 GitHub OIDC, SPIFFE/SPIRE, and Kubernetes bound tokens all converge on the principle stated
-in [Tokens & Identity → Principle](../_all.md#principle) — short-lived,
+in [Tokens & Identity → Principle](../README.md#principle) — short-lived,
 audience-scoped, auto-rotated identity backed by a pre-established trust relationship, not a
 copied shared secret. How each system realizes it:
 
@@ -1476,7 +1417,7 @@ copied shared secret. How each system realizes it:
 The tiered model these notes converge on (Tier 0 tokenless service account + trusted
 relationship, Tier 1 fine-grained token fallback, tags as the sharing primitive, and the
 Grafana → Okta R2 flow) is the canonical design. It is documented in
-[Tokens & Identity](../_all.md#tokens--identity) and is not repeated here.
+[Tokens & Identity](../README.md#tokens--identity) and is not repeated here.
 
 ---
 

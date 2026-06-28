@@ -37,5 +37,5 @@ gateway/security efforts.
 | Aggregation | One proxy endpoint | One catalog | Per-MCP URLs |
 | Secrets | Env from config | Keychain | `Connector` `secretKeyRef`, rendered in-cluster |
 | Approvals | — | Pause/resume | Pause/resume on sensitive tools |
-| UI | Roadmap | React dashboard | Vite/React (`mcphub-web`) |
+| UI | Roadmap | React dashboard | Vite/React (embedded in `mcphub`) |
 | Runtime | K8s containers | QuickJS sandbox | K8s containers + remote MCPs |

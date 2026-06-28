@@ -161,7 +161,7 @@ when { context.args.env == "prod" };
 When a call resolves to ask (or needs auth), the execution **pauses** and
 becomes a first-class object with an id, subject, target tool, and arguments. A human
 approves or denies it from **Approvals** in the [Web UI](web-ui.md), or via the API/CLI
-(`mcphub resume --execution-id …`). The same mechanism handles pausing for an upstream auth
+(`mcphubctl resume --execution-id …`). The same mechanism handles pausing for an upstream auth
 step. Pending approvals have a timeout.
 
 ## Why not a relationship engine (OpenFGA/SpiceDB)?

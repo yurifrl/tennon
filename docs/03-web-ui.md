@@ -1,6 +1,6 @@
 # Web UI
 
-The web UI (served by `mcphub-web`, built with Vite + React) is the primary way to operate
+The web UI (embedded in the `mcphub` server, built with Vite + React) is the primary way to operate
 MCPHub. It is **click-driven**: you never write YAML. Every action translates to a custom
 resource behind the scenes (see [CRDs](crds.md)), and resources created out-of-band
 (`kubectl`, GitOps) appear here too.

@@ -1,8 +1,10 @@
 #!/usr/bin/env bun
-// Build two scrolling pages: docs/_all.md (user guide, served at /) and
-// docs/arch/_all.md (design & internals, served at /arch). Each concatenates its
+// Build two scrolling pages: docs/README.md (user guide, served at /) and
+// docs/arch/README.md (design & internals, served at /arch). Each concatenates its
 // own NN-*.md files (filename order). Cross-doc links are rewritten: same-bucket
 // links become in-page anchors; cross-bucket links point at the other page + anchor.
+// README.md is docsify's folder-index name, so /arch/ routes to it natively
+// (a _all.md page can't be linked from the sidebar — docsify ignores _-prefixed files).
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,8 +18,8 @@ const listMd = (dir: string) =>
   readdirSync(dir).filter((f) => /^\d.*\.md$/.test(f)).sort().map((f) => join(dir, f));
 
 const buckets = {
-  user: { dir: DOCS, out: join(DOCS, "_all.md"), other: "arch/_all.md" },
-  arch: { dir: join(DOCS, "arch"), out: join(DOCS, "arch", "_all.md"), other: "../_all.md" },
+  user: { dir: DOCS, out: join(DOCS, "README.md"), other: "arch/README.md" },
+  arch: { dir: join(DOCS, "arch"), out: join(DOCS, "arch", "README.md"), other: "../README.md" },
 } as const;
 type Bucket = keyof typeof buckets;
 

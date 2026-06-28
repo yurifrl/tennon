@@ -45,9 +45,10 @@ recorded with the acting subject. (Audit sink configuration is deployment-specif
 
 ## Trust boundaries
 
-- `mcphub-web` holds no secrets and no business logic — safe to expose publicly while the
-  controller/API stays internal.
-- The CLI's MCP server (`mcphub mcp serve`) is a thin local stdio bridge; it carries the
+- The embedded web UI holds no secrets and no business logic — it calls the API like any
+  other client. The proxy and API surfaces of `mcphub` can be exposed or kept internal
+  independently.
+- The CLI's MCP server (`mcphubctl mcp serve`) is a thin local stdio bridge; it carries the
   caller's credential but performs no authorization or secret rendering — those stay in the
   controller.
 

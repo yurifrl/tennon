@@ -57,7 +57,7 @@ refreshed on expiry.
 ## Versioning & refresh
 
 - The fetched spec is **content-hashed** into `status.specHash`; this is the tools cache key.
-- Re-fetching is explicit (`mcphub connector refresh <name>`) or, where configured, on the
+- Re-fetching is explicit (`mcphubctl connector refresh <name>`) or, where configured, on the
   next apply. When the hash changes, tools are rebuilt; sharing, credentials, and policy are
   preserved across the rebuild.
 - There is no dependency or package version to pin — the "library" is a remote document, so a

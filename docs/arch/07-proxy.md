@@ -13,7 +13,7 @@ the upstream credential, route, and (if needed) pause for approval.
 
 Agents point an MCP client **directly** at a `/mcp/...` URL over Streamable
 HTTP. For clients that can only launch a stdio command, the CLI's MCP server
-(`mcphub mcp serve --transport stdio`) presents these endpoints locally and forwards to the
+(`mcphubctl mcp serve --transport stdio`) presents these endpoints locally and forwards to the
 proxy.
 
 ## Per-request flow

@@ -15,7 +15,7 @@ separate agent-side package to install.
 | Component | Language | Role |
 |-----------|----------|------|
 | `mcphub` (server) | Go | Controller + management API + MCP proxy + **embedded web UI**. One self-contained binary. |
-| `mcphub` (CLI) | Go | Operator/dev CLI: manage connectors/policies/tokens, discovery, resume |
+| `mcphubctl` (CLI) | Go | Operator/dev CLI: manage connectors/policies/tokens, discovery, resume. Separate binary, same repo. |
 
 The server is a single static binary (also shipped as a container image). The web UI is
 **embedded** into it, so a solo user runs one binary and gets the API, proxy, and UI. Larger
@@ -30,7 +30,7 @@ One self-contained process, multiple responsibilities:
 - **Controller.** Watches `McpConnector`, `Policy`, `Token`, and
   `ServiceAccount` objects. Reconciles them into runtime state: spawns/tears down MCP
   workloads, resolves and renders referenced secrets, keeps the proxy routing table current.
-  On the Kubernetes backend it **installs its own CRDs** on first run (or `mcphub install`),
+  On the Kubernetes backend it **installs its own CRDs** on first run (or `mcphubctl install`),
   so there is no `kubectl apply` of a repo manifest required.
 - **API.** REST/JSON used by the web UI, CLI, and automation. CRUD over all objects, tool
   discovery, execution control (pause/resume), token/identity management.
@@ -41,7 +41,7 @@ One self-contained process, multiple responsibilities:
 - **Web UI.** The Vite/React UI is **embedded** in the binary and served by it (can be
   disabled or fronted separately).
 
-### `mcphub` CLI
+### `mcphubctl` CLI
 
 A standalone client over the API (authenticating with an OIDC token or service token). It
 never touches the store directly, so the same validation, policy, and audit apply. The CLI also
@@ -55,7 +55,7 @@ Agents connect **directly to the proxy** over streamable-HTTP at a connector URL
 npm package or sidecar to install.
 
 For clients that can only launch a local **stdio** command (Claude Code, Cursor, etc.), the
-`mcphub` **CLI ships its own MCP server**: running `mcphub mcp serve` exposes an MCP endpoint
+`mcphubctl` **ships its own MCP server**: running `mcphubctl mcp serve` exposes an MCP endpoint
 locally that bridges to the hub (carrying your token, honoring policy and approvals). So the
 stdio bridge is just the CLI you already have — not a distinct component. See [CLI](cli.md).
 
@@ -101,7 +101,7 @@ container differs (Docker engine vs the kube scheduler).
 There is one **controller** exposing one **API**, and every surface is a client of it:
 
 - the **web UI** is a client (it calls the API),
-- the **CLI** ([`mcphub`](cli.md)) is a client,
+- the **CLI** ([`mcphubctl`](cli.md)) is a client,
 - your own automation/CI is a client,
 - on Kubernetes, `kubectl`/GitOps is an additional path that writes the same CRD objects.
 
@@ -115,7 +115,7 @@ validation, policy, and audit are uniform. See [API](api.md).
 graph TD
   Browser -->|HTTPS| UI[mcphub server: embedded web UI]
   UI -->|API| API[mcphub server: API]
-  CLI[mcphub CLI] -->|API + token| API
+  CLI[mcphubctl CLI] -->|API + token| API
   Agent[Agent / MCP client] -->|MCP over streamable-HTTP + OIDC/token/trust| Proxy[mcphub server: proxy]
   API --> Store[(runtime state)]
   Proxy --> Store

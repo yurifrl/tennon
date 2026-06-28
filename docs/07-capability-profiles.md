@@ -73,7 +73,7 @@ All three produce the same profile object.
 ## Attaching it to an MCP
 
 - **UI:** on the MCP, set **Capability profile: `grafana-jail`** (a dropdown).
-- **CLI:** `mcphub mcp set grafana --profile grafana-jail`.
+- **CLI:** `mcphubctl mcp set grafana --profile grafana-jail`.
 
 One profile can be reused across many MCPs, or you can edit it inline on a single MCP. If you
 don't attach one, a safe default profile is applied.

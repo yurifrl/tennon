@@ -9,7 +9,7 @@ tasks:
       - op inject -f --account my.1password.com -i .env.op -o .env
 
   docs:build:
-    desc: Build the user page (docs/_all.md) and arch page (docs/arch/_all.md) from NN-*.md
+    desc: Build the user page (docs/README.md) and arch page (docs/arch/README.md) from NN-*.md
     cmd: bun docs/_review/build_docs.ts
 
   docs:

@@ -75,14 +75,14 @@ with the Go types, so the embedded CRDs can never rot.
 
 Cluster API ships a dedicated CLI (`clusterctl`) and an inter-provider "API contract" because
 it orchestrates many independent providers and bootstraps workload clusters from a management
-cluster. MCPHub is a single control plane, so neither applies — `mcphub install` / self-install
+cluster. MCPHub is a single control plane, so neither applies — `mcphubctl install` / self-install
 is the right-sized equivalent. Argo CD's pure-declarative model (no self-install, controller
 has zero CRD permissions) fits a Kubernetes-only tool; MCPHub also runs off-cluster, so
 self-install is the better default.
 
-> **ponytail:** webhooks stay out of the Helm chart until a real `v1beta1` exists. Everything
-> before that is CEL-in-schema plus in-code validation, delivered as a generated bundle and
-> self-installed.
+**ponytail:** webhooks stay out of the Helm chart until a real `v1beta1` exists. Everything
+before that is CEL-in-schema plus in-code validation, delivered as a generated bundle and
+self-installed.
 
 ---
 
@@ -99,14 +99,14 @@ self-install is the better default.
 
 ```bash
 # Self-install (default): just run the controller; it applies its embedded CRDs.
-helm install mcphub ./charts/mcphub -n mcphub --create-namespace
+helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace
 
 # GitOps: let the chart manage CRDs declaratively, controller stays out of the schema.
-helm install mcphub ./charts/mcphub --set crds.install=true --set crds.keep=true
+helm install mcphub oci://ghcr.io/acme/charts/mcphub --set crds.install=true --set crds.keep=true
 # (or apply the generated bundle: kubectl apply -f mcphub.yaml)
 ```
 
-> The chart currently ships **open-schema** CRDs (`x-kubernetes-preserve-unknown-fields`) as a
-> placeholder until `controller-gen` exists in the repo — the same shortcut Argo CD's
-> `Application` CRD ships in production. Replace with generated structural schemas once the Go
-> types land, then flip `crds.install=false` to make self-install the default.
+Note: the chart currently ships **open-schema** CRDs (`x-kubernetes-preserve-unknown-fields`) as a
+placeholder until `controller-gen` exists in the repo — the same shortcut Argo CD's
+`Application` CRD ships in production. Replace with generated structural schemas once the Go
+types land, then flip `crds.install=false` to make self-install the default.

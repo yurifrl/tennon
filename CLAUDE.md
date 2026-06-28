@@ -78,18 +78,38 @@ wire the real one in `cmd/`. A hook with one real implementation still earns its
 *only* because the no-op keeps the core runnable without it; don't add hooks for hypothetical
 extension points (YAGNI).
 
+## Ship packages, not a repo
+
+MCPHub is delivered as **packages**, never as a source checkout. The deliverables are: the
+**server image** (`mcphub` — controller + API + proxy + embedded UI), the **Helm chart**
+(`charts/mcphub`), the **CLI binary** (`mcphubctl`, which embeds the MCP server), and the
+**released install bundle** (`mcphub.yaml` = CRDs + RBAC + controller). Assume the user has the
+*package*, not the repo.
+
+- No user-facing doc may instruct `make`, `git clone`, `task`, or any repo-relative path. Users
+  install with `helm install`, `kubectl apply -f <released mcphub.yaml>`, a package manager, or
+  by running the image/binary directly.
+- `make` / `Taskfile.yml` are **contributor-only** (build-from-source) and may be referenced
+  **only** in `docs/17-contributing.md`.
+- CRDs are delivered with the software: the controller self-installs them on boot, and the
+  bundle and Helm chart also carry them. Never document a "kubectl apply this repo file" step.
+
+The binaries: **one server** (`mcphub`, modes via flags, UI always embedded — there is no
+separate web tier) and **one client** (`mcphubctl`). Both build from this one repo
+(`cmd/mcphub`, `cmd/mcphubctl`).
+
 ## Docs: `docs/` is the user guide, `docs/arch/` is the design
 
 `docs/*.md` (root, served at `/`) is for someone installing and using MCPHub: how to install,
-the concepts they touch, and how to use each feature (UI, CLI, API, connectors, auth, policies,
-tokens, CRDs reference, storage, deployment). No architecture or rationale.
+the concepts they touch, how to use each feature (UI, CLI, API, connectors, auth, policies,
+tokens, CRDs reference, storage, deployment), and how to contribute. No architecture or rationale.
 
 `docs/arch/*.md` (served at `/arch`) is for someone building MCPHub: requirements, architecture,
 project structure, technologies, internals (proxy, runtime isolation, capability/CRD design),
-roadmap, contributing, and research notes. Design decisions a user doesn't need go here.
+roadmap, and research notes. Design decisions a user doesn't need go here.
 
 Adding a doc: pick the bucket, drop in an `NN-name.md`, run `task docs:build` (regenerates both
-`_all.md` pages). Cross-doc links use the un-numbered name (`](cli.md)`); the build rewrites them.
+`README.md` pages). Cross-doc links use the un-numbered name (`](cli.md)`); the build rewrites them.
 
 ## Checklist before you call it done
 

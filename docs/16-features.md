@@ -72,7 +72,7 @@ control layered on connectors. Together they cover "may you call this at all" (p
 
 ## 6. Web UI
 
-The Vite/React UI (served by `mcphub-web`) provides:
+The Vite/React UI (embedded in the `mcphub` server) provides:
 
 - A catalog browser (search, inspect tool schemas).
 - Source management (add/edit `McpConnector`s, view discovery + health).
@@ -87,13 +87,13 @@ configured yet), it mints a single-use **bootstrap admin token** and prints it t
 process logs — there is no chicken-and-egg "configure OIDC before you can log in" problem.
 
 ```
-mcphub-controller --store=sqlite --store-path=./mcphub.db ...
+mcphub --store=sqlite --store-path=./mcphub.db ...
 
   MCPHub control plane listening on :8080 (api) :8081 (proxy)
   No users found — first-run bootstrap.
 
-  → Open:  http://localhost:3000/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphub open
+  → Open:  http://localhost:8080/?token=mh_boot_8f3c1d9a7be240xZ
+  → Or run: mcphubctl open
 
   This token grants temporary admin. It is shown once and expires in 1h
   or as soon as the first User is created. Create a real account, then it dies.
@@ -102,10 +102,10 @@ mcphub-controller --store=sqlite --store-path=./mcphub.db ...
 - The token is a short-lived (default 1h) bearer stored as a hash in the backend; the
   plaintext is only ever in that log line. It is invalidated the moment the first
   [`User`](crds.md#user) is created, or on expiry, whichever comes first.
-- `mcphub open` reads the running server's bootstrap/auth token from local state and opens
+- `mcphubctl open` reads the running server's bootstrap/auth token from local state and opens
   the web UI already signed in (mirrors executor's `executor open`).
 - Same flow on the cluster backend: the bootstrap token is logged by the controller pod
-  (`kubectl logs deploy/mcphub-controller`).
+  (`kubectl logs deploy/mcphub`).
 - After bootstrap you wire up an [identity provider](authentication.md) and/or create
   [`User`](crds.md#user)/[`Role`](crds.md#role) resources; the bootstrap path is then
   permanently closed for that store.
@@ -120,7 +120,7 @@ mcphub-controller --store=sqlite --store-path=./mcphub.db ...
 | Pause/resume, `resume --execution-id` | Execution objects + `/executions/{id}/resume` |
 | Auth & policy management | OAuth2 + service tokens + `Policy` |
 | MCP server mode (`executor mcp`) | The proxy itself (per-MCP URLs) |
-| Web dashboard | `mcphub-web` (Vite/React) |
+| Web dashboard | embedded Vite/React UI in `mcphub` |
 | Sandboxed kernel execution | Container-runtime McpConnectors managed by the controller |
 
 ## Out of scope (vs. executor)

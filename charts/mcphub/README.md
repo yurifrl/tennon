@@ -7,10 +7,11 @@ reconcile connector workloads.
 ## Install
 
 ```bash
-helm install mcphub ./charts/mcphub -n mcphub --create-namespace \
-  --set image.repository=ghcr.io/acme/mcphub --set image.tag=0.1.0 \
+helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace \
   --set oidc.issuer=https://accounts.google.com --set oidc.clientId=mcphub
 ```
+
+(From a source checkout, use the chart path `./charts/mcphub` instead of the OCI ref.)
 
 Grab the one-time bootstrap admin token:
 

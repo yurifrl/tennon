@@ -11,9 +11,9 @@ pluggable; **Google** and **Okta** are first-class.
 ```mermaid
 sequenceDiagram
   participant User
-  participant Web as mcphub-web
+  participant Web as mcphub (web UI)
   participant IdP as Google / Okta
-  participant API as mcphub-controller
+  participant API as mcphub (API)
   User->>Web: Open MCPHub
   Web->>IdP: Authorize (code + PKCE)
   User->>IdP: Authenticate & consent
@@ -107,12 +107,12 @@ pre-shared secret), and **RFC 8707** resource indicators to bind the token to MC
 
 ### Or use the `mcphub` CLI bridge
 
-Also token-free: [`mcphub login`](cli.md) runs the browser/device OIDC flow **once** and
+Also token-free: [`mcphubctl login`](cli.md) runs the browser/device OIDC flow **once** and
 caches the token, then the CLI embeds a local MCP server that forwards to the proxy — handy
 for clients that only launch a stdio command and don't implement MCP OAuth.
 
 ```bash
-mcphub login            # browser/device flow → cached token (once, for all MCPs)
+mcphubctl login            # browser/device flow → cached token (once, for all MCPs)
 ```
 
 ```json

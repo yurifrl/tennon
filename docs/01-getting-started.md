@@ -12,28 +12,30 @@ share it with a teammate — without exposing the credential.
 
 ## 1. Run the control plane
 
-Solo / local (SQLite backend):
+Solo / local (SQLite backend) — one binary, UI embedded:
 
 ```bash
-mcphub-controller \
+mcphub \
   --store=sqlite --store-path=./mcphub.db \
   --api-addr=:8080 --proxy-addr=:8081 \
   --oidc-issuer=https://accounts.google.com \
   --oidc-client-id=mcphub
 ```
 
-Team / cluster (Kubernetes backend) — self-contained, no repo checkout required:
+The API, MCP proxy, and web UI are all served by this one process (the UI on the API port).
+
+Team / cluster (Kubernetes backend) — install with Helm:
 
 ```bash
-# apply CRDs + controller straight from the release
-kubectl apply -f https://github.com/acme/mcphub/releases/latest/download/mcphub.yaml
+helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace \
+  --set oidc.issuer=https://accounts.google.com --set oidc.clientId=mcphub
 ```
 
-Then start the web server:
+The controller installs its own CRDs on first start, so there is no separate CRD step. If you
+prefer a single declarative manifest, apply the released bundle instead:
 
 ```bash
-mcphub-web --listen=:3000 --api-url=http://localhost:8080 \
-  --oidc-issuer=https://accounts.google.com --oidc-client-id=mcphub
+kubectl apply -f https://github.com/acme/mcphub/releases/latest/download/mcphub.yaml
 ```
 
 On an empty store the controller logs a one-time **bootstrap admin token** so you can get in
@@ -41,11 +43,11 @@ before any identity provider is wired up:
 
 ```
 No users found — first-run bootstrap.
-  → Open:  http://localhost:3000/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphub open
+  → Open:  http://localhost:8080/?token=mh_boot_8f3c1d9a7be240xZ
+  → Or run: mcphubctl open
 ```
 
-Open that URL (or run `mcphub open`), then create your first [User](users.md). The token
+Open that URL (or run `mcphubctl open`), then create your first [User](users.md). The token
 expires in 1h or the moment the first user exists. After that, sign in with Google or Okta.
 
 ## 2. Add a credentialed connector (Grafana)
@@ -57,8 +59,8 @@ value is stored in the configured secret backend and never shown again).
 From the CLI:
 
 ```bash
-mcphub secret create grafana-creds --from-literal=token=$GRAFANA_TOKEN
-mcphub connector add grafana \
+mcphubctl secret create grafana-creds --from-literal=token=$GRAFANA_TOKEN
+mcphubctl connector add grafana \
   --remote https://grafana.example.com/mcp --transport streamable-http \
   --header "Authorization=Bearer {{secret:grafana-creds.token}}" \
   --expose-prefix grafana_ --tag observability
@@ -76,7 +78,7 @@ Okta → `observability`**, choose which tools, save.
 From the CLI (sugar that authors a `Policy` rule):
 
 ```bash
-mcphub connector share grafana \
+mcphubctl connector share grafana \
   --to "group:okta:observability" \
   --tools "grafana_get_*,grafana_search_*,grafana_list_*"
 ```
@@ -134,7 +136,7 @@ token as an `Authorization` header.
 
 Call a read tool — it runs immediately. Call a tool flagged sensitive and the execution
 **pauses**; approve it from **Approvals** in the
-UI (or `mcphub resume`).
+UI (or `mcphubctl resume`).
 
 ## Next steps
 

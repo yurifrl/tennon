@@ -16,10 +16,10 @@ token** and prints it on startup (see [Features §7](features.md)):
 ```
 No users found — first-run bootstrap.
   → Open:  http://localhost:3000/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphub open
+  → Or run: mcphubctl open
 ```
 
-Open that URL (or run `mcphub open`), then create your real account. The bootstrap token dies
+Open that URL (or run `mcphubctl open`), then create your real account. The bootstrap token dies
 the moment the first `User` exists, or after 1h.
 
 ## Users
@@ -30,19 +30,19 @@ the [`Role`](#roles)s in `spec.roles`. Users come in two flavors:
 - **Local users** — created explicitly and stored in the backend:
 
   ```bash
-  mcphub users add joe --roles=devtools-user
+  mcphubctl users add joe --roles=devtools-user
   # or, declaratively:
-  mcphub create -f joe.yaml
+  mcphubctl create -f joe.yaml
   ```
 
 - **SSO users** — created automatically at login from an [identity provider](authentication.md).
   Their OIDC claims populate `spec.traits` (notably `groups`), and roles are assigned by the
   identity provider's [`claimsToRoles`](crds.md#identityprovider) mapping.
 
-Either way the user is a real backend object you can `mcphub get users`, edit, or **lock**:
+Either way the user is a real backend object you can `mcphubctl get users`, edit, or **lock**:
 
 ```bash
-mcphub users lock joe       # instantly cut off access without deleting the account
+mcphubctl users lock joe       # instantly cut off access without deleting the account
 ```
 
 Locking terminates live sessions and blocks new ones — the emergency stop.
@@ -135,7 +135,7 @@ Identity is editable from either side; both converge on the backend store:
 
 | Path | How | Best for |
 |------|-----|----------|
-| **CLI / API / UI** | `mcphub users add`, `mcphub create -f role.yaml`, web UI | day-to-day, ad-hoc |
+| **CLI / API / UI** | `mcphubctl users add`, `mcphubctl create -f role.yaml`, web UI | day-to-day, ad-hoc |
 | **Kubernetes Operator** | apply `User`/`Role` CRs; the controller reconciles them into the store | GitOps / Argo / Terraform |
 
 On the cluster backend the **CRD *is* the resource**: `kubectl apply` a `Role` and it becomes
