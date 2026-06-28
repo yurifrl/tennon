@@ -35,8 +35,9 @@ never exposed. Multiple accounts of the same upstream (a work and a personal Goo
 simply **two connectors** with two Secrets — there is no separate connection object.
 
 **Who may use a connector** — and which calls require approval — is **not** part of the
-connector; that is the [Authorization](authorization.md) domain. A connector defines only how
-to reach the upstream and which tools it exposes.
+connector. A connector defines only how to reach the upstream and which tools it exposes;
+authorization lives entirely in org-wide [`Policy`](#policy) and identity-side
+[`Role`](#role) grants, evaluated by [Authorization](authorization.md).
 
 ### McpConnector
 
@@ -164,11 +165,12 @@ status, logs, or the UI.
 
 ## Policy
 
-Org-wide **general** rules only — guardrails and defaults that span many connectors. Per-connector
-sharing and grants do **not** go here; they live in each connector's `access` block (above).
-Global policy should stay general: domain/tag defaults, mandatory approvals, blanket denies.
+Org-wide rules: guardrails, defaults, and per-connector sharing/grants. With connectors
+carrying no access of their own, `Policy` (alongside [`Role`](#role)) is where every
+grant lives — from "share the `grafana` connector with the Okta `observability` group" to
+"every tool tagged `sensitive` requires approval everywhere."
 
-Every rule — here, in a connector's `access`, and in a [`Role`](#role) — compiles to one
+Every rule — here and in a [`Role`](#role) — compiles to one
 primitive: `subject × resource × when? × effect`. See
 [Authorization → The rule](authorization.md#the-rule).
 
@@ -199,13 +201,55 @@ spec:
       effect: block
 ```
 
-Global rules are evaluated together with each connector's local `access` and every assigned
+Global rules are evaluated together with every assigned
 `Role` by the single algorithm in [Authorization → Resolution](authorization.md#resolution):
 all rules are gathered and the **most-restrictive matching effect wins** (`block >
 ask > allow`), so a global guardrail can only tighten, never loosen. Subject
 kinds: `User`, `Group`, `EmailDomain`, `Token`, `ServiceAccount`. A rule's `resource` matches
 by `connector`, `tool` (glob), or `tag`, with an optional `when` condition over the
 call's arguments.
+
+## IdentityProvider
+
+How **humans log in**. An `IdentityProvider` registers an external OIDC provider (Google,
+Okta, …) and maps its claims to MCPHub identity: it is the Teleport-style *auth connector*.
+Don't confuse it with [`OAuthApp`](#oauthapp) — an `OAuthApp` is an **upstream** OAuth client
+used to credential *connectors*, while an `IdentityProvider` is how *users* authenticate **to**
+MCPHub. Configure these under **Admin → Identity Providers** in the UI.
+
+```yaml
+apiVersion: mcphub.io/v1alpha1
+kind: IdentityProvider
+metadata: { name: okta }          # referenced by Policy `provider:`, User `identities[].provider`,
+                                  # and the group-id prefix (e.g. okta:observability)
+spec:
+  type: oidc                       # oidc only at launch (Google & Okta are first-class)
+  displayName: "Okta"
+  issuer: https://acme.okta.com    # OIDC issuer; metadata discovered via RFC 8414
+  clientId: "0oa1b2c3def"
+  clientSecretRef: { name: okta-oidc, key: client_secret }   # never inline
+  scopes: ["openid", "email", "groups"]
+  claims:
+    username: email                # OIDC claim used as the User name / subject
+    groups: groups                 # OIDC claim carrying group membership
+  claimsToRoles:                   # map claim values → MCPHub roles (Teleport's claims_to_roles)
+    - { claim: groups, value: "observability",   roles: ["devtools-user"] }
+    - { claim: groups, value: "sre-*",           roles: ["devtools-user"] }   # glob match on the claim value
+    - { claim: groups, value: "platform-admins", roles: ["admin"] }
+status:
+  phase: Ready                     # Pending | Ready | Degraded | Failed
+  lastLogin: "2026-06-21T09:00:00Z"
+```
+
+At login MCPHub validates the OIDC token, reads `claims.username` and `claims.groups`, and
+creates (or updates) the [`User`](#user): the username becomes `metadata.name`, the claims
+populate `spec.traits`, and `claimsToRoles` assigns `spec.roles`. Each `claimsToRoles.value`
+matches a claim value exactly or by glob (`sre-*`); the first matching entry's roles apply.
+A group from this provider
+is addressed everywhere as `<provider-name>:<group-value>` — e.g. the Okta `observability`
+group is `okta:observability` in a connector's `access`, a `Role`'s templating, and a `Policy`
+subject (`{ kind: Group, provider: okta, match: observability }`). See
+[Authentication](authentication.md) and [Users & Roles](users.md).
 
 ## User
 
@@ -225,7 +269,7 @@ spec:
     email: ["joe@example.com"]
     groups: ["sre@example.com"]    # from the OIDC groups claim for SSO users
   identities:                     # SSO links (omitted for pure local users)
-    - connector: google           # an IdentityProvider name
+    - provider: google           # an IdentityProvider name
       subject: "joe@example.com"
 status:
   locked: false                   # lock to instantly cut off access
@@ -276,7 +320,7 @@ spec:
 ```
 
 Verbs are `list, create, read, update, delete` (or `*`); resource kinds include
-`connector, role, user, token, serviceAccount, policy, secret, capabilityProfile`.
+`connector, role, user, token, serviceAccount, identityProvider, policy, secret, capabilityProfile`.
 Trait templating mirrors Teleport: `{{internal.<trait>}}` for local user traits and
 `{{external.<claim>}}` for SSO claims, interpolated into `tools`, label selectors, etc. The
 data-plane `tools` grants and a [`Policy`](#policy)'s rules **compile to the same rule
@@ -352,6 +396,7 @@ spec:
   grants:
     - tag: chat
       tools: ["slack_post_message", "slack_read_*"]
+      effect: allow              # allow | ask | block — same effect as a Policy/Role rule
   ttl: 1h                        # short-lived; re-mint on expiry
   maxLifetime: 90d               # org-enforceable ceiling
 status:

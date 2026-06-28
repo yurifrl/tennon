@@ -30,7 +30,9 @@ sequenceDiagram
   This is the basis of the [share-with-a-team](getting-started.md#3-share-it-with-an-okta-team)
   flow.
 
-Configure providers under **Admin → Identity Providers** in the UI.
+Configure providers under **Admin → Identity Providers** in the UI; the schema is the
+[`IdentityProvider`](crds.md#identityprovider) CRD, whose `claimsToRoles` mapping turns IdP
+group claims into MCPHub roles.
 
 ## Machines — tokenless trust (preferred)
 
@@ -45,7 +47,7 @@ instance identity) and full examples live in
 ## Machines — fine-grained tokens (fallback)
 
 When tokenless is not possible, mint a fine-grained, short-lived token (GitHub-PAT-style)
-bound to a subject and scoped to resources × tools × level × expiry. See
+bound to a subject and scoped to resources × tools × effect × expiry. See
 [Tokens & Identity](tokens-and-identity.md).
 
 ## Connecting a client — one login for every MCP

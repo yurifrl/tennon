@@ -41,7 +41,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ## 2026-06-28T13:22:02-03:00 — docs · MCPHub Documentation · /#/?id=why-cedar-for-policies
 
-- **state:** open
+- **state:** done
 - **type:** link
 - **params:** {}
 
@@ -55,7 +55,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ## 2026-06-28T13:24:05-03:00 — docs · MCPHub Documentation · /#/?id=why-cedar-for-policies
 
-- **state:** open
+- **state:** done
 - **type:** content
 - **params:** {}
 
@@ -69,7 +69,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ## 2026-06-28T13:24:31-03:00 — docs · MCPHub Documentation · /#/?id=why-cedar-for-policies
 
-- **state:** open
+- **state:** done
 - **type:** content
 - **params:** {}
 
@@ -83,7 +83,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ## 2026-06-28T14:46:53-03:00 — docs · MCPHub Documentation · /#/
 
-- **state:** open
+- **state:** done
 - **type:** 
 - **params:** 
 
@@ -126,7 +126,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ## 2026-06-28T14:47:34-03:00 — docs · MCPHub Documentation · /#/
 
-- **state:** open
+- **state:** done
 - **type:** 
 - **params:** 
 

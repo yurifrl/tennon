@@ -12,8 +12,8 @@ authorization works.
 Implications:
 - The pluggable storage backends cover the range: SQLite/local for one person, Postgres or
   Kubernetes/etcd for a team.
-- The authorization model (subjects = user / group / service token) must read naturally for
-  one user and for many. Groups are optional, not mandatory.
+- The authorization model (subjects = user / group / email-domain / service account / token)
+  must read naturally for one user and for many. Groups are optional, not mandatory.
 - Sharing is additive: a solo setup becomes a team setup by sharing an existing connector,
   not by reconfiguring it.
 
@@ -41,13 +41,13 @@ Requirements this implies:
   provider for team identity and groups.)
 - **Granular sharing.** Sharing can be the whole connector or a subset of its tools —
   scoped to the group, and optionally gated by approval for sensitive tools. It is
-  authored in the connector's local `access` block; org-wide guardrails live in a global
-  [`Policy`](crds.md#policy). See [Authorization](authorization.md).
+  authored in a [`Policy`](crds.md#policy) (connectors carry no access of their own). See
+  [Authorization](authorization.md).
 
 ### Example shape
 
-The owner's credentialed connector, shared with an Okta team in its local `access` block —
-per-connector sharing lives on the connector, not in a global `Policy`:
+The owner's credentialed connector plus a `Policy` that shares it with an Okta team —
+the connector defines only reachability and tools; sharing lives in the Policy:
 
 ```yaml
 apiVersion: mcphub.io/v1alpha1
@@ -62,12 +62,20 @@ spec:
   tools:
     exposePrefix: "grafana_"
   # credential: the mcphub-grafana Secret, injected by the proxy, never exposed
-  access:                              # share with the Okta team — members never see the credential
-    - subject:
-        group: "okta:observability"    # Okta group; resolved from the OIDC groups claim at request time
-      tools: ["grafana_get_*", "grafana_search_*", "grafana_list_*"]
+---
+apiVersion: mcphub.io/v1alpha1
+kind: Policy
+metadata: { name: grafana-observability }
+spec:
+  rules:                               # share with the Okta team — members never see the credential
+    - subjects:
+        - { kind: Group, provider: okta, match: observability }   # resolved from the OIDC groups claim at request time
+      resource:
+        connector: grafana
+        tools: ["grafana_get_*", "grafana_search_*", "grafana_list_*"]
+      effect: allow
 ```
 
-In Cedar terms this becomes a `permit(principal in Group::"okta/observability", action ==
+In Cedar terms this becomes a `permit(principal in Group::"okta:observability", action ==
 Action::"call", resource in Connector::"grafana")` with the owner's credential resolved by the
 proxy at call time. See [Authentication](authentication.md) and [Authorization](authorization.md).

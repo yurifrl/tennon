@@ -37,7 +37,7 @@ the [`Role`](#roles)s in `spec.roles`. Users come in two flavors:
 
 - **SSO users** — created automatically at login from an [identity provider](authentication.md).
   Their OIDC claims populate `spec.traits` (notably `groups`), and roles are assigned by the
-  connector's claim-to-role mapping.
+  identity provider's [`claimsToRoles`](crds.md#identityprovider) mapping.
 
 Either way the user is a real backend object you can `mcphub get users`, edit, or **lock**:
 
@@ -86,10 +86,10 @@ identity ──carries──▶ traits ──assigned──▶ roles ──conta
 
 1. An identity (local or SSO) carries **traits** — `spec.traits` for local users, OIDC
    claims for SSO users.
-2. Traits map to **roles** (directly via `User.spec.roles`, or via the connector's
+2. Traits map to **roles** (directly via `User.spec.roles`, or via the identity provider's
    claim-to-role mapping for SSO).
 3. Roles contain **rules** (manage) and **tool grants** (call).
-4. Every grant — from a role, a connector's `access`, or a global `Policy` — compiles to one
+4. Every grant — from a role or a `Policy` — compiles to one
    rule primitive, and the call resolves by **most-restrictive-wins** (`block >
    ask > allow`). A `deny` is just a rule with `effect: block`, so "deny wins"
    is the top of that order. See [Authorization → Resolution](authorization.md#resolution)

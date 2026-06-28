@@ -139,7 +139,7 @@ At call time the workload presents a platform-signed document and MCPHub mints a
 - **Cloud instance identity** — AWS/GCP/Azure attestation.
 
 **Fallback — fine-grained token.** When tokenless isn't possible, mint a GitHub-PAT-style
-token bound to a subject and scoped to resources × tools × level × expiry. The secret is
+token bound to a subject and scoped to resources × tools × effect × expiry. The secret is
 shown **once** at creation and stored only as a hash; it's revocable.
 
 All paths resolve to one bearer credential on the proxy/API:

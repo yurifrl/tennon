@@ -69,11 +69,11 @@ proxy**; they never receive the token.
 
 ## 3. Share it with an Okta team
 
-Sharing is a **local** decision on the connector — not a separate global policy. From the
-web UI: open the `grafana` connector → **Access & sharing** → **Share**, pick subject **Group →
+Sharing is a **`Policy`** decision — the connector itself carries no access. From the
+web UI: **Policies** → **New share**, pick the `grafana` connector, subject **Group →
 Okta → `observability`**, choose which tools, save.
 
-From the CLI:
+From the CLI (sugar that authors a `Policy` rule):
 
 ```bash
 mcphub connector share grafana \
@@ -83,7 +83,7 @@ mcphub connector share grafana \
 
 Membership resolves from the Okta `groups` claim at request time — people joining or leaving
 the Okta team gain or lose access automatically, with no edit. Org-wide guardrails (e.g.
-"`sensitive` tools always require approval") live separately in Global Policies and can only
+"`sensitive` tools always require approval") are other Policy rules and can only
 tighten this grant.
 
 ## 4. Connect an agent

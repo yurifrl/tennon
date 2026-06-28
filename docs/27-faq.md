@@ -64,9 +64,10 @@ the UI (or via `mcphub resume`), then it continues or is rejected. See
 
 ### Why Cedar for policies?
 
-It gives RBAC now, ABAC (conditions) later, and analyzability to catch over-broad grants —
-all in-process, with no extra stateful service, preserving the embeddable SQLite story. You
-author [`Policy`](crds.md#policy); Cedar is the compilation target. See
+[Cedar](https://www.cedarpolicy.com/) is an open-source policy language and authorization
+engine (from AWS). It gives RBAC now, ABAC (conditions) later, and analyzability to catch
+over-broad grants — all in-process, with no extra stateful service, preserving the embeddable
+SQLite story. You author [`Policy`](crds.md#policy); Cedar is the compilation target. See
 [Authorization](authorization.md).
 
 ### Is it production ready?

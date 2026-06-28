@@ -43,12 +43,12 @@ mcphub secret create github-credentials --from-literal=token=$GITHUB_TOKEN
 ## Sharing & policy
 
 ```bash
-# share a connector locally (most grants live here)
+# share a connector (sugar that authors a Policy rule)
 mcphub connector share grafana \
   --to "group:okta:observability" \
   --tools "grafana_get_*,grafana_search_*"
 
-# org-wide guardrail (global Policy)
+# org-wide guardrail (Policy)
 mcphub policy list
 mcphub policy create sensitive-needs-approval \
   --where "tag:sensitive" --effect ask

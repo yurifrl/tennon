@@ -71,20 +71,25 @@ A **subject** is who or what is making a call:
 
 - a **user** (authenticated via OIDC — Google or Okta),
 - a **group** (from the identity provider's `groups` claim),
-- a **service account** / **token** (a machine identity).
+- an **email domain** (everyone at `example.com`),
+- a **service account** or **token** (a machine identity).
+
+These are the subject kinds the authorization model matches on: `User`, `Group`,
+`EmailDomain`, `ServiceAccount`, `Token`. See [Authorization](authorization.md#the-rule).
 
 ## Policy
 
 A **policy** maps subjects to what they may do with tools: **allow**, **ask**,
-or **block**. Policy lives at two tiers:
+or **block**. Rules are authored in two places, both compiling to one rule primitive:
 
-- **Local** — most policy lives **on the connector** (its `access` block): who may use this
-  specific MCP and which of its tools. Sharing happens here.
-- **Global** — a few org-wide **general** rules ([`Policy`](crds.md#policy)): guardrails
-  and defaults that span everything (e.g. "all `sensitive` tools require approval").
+- **`Policy`** — most policy lives here ([`Policy`](crds.md#policy)): per-connector sharing
+  (who may use a specific MCP and which of its tools) plus org-wide guardrails and defaults
+  (e.g. "all `sensitive` tools require approval"). Connectors carry no access of their own.
+- **Role** — identity-side packaging: reusable grants assigned to users, groups, or service
+  accounts (see [Users & Roles](users.md)).
 
 They resolve together: grants are additive, and a global guardrail can only **tighten** a
-local grant (force ask or block), never loosen it. See [Authorization](authorization.md).
+grant (force ask or block), never loosen it. See [Authorization](authorization.md).
 
 ## Service account & token
 
@@ -94,7 +99,7 @@ authenticates one of two ways:
 - **Tokenless (preferred):** a trusted relationship (OIDC, Kubernetes ServiceAccount,
   SPIFFE, cloud instance identity). No secret is stored; MCPHub mints a short-lived
   credential per call.
-- **Fine-grained token:** a GitHub-style token scoped to resources × tools × level × expiry,
+- **Fine-grained token:** a GitHub-style token scoped to resources × tools × effect × expiry,
   short-lived and re-minted on expiry.
 
 See [Tokens & Identity](tokens-and-identity.md).

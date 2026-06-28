@@ -66,32 +66,25 @@ block    contractor  */delete_*
 
 ## Authoring surfaces
 
-Three places author rules. They do not overlap — each has one job, and all three emit the
-primitive above.
+Two places author rules. They do not overlap — each has one job, and both emit the
+primitive above. **Connectors carry no access of their own**; authorization is kept entirely
+separate from the connector that defines how to reach an upstream.
 
-### Connector `access` — local sharing (the default home)
-Most grants live **with the thing they govern**. Each connector carries an `access` block:
-which subjects may use *this* connector, which of *its* tools, and which require approval.
-"Share the `grafana-read` connector with the Okta `observability` group, deletes requiring
-approval" is a property of that connector, set by its owner, next to the credential and tool
-scope it relates to. Most day-to-day policy lives here.
+### Policy — the default home
+Most grants live in a [`Policy`](crds.md). A Policy holds both per-connector sharing and
+org-wide guardrails: "share the `grafana-read` connector with the Okta `observability` group,
+deletes requiring approval" is a Policy rule, just like "every tool tagged `sensitive` requires
+approval everywhere." Rules name connectors, tools, or tags, so a single Policy can be as
+narrow as one connector's tools or as broad as an org-wide default.
 
 ### Role — identity-side packaging
 A [`Role`](users.md#roles) packages reusable grants and assigns them to subjects or personas.
 It carries **both** planes: control-plane RBAC (`rules`: resources × verbs) and data-plane
 tool grants. Use a Role when you manage access by persona ("devtools-user") rather than
-per-connector. A Role's tool grants compile to the *same rule primitive* as a connector's
-`access` — they differ only in who authors them and why, not in what they mean.
+by Policy. A Role's tool grants compile to the *same rule primitive* as a Policy — they
+differ only in who authors them and why, not in what they mean.
 
-### Policy — org-wide guardrails only
-A small number of global [`Policy`](crds.md) objects hold rules that span many connectors:
-org guardrails and broad defaults. Examples: "anyone in `example.com` may use `tag:public`
-connectors," "every tool tagged `sensitive` requires approval everywhere," "contractors can
-never touch `tag:internal`." Global policy is intentionally *general* — it **may not**
-enumerate per-connector grants; those belong in the connector's `access`.
-
-> Rule of thumb: **grant on the connector; set org-wide guardrails and defaults in a Policy.**
-> If a rule names one connector's tools for one team, it's local.
+> Rule of thumb: **grant in a Policy; package per-persona grants in a Role.**
 
 ## Resolution
 
@@ -99,9 +92,9 @@ One algorithm, evaluated on every call:
 
 1. Resolve the caller's **subject and groups** (from OIDC claims, the token, or the service
    account).
-2. Gather **every matching rule** for `(subject, resource)` from all three surfaces: the
-   target connector's `access`, every `Role` assigned to the subject, and all global
-   `Policy` objects (cached in-memory; watched, not re-read per request).
+2. Gather **every matching rule** for `(subject, resource)` from both surfaces: every
+   `Role` assigned to the subject and all `Policy` objects (cached in-memory; watched, not
+   re-read per request).
 3. Evaluate each rule's `when` predicate against the live request (`arguments`, time, rate);
    drop rules whose condition fails.
 4. **Most-restrictive matching effect wins:** any `block` ⇒ block; else any `ask`
@@ -111,13 +104,13 @@ One algorithm, evaluated on every call:
 
 Because `deny` is just `effect: block`, "deny overrides allow" and "global guardrails can
 only tighten" are the same step (4), not separate rules. An org-wide `Policy` can force
-approval or block over a local `allow`; it can never loosen one.
+approval or block over an `allow` from a Role or another Policy; it can never loosen one.
 
 ## Engine: compiled to Cedar
 
 The authoring surfaces are the human-facing layer; the controller **compiles them all to
-[Cedar](https://www.cedarpolicy.com/)** (connector `access`, `Role` grants, and global
-`Policy` together) and evaluates Cedar **in-process** on each call. This gives:
+[Cedar](https://www.cedarpolicy.com/)** (`Policy` rules and `Role` grants together) and
+evaluates Cedar **in-process** on each call. This gives:
 
 - **RBAC** — subjects → resources → tools.
 - **ABAC** — the `when` predicate becomes a Cedar condition on request context (arguments,
@@ -129,7 +122,7 @@ A simple compiled grant:
 
 ```
 permit(
-  principal in Group::"okta/observability",
+  principal in Group::"okta:observability",
   action == Action::"call",
   resource in Connector::"grafana"
 );

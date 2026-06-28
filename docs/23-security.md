@@ -23,7 +23,7 @@ behind them. This page summarizes the security properties and where to verify th
 - **Machines (preferred):** tokenless trust — no stored secret; a short-lived credential is
   minted per call after validating a platform-signed document.
 - **Machines (fallback):** fine-grained, short-lived tokens scoped to resources × tools ×
-  level × expiry, with an org-enforceable maximum lifetime.
+  effect × expiry, with an org-enforceable maximum lifetime.
 - Authorization is per-tool, additive, most-restrictive-wins, with allow / ask /
   block. See [Authorization](authorization.md).
 

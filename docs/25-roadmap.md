@@ -4,11 +4,28 @@ A phased plan. Phases 1-3 establish the Kubernetes-native proxy; phases 4-5 add 
 catalog, approvals, and the UI. Pre-1.0: APIs and CRD schemas may change.
 
 ## Phase 1 — Controller + per-MCP proxy
+The end-to-end goal: **register an MCP, attach it to an agent, and let the agent call its
+tools using the connector's credentials** — no credential ever exposed to the caller.
+
 - `McpConnector` CRD and reconciler (container + remote runtimes).
 - State-backed routing (no single config file).
 - Proxy with per-MCP URLs and tool prefixing/allow-deny.
+- Credential rendered from the connector's Secret into the upstream call at request time.
 - **Done when:** applying an `McpConnector` spawns/connects the server and proxies its tools at
-  `/mcp/<name>` with the configured prefix.
+  `/mcp/<name>` with the configured prefix, and an agent calls those tools using the
+  connector's stored credential.
+
+## Phase 1.1 — Spec connectors (integrations)
+Same end-to-end goal as Phase 1, but for **spec connectors** (`OpenApiConnector` /
+`GraphqlConnector`) that compile tools from a spec and run in-process. **Google is the proof
+of concept:** an `OpenApiConnector` fed by Google's API Discovery documents, authenticated via
+an `OAuthApp`.
+
+- Spec fetch → compile → serve at `/mcp/<name>`, identical to an MCP connector downstream.
+- `OAuthApp` + minted token rendered into the call; multiple accounts = multiple connectors.
+- **Done when:** a Google `OpenApiConnector` is registered, attached to an agent, and the agent
+  calls a Gmail/Calendar tool using the OAuth credential. See
+  [Spec Connectors](spec-connectors.md).
 
 ## Phase 2 — Storage backends & authentication
 - Pluggable store: Kubernetes/etcd, Postgres, SQLite (same CRD types).
