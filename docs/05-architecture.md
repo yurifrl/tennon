@@ -7,7 +7,7 @@ desired state is persisted in a **pluggable backing store** (Kubernetes/etcd, Po
 SQLite).
 
 The MCP surface agents connect to **is the proxy itself**: it speaks MCP over
-streamable-HTTP, so any MCP client points straight at a connection or bundle URL. There is no
+streamable-HTTP, so any MCP client points straight at a connector or bundle URL. There is no
 separate agent-side package to install.
 
 ## Components at a glance
@@ -15,7 +15,7 @@ separate agent-side package to install.
 | Component | Language | Role |
 |-----------|----------|------|
 | `mcphub` (server) | Go | Controller + management API + MCP proxy + **embedded web UI**. One self-contained binary. |
-| `mcphub` (CLI) | Go | Operator/dev CLI: manage MCPs/connections/bundles/policies/tokens, discovery, resume |
+| `mcphub` (CLI) | Go | Operator/dev CLI: manage connectors/bundles/policies/tokens, discovery, resume |
 
 The server is a single static binary (also shipped as a container image). The web UI is
 **embedded** into it, so a solo user runs one binary and gets the API, proxy, and UI. Larger
@@ -27,16 +27,16 @@ deployments can optionally run the UI as a separate front tier, but nothing requ
 
 One self-contained process, multiple responsibilities:
 
-- **Controller.** Watches `Mcp`, `McpConnection`, `McpBundle`, `McpPolicy`, `Token`, and
+- **Controller.** Watches `McpConnector`, `Bundle`, `Policy`, `Token`, and
   `ServiceAccount` objects. Reconciles them into runtime state: spawns/tears down MCP
   workloads, resolves and renders referenced secrets, keeps the proxy routing table current.
   On the Kubernetes backend it **installs its own CRDs** on first run (or `mcphub install`),
   so there is no `kubectl apply` of a repo manifest required.
 - **API.** REST/JSON used by the web UI, CLI, and automation. CRUD over all objects, tool
   discovery, execution control (pause/resume), token/identity management.
-- **MCP proxy.** The data plane and the MCP surface. Each `McpConnection` is reachable at
-  its own URL; each `McpBundle` at an aggregated endpoint. The proxy authenticates the
-  caller, applies policy, renders the connection's secret, and forwards the call — speaking
+- **MCP proxy.** The data plane and the MCP surface. Each `Connector` is reachable at
+  its own URL; each `Bundle` at an aggregated endpoint. The proxy authenticates the
+  caller, applies policy, renders the connector's secret, and forwards the call — speaking
   MCP over streamable-HTTP directly to agents.
 - **Web UI.** The Vite/React UI is **embedded** in the binary and served by it (can be
   disabled or fronted separately).
@@ -50,7 +50,7 @@ AI agents. See [CLI](cli.md).
 
 ### The MCP surface (proxy direct, or the CLI's MCP server)
 
-Agents connect **directly to the proxy** over streamable-HTTP at a connection or bundle URL
+Agents connect **directly to the proxy** over streamable-HTTP at a connector or bundle URL
 (e.g. `/mcp/grafana-read`, `/bundle/devtools`), presenting their token. There is no separate
 npm package or sidecar to install.
 
@@ -61,7 +61,7 @@ stdio bridge is just the CLI you already have — not a distinct component. See 
 
 ## State model
 
-Every object — `Mcp`, `McpBundle`, `McpPolicy`, `Token`, `ServiceAccount` — is defined as a
+Every object — `McpConnector`, `Bundle`, `Policy`, `Token`, `ServiceAccount` — is defined as a
 CRD (schema, validation, versioning). Two layers of state:
 
 1. **Desired state + audit — the configured store.** CRD objects (created via `kubectl`,
@@ -88,7 +88,7 @@ environment:
   controller starts/stops containers, mounts volumes, and applies the sandbox/egress config
   directly to them. This is the mode for a solo user on the SQLite/Postgres backends — no
   cluster needed.
-- **Kubernetes:** MCP servers run as **Pods**, driven by the `Mcp`/`McpConnection` CRDs.
+- **Kubernetes:** MCP servers run as **Pods**, driven by the `McpConnector` CRD.
   The controller creates the Pods (with `runtimeClass`, securityContext, NetworkPolicy, and
   KubeArmor policy) and reconciles them like any operator.
 
@@ -134,6 +134,6 @@ graph TD
 - **MCP surface:** the proxy speaks MCP over streamable-HTTP; no separate package.
 - **Web:** Vite + React (TypeScript), built and embedded into the server binary.
 - **Auth:** OIDC (Google, Okta) for users; tokenless trust + short-lived tokens for machines.
-- **Authorization:** `McpPolicy` compiled to Cedar, evaluated in-process.
+- **Authorization:** `Policy` compiled to Cedar, evaluated in-process.
 - **Persistence:** CRD-modeled desired state in a pluggable backend; controller store for
   runtime state.

@@ -4,10 +4,10 @@ A phased plan. Phases 1-3 establish the Kubernetes-native proxy; phases 4-6 add 
 catalog, approvals, and the UI. Pre-1.0: APIs and CRD schemas may change.
 
 ## Phase 1 — Controller + per-MCP proxy
-- `Mcp` CRD and reconciler (container + remote runtimes).
+- `McpConnector` CRD and reconciler (container + remote runtimes).
 - State-backed routing (no single config file).
 - Proxy with per-MCP URLs and tool prefixing/allow-deny.
-- **Done when:** applying an `Mcp` spawns/connects the server and proxies its tools at
+- **Done when:** applying an `McpConnector` spawns/connects the server and proxies its tools at
   `/mcp/<name>` with the configured prefix.
 
 ## Phase 2 — Storage backends & authentication
@@ -18,13 +18,13 @@ catalog, approvals, and the UI. Pre-1.0: APIs and CRD schemas may change.
   leak; a user logs in via OIDC and a CI token authenticates.
 
 ## Phase 3 — Authorization
-- `McpPolicy` CRD compiled to Cedar, evaluated in-process.
+- `Policy` CRD compiled to Cedar, evaluated in-process.
 - Watched, cached policies; additive, most-restrictive-wins; allow/deny/require-approval.
 - **Done when:** two subjects see different allowed tools; policy edits take effect live.
 
 ## Phase 4 — Bundles
-- `McpBundle` CRD: curate/rename tools across MCPs; bundle endpoints with their own auth.
-- **Done when:** a bundle aggregates 2+ MCPs behind one URL and renamed tools route
+- `Bundle` CRD: curate/rename tools across connectors; bundle endpoints with their own auth.
+- **Done when:** a bundle aggregates 2+ connectors behind one URL and renamed tools route
   correctly.
 
 ## Phase 5 — Tokenless identity & catalog

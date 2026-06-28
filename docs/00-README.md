@@ -29,7 +29,7 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 ### Concepts & design
 - [Concepts](concepts.md) — MCP, bundle, policy, token, service account, tags.
 - [Architecture](architecture.md) — the binaries, the proxy, the control loop.
-- [Custom Resources (CRDs)](crds.md) — `Mcp`, `McpBundle`, `McpPolicy`, `Token`, `ServiceAccount`.
+- [Custom Resources (CRDs)](crds.md) — `McpConnector`, `Bundle`, `Policy`, `Token`, `ServiceAccount`.
 - [Storage backends](storage.md) — Kubernetes/etcd, Postgres, SQLite.
 
 ### Using MCPHub

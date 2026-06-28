@@ -31,7 +31,7 @@ container differs:
 - **Local / single host:** MCP servers are **Docker containers** the controller starts and
   stops (gVisor runtime, `--read-only`, `--cap-drop ALL`, seccomp/AppArmor, an egress proxy
   or firewall rules). This is the solo / SQLite-Postgres mode — no cluster.
-- **Kubernetes:** MCP servers are **Pods** created from the `Mcp`/`McpConnection` CRDs
+- **Kubernetes:** MCP servers are **Pods** created from the `McpConnector` CRD
   (`runtimeClass` for gVisor/Kata, `securityContext`, NetworkPolicy/Cilium, KubeArmor
   policy). The controller reconciles them like any operator.
 
@@ -41,7 +41,7 @@ locally or to Pod settings + policy CRDs in Kubernetes.
 ## Container isolation ("tightly jailed")
 
 MCP code is untrusted, so containers are hardened in layers. All of this is config-driven per
-`Mcp` / `McpConnection`.
+`McpConnector`.
 
 ### Sandboxed runtime (kernel isolation)
 Run MCP containers under a **sandbox runtime**, selected via a `runtimeClass`:
@@ -84,7 +84,7 @@ the status reports) is the [Capability Enforcement design](capability-architectu
 
 ## Config knobs (per MCP)
 
-Surfaced on the `Mcp` / `McpConnection` spec (set via the UI, no YAML required):
+Surfaced on the `McpConnector` spec (set via the UI, no YAML required):
 
 - `runtime.sandbox`: `gvisor | kata | none` (maps to a `runtimeClass`).
 - `runtime.egress`: `deny` (default) + `allow: [host:port, CIDR]` (compiled to NetworkPolicy

@@ -6,12 +6,12 @@ the upstream credential, route, and (if needed) pause for approval.
 
 ## Endpoints
 
-- **Per-connection URL** — every [`McpConnection`](crds.md#mcpconnection) is reachable at
+- **Per-connector URL** — every [`Connector`](crds.md#mcpconnector) is reachable at
   `/mcp/<name>` (e.g. `/mcp/grafana-read`, `/mcp/grafana-write`). The client sees that
-  connection's exposed, credentialed tool set. The same `Mcp` definition can back several
-  connections with different credentials and scopes.
-- **Bundle URL** — every [`McpBundle`](crds.md#mcpbundle) is reachable at `/bundle/<name>`.
-  The client sees a curated, possibly renamed surface spanning multiple MCPs. See
+  connector's exposed, credentialed tool set. Several connectors can front the same provider
+  with different credentials and scopes.
+- **Bundle URL** — every [`Bundle`](crds.md#bundle) is reachable at `/bundle/<name>`.
+  The client sees a curated, possibly renamed surface spanning multiple connectors. See
   [Bundles](bundles.md).
 
 Agents point an MCP client **directly** at a `/mcp/...` or `/bundle/...` URL over Streamable
@@ -68,6 +68,6 @@ The proxy also exposes a discovery surface so agents can find tools by intent at
 | Config | Per server, in client | One URL (per-MCP or bundle) |
 | Auth | Per server, often secrets in client config | Central OIDC / tokenless / token |
 | Authorization | By the server, if any | Central policy, per tool |
-| Secrets | Often client-side | Owned by the MCP, rendered in-cluster |
+| Secrets | Often client-side | Owned by the connector, rendered in-cluster |
 | Approvals | None | Human-in-the-loop on sensitive tools |
 | Aggregation | One server | Per-MCP **and** composable bundles |

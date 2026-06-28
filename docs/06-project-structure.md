@@ -66,7 +66,8 @@ Reading the diagram top-to-bottom, every arrow points **down**:
                        domain                          ← core (no imports out)
 ```
 
-- **`domain` (bottom).** Types and rules: `Integration`, `Connection`, `Bundle`, `Policy`,
+- **`domain` (bottom).** Types and rules: `Connector` (`McpConnector`, `OpenApiConnector`,
+  `GraphqlConnector`), `Bundle`, `Policy`,
   `Token`, `ServiceAccount`, `Subject`, authorization decisions. Also the **port
   interfaces** the upper layers must satisfy (`Store`, `Runtime`, `SecretRenderer`,
   `IdentityVerifier`). Imports nothing outward.
@@ -108,8 +109,7 @@ mcphub/
 │   ├── mcphub/            # server binary: controller + api + proxy + ui
 │   └── mcphubctl/         # cli binary (also `mcp serve` bridge)
 ├── domain/               # core types + port interfaces (no outward imports)
-│   ├── integration.go
-│   ├── connection.go
+│   ├── connector.go
 │   ├── policy.go
 │   ├── identity.go       # Subject, Token, ServiceAccount
 │   └── ports.go          # Store, Runtime, SecretRenderer, Authorizer, IdentityVerifier
@@ -135,7 +135,7 @@ mcphub/
 
 1. **New rule or object?** Add the type/interface to `domain`. Stop and check nothing in
    `domain` now imports outward.
-2. **New backend/integration?** Implement an existing `domain` port in `store`/`runtime`/
+2. **New backend or adapter?** Implement an existing `domain` port in `store`/`runtime`/
    `secret`/`auth`. Provide it in `cmd/`.
 3. **New endpoint or tool surface?** Add it in `api`/`proxy`/`cli`, calling **down** into
    domain ports. Do not reach into another delivery package.

@@ -6,16 +6,16 @@ Kubernetes-native, state-backed system.
 
 ## 1. Unified tool catalog
 
-Every tool from every registered `Mcp` is indexed into a single searchable catalog held in
+Every tool from every registered `Connector` is indexed into a single searchable catalog held in
 the controller's runtime state. The catalog is the backing data for discovery, bundles,
 and the web UI. Unlike executor's local-first store, MCPHub's catalog is derived from
-cluster state (the set of `Mcp` resources) and rebuilt by reconciliation.
+cluster state (the set of `Connector` resources) and rebuilt by reconciliation.
 
 ## 2. Source auto-detection
 
 When adding an MCP via the API or web UI, MCPHub probes the target to detect its transport
 (`stdio`, `streamable-http`, `sse`) and performs an initial tool discovery to populate the
-catalog and the `Mcp` status. The result is written into an `Mcp` resource — so the UI
+catalog and the `McpConnector` status. The result is written into an `McpConnector` resource — so the UI
 "add a source" action is just a guided way to create a CR.
 
 ## 3. Intent-based tool discovery
@@ -33,7 +33,7 @@ agents can find tools at runtime.
 
 ## 4. Pause / resume executions (human-in-the-loop)
 
-Sensitive tools — flagged on an `Mcp` or under a bundle's `approvals` — do not execute
+Sensitive tools — flagged on a `Connector` or under a bundle's `approvals` — do not execute
 immediately. Instead the execution **pauses** and waits for a human (or a second factor)
 to approve or deny.
 
@@ -65,9 +65,9 @@ sequenceDiagram
 
 ## 5. Policy enforcement
 
-Authorization rules are `McpPolicy` resources (see
+Authorization rules are `Policy` resources (see
 [authentication-flow.md](authentication-flow.md)). Approval requirements are a complementary
-control layered on bundles/MCPs. Together they cover "may you call this at all" (policy) and
+control layered on bundles/connectors. Together they cover "may you call this at all" (policy) and
 "should a human confirm this specific call" (approval).
 
 ## 6. Web UI
@@ -75,8 +75,8 @@ control layered on bundles/MCPs. Together they cover "may you call this at all" 
 The Vite/React UI (served by `mcphub-web`) provides:
 
 - A catalog browser (search, inspect tool schemas).
-- Source management (add/edit `Mcp`s, view discovery + health).
-- Bundle composition (build `McpBundle`s visually).
+- Source management (add/edit `McpConnector`s, view discovery + health).
+- Bundle composition (build `Bundle`s visually).
 - Policy and service-token management.
 - An approvals inbox for pending executions.
 - Audit/usage views.
@@ -115,14 +115,14 @@ mcphub-controller --store=sqlite --store-path=./mcphub.db ...
 
 | Executor concept | MCPHub equivalent |
 |------------------|-------------------|
-| Unified tool catalog | Catalog derived from `Mcp` resources |
-| Source auto-detection / indexing | Transport probe + discovery on `Mcp` create |
+| Unified tool catalog | Catalog derived from `Connector` resources |
+| Source auto-detection / indexing | Transport probe + discovery on `McpConnector` create |
 | `tools.discover` intent search | `/api/tools/search` + proxy `discover` meta-tool |
 | Pause/resume, `resume --execution-id` | Execution objects + `/executions/{id}/resume` |
-| Auth & policy management | OAuth2 + service tokens + `McpPolicy` |
+| Auth & policy management | OAuth2 + service tokens + `Policy` |
 | MCP server mode (`executor mcp`) | The proxy itself (per-MCP URLs + bundles) |
 | Web dashboard | `mcphub-web` (Vite/React) |
-| Sandboxed kernel execution | Container-runtime MCPs managed by the controller |
+| Sandboxed kernel execution | Container-runtime McpConnectors managed by the controller |
 
 ## Out of scope (vs. executor)
 

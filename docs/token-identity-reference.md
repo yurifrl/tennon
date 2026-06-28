@@ -93,7 +93,7 @@ owner`.
 
 **MCPHub takeaway:** when a token *is* used, its grant must be expressible at this level:
 specific MCPs/bundles/tags **×** specific tools **×** read/call/approve **×** expiry **×**
-owner — which is exactly what the granular-token builder in the mockup and `McpPolicy`
+owner — which is exactly what the granular-token builder in the mockup and `Policy`
 already aim at. Add **org approval** for sensitive grants and an **enforceable max
 lifetime**.
 
@@ -143,7 +143,7 @@ preferred path:
 
 ### How R2 (Grafana → Okta team) plays out
 - Owner registers the `grafana` MCP with a `secretKeyRef` credential (never exposed).
-- Owner shares via `McpPolicy` to the **Okta group** `observability` (resolved from the
+- Owner shares via `Policy` to the **Okta group** `observability` (resolved from the
   OIDC `groups` claim — no per-person edits; Okta membership drives access).
 - A teammate authenticates via Okta (user OIDC), or **Hermes authenticates tokenless via
   its workload identity**; the proxy injects the owner's Grafana credential and enforces the

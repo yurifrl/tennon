@@ -22,7 +22,7 @@ the UI and CRDs stay in sync.
 
 ### Can I share an MCP that needs a credential without giving the credential away?
 
-Yes — this is the core use case. The credential is owned by the [`Mcp`](crds.md#mcp) and
+Yes — this is the core use case. The credential is owned by the [`McpConnector`](crds.md#mcpconnector) and
 rendered into the upstream server at call time. People you share with call the MCP through
 the proxy and never receive the secret. See [Getting Started](getting-started.md) and
 [Security](security.md).
@@ -49,7 +49,7 @@ against a trust rule and mints a short-lived credential per call. Nothing to lea
 ### Does it work for just me?
 
 Yes. Solo is the degenerate case: one subject, no groups, SQLite store. Adding a team later is
-additive — you share existing MCPs/bundles to a group — with no reconfiguration.
+additive — you share existing connectors/bundles to a group — with no reconfiguration.
 
 ### Which agents can connect?
 
@@ -67,7 +67,7 @@ the UI (or via `mcphub resume`), then it continues or is rejected. See
 
 It gives RBAC now, ABAC (conditions) later, and analyzability to catch over-broad grants —
 all in-process, with no extra stateful service, preserving the embeddable SQLite story. You
-author [`McpPolicy`](crds.md#mcppolicy); Cedar is the compilation target. See
+author [`Policy`](crds.md#policy); Cedar is the compilation target. See
 [Authorization](authorization.md).
 
 ### Is it production ready?

@@ -6,7 +6,7 @@ Anything you can do in the UI you can do over the API.
 
 ## What the API is for
 
-- CRUD over every object: `Mcp`, `McpConnection`, `McpBundle`, `McpPolicy`, `Token`,
+- CRUD over every object: `McpConnector`, `Bundle`, `Policy`, `Token`,
   `ServiceAccount`, `Repo`.
 - Tool **discovery** and schema inspection across the catalog.
 - **Execution control**: invoke/replay tools for debugging, and resume paused
@@ -32,7 +32,7 @@ See [Authentication](authentication.md) for how humans (OIDC: Google/Okta) and m
 
 ## Shape
 
-- REST/JSON over HTTPS, resource-oriented (`/api/v1/mcps`, `/api/v1/connections`,
+- REST/JSON over HTTPS, resource-oriented (`/api/v1/connectors`,
   `/api/v1/bundles`, `/api/v1/policies`, `/api/v1/tokens`, `/api/v1/executions`, …).
 - Objects are the CRD schemas documented in [CRDs](crds.md); the API is a typed front over
   the same objects whether they live in Kubernetes/etcd, Postgres, or SQLite.

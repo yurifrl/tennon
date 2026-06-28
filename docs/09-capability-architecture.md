@@ -2,7 +2,7 @@
 
 Architectural design for how a [Capability Profile](capability-profiles.md) — the user's
 plain-language intent — becomes real enforcement on whatever the cluster provides. This is
-the **container capability plane**, distinct from request authorization (`McpPolicy`).
+the **container capability plane**, distinct from request authorization (`Policy`).
 
 ## Goals
 
@@ -58,7 +58,7 @@ workload; it adds derived enforcement objects:
 
 ```mermaid
 graph TD
-  CP[CapabilityProfile + Mcp] --> REC[Controller reconcile]
+  CP[CapabilityProfile + McpConnector] --> REC[Controller reconcile]
   REC -->|create| POD[MCP Pod: supergateway + server, runtimeClass=gvisor, securityContext]
   REC -->|derive + own| CIL[CiliumNetworkPolicy]
   REC -->|derive + own| KA[KubeArmorPolicy]
@@ -71,7 +71,7 @@ graph TD
 
 - Derived objects (`CiliumNetworkPolicy`, `KubeArmorPolicy`) are **controller-owned children**
   (ownerReferences), selected onto the pod by label, updated on profile change, GC'd with the
-  MCP.
+  McpConnector.
 - On the **local/Docker backend**, the same profile compiles to Docker flags
   (`--cap-drop`, `--read-only`, seccomp, gVisor runtime) plus KubeArmor systemd-mode rules and
   egress proxy/firewall rules — same intent, different emitted artifacts.
@@ -117,7 +117,7 @@ no change to the profile vocabulary users write.
 ## Boundaries
 
 - This plane governs **what the container may do**. Who may call which tool is
-  [Authorization](authorization.md) (`McpPolicy` → Cedar/OPA), enforced in the proxy.
+  [Authorization](authorization.md) (`Policy` → Cedar/OPA), enforced in the proxy.
 - It complements, not replaces, the kernel sandbox: gVisor/Kata is the boundary the container
   runs inside; KubeArmor/Cilium constrain behavior within it.
 - See [Runtime & Isolation](runtime-isolation.md) for the broader runtime picture and the

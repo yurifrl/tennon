@@ -105,8 +105,8 @@ real-time co-editing becomes a goal.
 - A new kind **`Repo`**: a git remote or directory + push credential reference + sync policy.
   It is the shared filesystem volume and the unit of sharing/authorization.
 - Adding a `Repo` auto-creates its **driver MCP** (`runtime: filesystem | git`) mounted
-  read-write on the volume. This is a normal `Mcp` whose backing store is the Repo volume.
-- Other MCPs **attach** via a mount declaration, e.g. on the `Mcp` spec:
+  read-write on the volume. This is a normal `McpConnector` whose backing store is the Repo volume.
+- Other MCPs **attach** via a mount declaration, e.g. on the `McpConnector` spec:
   `repoMounts: [{ repo: vault, mode: read|read-write, path: /vault }]`. The controller mounts
   the Repo volume into that MCP's runtime at `path` with the requested mode.
 - Everything inherits MCPHub auth/policy/approval: per-tool policy still applies (e.g.

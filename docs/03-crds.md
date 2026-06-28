@@ -8,167 +8,141 @@ GitOps, and automation.
 The CRD *schema* is fixed regardless of [storage backend](storage.md); on Postgres/SQLite
 the same objects are persisted as rows and behave identically.
 
-## Integration
+## Connectors
 
-The **definition** of an upstream tool provider: how to reach it and where its tool catalog
-comes from. An MCP server is one `kind` of integration; OpenAPI and GraphQL services are
-others. Tools are **rebuilt from the integration's spec** — connections, credentials, and
-policies are preserved across a rebuild. An `Integration` is credential-agnostic on its own;
-credentials live on a [`Connection`](#connection). For convenience it may declare one inline
-`defaultConnection` so single-credential setups stay a single object.
+A **connector** is a registered upstream that MCPHub credentials, runs, and turns into a set
+of callable tools. It is the credentialed, addressable unit, and whatever its type it is
+served to clients over the **MCP protocol** at `/mcp/<name>`. Three concrete kinds specialize
+the concept; they share the `connectors` category (`kubectl get connectors` lists them all)
+but differ in how tools are produced and where they run:
 
-`spec.kind` selects the source plugin and which `spec.source` shape applies:
+| Kind | Tools come from | Runs |
+|------|-----------------|------|
+| **McpConnector** | discovered by connecting to an MCP server | a container / stdio process / remote endpoint |
+| **OpenApiConnector** | compiled from an OpenAPI spec | in-process in the server (no Pod) |
+| **GraphqlConnector** | compiled from a GraphQL endpoint | in-process |
+
+**Credentials by convention.** A connector reads a Kubernetes `Secret` named
+`mcphub-<connector-name>`, assumed to already exist; the value is rendered at call time and
+never exposed. Multiple accounts of the same upstream (a work and a personal Google) are
+simply **two connectors** with two Secrets — there is no separate connection object.
+
+**Local sharing** lives on the connector in its `access` block (who may use it, which tools,
+which require approval). Org-wide guardrails live in a global [`Policy`](#policy); see
+[Authorization](authorization.md).
+
+### McpConnector
+
+An upstream MCP server. `spec.runtime` selects how it runs; `spec.scaling` applies only to
+the container runtime.
 
 ```yaml
-# kind: mcp — an upstream MCP server
 apiVersion: mcphub.io/v1alpha1
-kind: Integration
+kind: McpConnector
 metadata:
-  name: grafana
+  name: github
   namespace: mcphub
   labels:
-    tags: "observability"
+    tags: code
 spec:
-  kind: mcp                    # mcp | openapi | graphql
-  description: "Grafana dashboards, alerts, and datasources."  # agent-visible context
-  source:
-    runtime:
-      type: remote             # container | remote
-      url: https://grafana.example.com/mcp
-    transport: streamable-http # streamable-http only (stdio servers are bridged by Supergateway)
+  description: "GitHub repos, issues, and pull requests."   # agent-visible context
+  runtime:
+    container:
+      image: ghcr.io/github/github-mcp-server:latest
+    # stdio:  { command: npx, args: ["-y", "@modelcontextprotocol/server-github"] }
+    # remote: { url: https://api.githubcopilot.com/mcp }
+  transport: streamable-http
+  scaling:
+    replicas: 1                  # or autoscale: { minReplicas, maxReplicas, targetCPUUtilizationPercent }
+  capabilityProfile: github-jail # container runtime only
   tools:
-    exposePrefix: "grafana_"    # catalog-level prefix
-  # Optional: inline default connection for the simple one-credential case.
-  defaultConnection:
-    secretKeyRef: { name: grafana-creds, key: token, as: header, format: "Bearer {{ .value }}" }
+    exposePrefix: "github_"
+  access:                        # local sharing — who may use THIS connector
+    - subject:
+        group: "okta:dev"
+      tools: ["*"]
+  tags: ["code"]
 status:
-  phase: Ready                 # Pending | Ready | Degraded | Failed
+  phase: Ready                   # Pending | Ready | Degraded | Failed
   discoveredTools: 30
-  specHash: "sha256:1f3c…"     # tools cache key; changes when the spec changes
-  connections: ["grafana-read", "grafana-write"]
-```
-
-```yaml
-# kind: openapi — an OpenAPI service, or a bundle of several (e.g. Google)
-apiVersion: mcphub.io/v1alpha1
-kind: Integration
-metadata: { name: google, namespace: mcphub, labels: { tags: "productivity" } }
-spec:
-  kind: openapi
-  description: "Bundle Gmail, Calendar, Drive, Docs, and other Google APIs into one source."
-  source:
-    # A single spec URL, or several discovery docs bundled into one integration.
-    discoveryUrls:
-      - https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest
-      - https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest
-      - https://www.googleapis.com/discovery/v1/apis/drive/v3/rest
-    refetchOnSave: false       # re-pull the spec(s) and rebuild tools on the next apply
-status:
-  phase: Ready
-  specHash: "sha256:9ab0…"
-  discoveredTools: 214
-```
-
-```yaml
-# kind: graphql — a GraphQL endpoint (tools from introspection)
-apiVersion: mcphub.io/v1alpha1
-kind: Integration
-metadata: { name: linear, namespace: mcphub }
-spec:
-  kind: graphql
-  description: "Linear issues, projects, and cycles."
-  source:
-    endpoint: https://api.linear.app/graphql
-status: { phase: Ready, discoveredTools: 47 }
-```
-
-For `kind: mcp`, container sources set `source.runtime.type: container` with an `image`
-(credentials rendered as `env`); remote sources render into request `headers`. Container MCPs
-run in a tightly jailed sandbox and stdio servers are bridged to Streamable HTTP by
-Supergateway — see [Runtime & Isolation](runtime-isolation.md). For `kind: openapi`/`graphql`
-the controller fetches the spec, hashes it (`status.specHash`), and compiles each operation
-into a tool; the spec text is stored by hash, never inline. In all cases secret values are
-resolved in-cluster and never exposed.
-
-The **preset catalog** (Google, Stripe, GitHub REST, Vercel, …) is not stored as resources —
-it is a static library the UI/CLI seed from. Picking a preset just produces an `Integration`
-of the right `kind` with the spec URL(s) and suggested OAuth config prefilled.
-
-## Connection
-
-A named, **credentialed instance** of an `Integration`. This is how you use the same provider
-with different credentials and tool scopes — e.g. a read connection and a write connection of
-one Grafana MCP, or a personal and a work account of the Google integration. Each MCP
-connection gets its own proxied URL (`/mcp/<name>`); OpenAPI/GraphQL connections expose their
-tools into the catalog and [bundles](bundles.md). Connections are independently shared and
-governed.
-
-```yaml
-# API-key / header credential (resolved from a Secrets provider)
-apiVersion: mcphub.io/v1alpha1
-kind: Connection
-metadata: { name: grafana-read, namespace: mcphub }
-spec:
-  integrationRef: grafana
-  identityLabel: "Grafana (read-only)"
-  credential:
-    secretKeyRef: { name: grafana-readonly, key: token, as: header, format: "Bearer {{ .value }}" }
-  tools:
-    allow: ["get_*", "search_*", "list_*"]
-  access:                      # local policy — who may use THIS connection (lives with it)
-    - subject: { group: "okta:observability" }
-      tools: ["*"]             # of this connection's exposed tools
-    - subject: { token: "ci-runner" }
-      tools: ["get_*"]
-  approvals:
-    require: ["delete_*"]
-  tags: ["observability", "read"]
-status:
-  url: /mcp/grafana-read
-  exposedTools: 14
----
-# OAuth credential (minted via a shared OAuthApp; token stored in a Secrets provider)
-apiVersion: mcphub.io/v1alpha1
-kind: Connection
-metadata: { name: google-work, namespace: mcphub }
-spec:
-  integrationRef: google
-  identityLabel: "Google (work account)"
-  oauth:
-    appRef: google-workspace   # an OAuthApp targeting Google's OAuth endpoint
-    scope: "https://mail.google.com/ https://www.googleapis.com/auth/calendar"
-  tools:
-    allow: ["gmail_*", "calendar_*"]
-  tags: ["productivity"]
-status:
-  exposedTools: 38
-  expiresAt: "2026-06-21T12:00:00Z"   # OAuth token expiry; re-minted on demand
+  url: /mcp/github
 ```
 
 Notes:
 
-- `integrationRef` points at the `Integration` definition (shared discovery + spec).
-- A connection carries **either** a `credential` (api-key/header, resolved from a Secrets
-  provider) **or** an `oauth` block referencing a reusable [`OAuthApp`](#oauthapp).
-- `tools.allow/deny` scopes which of the integration's tools this connection exposes.
-- **`access` is the connection's local policy** — who may use it and which of its tools, plus
-  `approvals`. Sharing lives here (e.g. "give the Okta `observability` group read access"),
-  next to the credential it relates to, set by the connection's owner. Most policy is local.
-- Org-wide guardrails/defaults live separately in a global [`McpPolicy`](#mcppolicy); they can
-  only tighten a connection's local grants (force approval / deny), never loosen them.
-- Tokens and bundles also target a **connection** (e.g. `connection: grafana-read`),
-  so you can share read access widely and write access narrowly.
-- The simple case (`Integration.defaultConnection`) creates an implicit connection named
-  after the integration, addressable at `/mcp/<integration>` for MCP kinds.
+- `runtime` is exactly one of `container`, `stdio`, `remote`, or `host` (expose a whole
+  machine). Container and stdio MCPs run in a tightly jailed sandbox; stdio servers are
+  bridged to Streamable HTTP by Supergateway — see [Runtime & Isolation](runtime-isolation.md).
+- `scaling` is `replicas` (passthrough to the Deployment) or `autoscale` (the controller
+  emits a native `HorizontalPodAutoscaler`). There is no scale-to-zero. Omitted ⇒
+  `replicas: 1`.
+- The credential is the `mcphub-github` Secret, rendered into request headers (remote) or
+  `env` (container) at call time, never exposed to callers.
 
-A Repo's driver and attached MCPs (see the Repository Server design note) are connections
-too, which is how read vs read-write access to a shared filesystem is expressed.
+### OpenApiConnector
+
+Tools compiled from an OpenAPI spec; the connector runs in-process (no Pod). The controller
+fetches the spec, hashes it (`status.specHash`), and compiles each operation into a tool.
+
+```yaml
+apiVersion: mcphub.io/v1alpha1
+kind: OpenApiConnector
+metadata:
+  name: grafana-read
+  namespace: mcphub
+  labels:
+    tags: observability
+spec:
+  description: "Grafana dashboards, alerts, and datasources (read-only)."
+  specUrl: https://grafana.example.com/openapi.json
+  baseUrl: https://grafana.example.com/api    # overrides the spec's servers; optional
+  tools:
+    allow: ["get_*", "search_*", "list_*"]     # scope which operations become tools
+    exposePrefix: "grafana_"
+  access:
+    - subject:
+        group: "okta:observability"
+      tools: ["*"]
+  approvals:
+    require: ["delete_*"]
+  tags: ["observability", "read"]
+status:
+  phase: Ready
+  generatedTools: 14
+  specHash: "sha256:1f3c…"                     # tools cache key; changes when the spec changes
+  url: /mcp/grafana-read
+```
+
+A read connector and a write connector of the same provider are two `OpenApiConnector`
+objects (`grafana-read`, `grafana-write`) with two Secrets — share read access widely and
+write access narrowly.
+
+### GraphqlConnector
+
+Tools compiled from a GraphQL endpoint via introspection; runs in-process.
+
+```yaml
+apiVersion: mcphub.io/v1alpha1
+kind: GraphqlConnector
+metadata:
+  name: linear
+  namespace: mcphub
+spec:
+  description: "Linear issues, projects, and cycles."
+  endpoint: https://api.linear.app/graphql
+  tools:
+    exposePrefix: "linear_"
+status:
+  phase: Ready
+  generatedTools: 47
+  url: /mcp/linear
+```
 
 ## OAuthApp
 
-A **registered, reusable OAuth client**. One app serves every `Connection` whose integration
-hits the same OAuth endpoint — you register Google once, then connect personal and work
-accounts against it. The client secret is a [Secrets](#secrets) reference, never inline.
+A **registered, reusable OAuth client**. One app serves every connector whose upstream hits
+the same OAuth endpoint — you register Google once, then credential personal and work
+connectors against it. The client secret is a [Secrets](#secrets) reference, never inline.
 
 ```yaml
 apiVersion: mcphub.io/v1alpha1
@@ -179,30 +153,30 @@ spec:
   tokenUrl: https://oauth2.googleapis.com/token
   clientId: "1234567890.apps.googleusercontent.com"
   clientSecretRef: { name: google-oauth, key: client_secret }
-  scopes: []                          # optional default scopes; connections may request more
+  scopes: []                          # optional default scopes; connectors may request more
   supportsDynamicRegistration: false  # RFC 7591 — auto-register a client when the provider allows it
 status:
-  connections: ["google-personal", "google-work"]
+  connectors: ["google-personal", "google-work"]
 ```
 
-When an integration's OAuth endpoint supports dynamic client registration (RFC 7591) or
+When an upstream's OAuth endpoint supports dynamic client registration (RFC 7591) or
 publishes metadata (RFC 8414 / RFC 9728), MCPHub can register the app for you; otherwise you
 paste the `clientId`/secret from the provider's console. The minted access/refresh tokens are
-written to the connection's Secrets provider and renewed on expiry — they never appear in API
-responses, status, logs, or the UI.
+written to the connector's Secret and renewed on expiry — they never appear in API responses,
+status, logs, or the UI.
 
-## McpBundle
+## Bundle
 
-A curated, renamed set of tools from one or more **connections** (of any integration kind)
-behind a single endpoint.
+A curated, renamed set of tools from one or more **connectors** (of any kind) behind a single
+endpoint.
 
 ```yaml
 apiVersion: mcphub.io/v1alpha1
-kind: McpBundle
+kind: Bundle
 metadata: { name: devtools, namespace: mcphub }
 spec:
   tools:
-    - from: github               # a connection name
+    - from: github               # a connector name
       select: ["search_*", "get_*", "list_*"]
       as: "gh_{{ .tool }}"
     - from: jira
@@ -219,38 +193,50 @@ status:
 
 See [Bundles](bundles.md).
 
-## McpPolicy (global)
+## Policy
 
-Org-wide **general** rules only — guardrails and defaults that span many connections. Per-MCP
-sharing and grants do **not** go here; they live in each connection's `access` block (above).
+Org-wide **general** rules only — guardrails and defaults that span many connectors. Per-connector
+sharing and grants do **not** go here; they live in each connector's `access` block (above).
 Global policy should stay general: domain/tag defaults, mandatory approvals, blanket denies.
-See [Authorization](authorization.md).
+
+Every rule — here, in a connector's `access`, and in a [`Role`](#role) — compiles to one
+primitive: `subject × resource × when? × effect`. See
+[Authorization → The rule](authorization.md#the-rule).
 
 ```yaml
 apiVersion: mcphub.io/v1alpha1
-kind: McpPolicy
+kind: Policy
 metadata: { name: org-guardrails }
 spec:
-  scope: global
   rules:
-    # default: anyone in the org may use connections tagged public
-    - subjects: [{ kind: EmailDomain, match: "example.com" }]
-      where: { tag: public }
-      grant: { tools: ["*"] }
+    # default: anyone in the org may use connectors tagged public
+    - subjects:
+        - kind: EmailDomain
+          match: "example.com"
+      resource:
+        tag: public
+      effect: allow
     # guardrail: every tool tagged sensitive requires approval, everywhere
-    - where: { tag: sensitive }
+    - resource:
+        tag: sensitive
       effect: require-approval
-    # guardrail: contractors can never reach internal connections
-    - subjects: [{ kind: Group, provider: okta, match: "contractors" }]
-      where: { tag: internal }
+    # guardrail: contractors can never reach internal connectors
+    - subjects:
+        - kind: Group
+          provider: okta
+          match: contractors
+      resource:
+        tag: internal
       effect: block
 ```
 
-Global rules are evaluated together with each connection's local `access` (see
-[Authorization → Resolution](authorization.md)): grants are additive, and a global
-`require-approval`/`block` **overrides** a local allow — guardrails only tighten. Subject
-kinds: `User`, `Group`, `EmailDomain`, `ServiceToken`, `ServiceAccount`. A rule's `where`
-matches by `tag`, `integration`, `connection`, or `bundle`.
+Global rules are evaluated together with each connector's local `access` and every assigned
+`Role` by the single algorithm in [Authorization → Resolution](authorization.md#resolution):
+all rules are gathered and the **most-restrictive matching effect wins** (`block >
+require-approval > allow`), so a global guardrail can only tighten, never loosen. Subject
+kinds: `User`, `Group`, `EmailDomain`, `Token`, `ServiceAccount`. A rule's `resource` matches
+by `connector`, `tool` (glob), `tag`, or `bundle`, with an optional `when` condition over the
+call's arguments.
 
 ## User
 
@@ -285,9 +271,9 @@ sessions and blocks new ones without deleting the account. Machine identities us
 
 What a subject may do — both **manage** control-plane resources and **call** tools. Modeled on
 Teleport's role: two condition sets, `spec.allow` and `spec.deny`, plus `spec.options`.
-**Deny always overrides allow.** Roles are assigned to `User`s, `ServiceAccount`s, and SSO
-groups; a subject's access is the union of its roles' `allow` minus the union of their
-`deny`.
+**A `deny` is just a rule with `effect: block`**, so "deny overrides allow" is the top of the
+most-restrictive-wins order, not a separate algorithm. Roles are assigned to `User`s,
+`ServiceAccount`s, and SSO groups.
 
 ```yaml
 apiVersion: mcphub.io/v1alpha1
@@ -300,18 +286,18 @@ spec:
   allow:
     # Control-plane RBAC: which MCPHub resources this role may manage, and how.
     rules:
-      - resources: [integration, connection, bundle]
+      - resources: [connector, bundle]
         verbs: [list, read]
       - resources: [token]
         verbs: [list, create, read, update, delete]
-    # Data-plane: which tools this role may call (the McpPolicy grant surface).
+    # Data-plane: which tools this role may call.
     tools:
       - bundle: devtools
         tools: ["*"]
       - tag: infra
         tools: ["status"]
-    # Label selector over integrations (OR within a key, AND across keys; '*' = any).
-    integrationLabels:
+    # Label selector over connectors (OR within a key, AND across keys; '*' = any).
+    connectorLabels:
       tags: ["code", "tickets"]
   deny:
     tools:
@@ -321,13 +307,13 @@ spec:
 ```
 
 Verbs are `list, create, read, update, delete` (or `*`); resource kinds include
-`integration, connection, bundle, role, user, token, serviceAccount, policy, secret,
-capabilityProfile`. Trait templating mirrors Teleport: `{{internal.<trait>}}` for local user
-traits and `{{external.<claim>}}` for SSO claims, interpolated into `tools`, label
-selectors, etc. The data-plane `tools` grants are exactly what [`McpPolicy`](#mcppolicy)
-expresses — a `Role` is the identity-side, Teleport-style packaging of them, while
-`McpPolicy` remains the standalone subject→tool mapping for cases that don't need a full
-role.
+`connector, bundle, role, user, token, serviceAccount, policy, secret, capabilityProfile`.
+Trait templating mirrors Teleport: `{{internal.<trait>}}` for local user traits and
+`{{external.<claim>}}` for SSO claims, interpolated into `tools`, label selectors, etc. The
+data-plane `tools` grants and a [`Policy`](#policy)'s rules **compile to the same rule
+primitive** (see [Authorization](authorization.md#the-rule)); they differ only in who authors
+them and why — a `Role` packages grants on the identity side and assigns them to subjects,
+while a `Policy` holds org-wide guardrails.
 
 **Just-in-time access** (optional): a role may grant the ability to *request* other roles for
 a bounded TTL.
@@ -448,15 +434,18 @@ status:
     kubeArmorPolicy:     grafana-jail-ka
 ```
 
-Attach a profile to an integration or connection via `runtime.capabilityProfile: grafana-jail` (a
-default profile applies if omitted). The `status.planes` map reports, per plane, whether it
-is `enforced | degraded | audit | unenforced` and which provider satisfied it — this is what
-the UI status line summarizes. The `CiliumNetworkPolicy` / `KubeArmorPolicy` are
-controller-owned derived objects you never write by hand.
+Attach a profile to an `McpConnector` via `capabilityProfile: grafana-jail` (a default
+profile applies if omitted). Capability profiles apply only to container/stdio McpConnectors —
+`OpenApiConnector`/`GraphqlConnector` run in-process and have no container to jail. The
+`status.planes` map reports, per plane, whether it is `enforced | degraded | audit |
+unenforced` and which provider satisfied it — this is what the UI status line summarizes. The
+`CiliumNetworkPolicy` / `KubeArmorPolicy` are controller-owned derived objects you never write
+by hand.
 
 ## Secrets
 
-On the Kubernetes backend, secrets are native `Secret` objects referenced by `secretKeyRef`.
-On Postgres/SQLite, MCPHub uses an encrypted store-native secret table with the same
-reference shape. Either way, values are rendered into the upstream MCP at call time and
-**never** appear in API responses, status, logs, or the UI. See [Security](security.md).
+On the Kubernetes backend, a connector's credential is a native `Secret` located by convention
+(`mcphub-<connector-name>`) or by an explicit `secretKeyRef`. On Postgres/SQLite, MCPHub uses
+an encrypted store-native secret table with the same reference shape. Either way, values are
+rendered into the upstream at call time and **never** appear in API responses, status, logs,
+or the UI. See [Security](security.md).

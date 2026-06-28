@@ -38,17 +38,9 @@ Machines (CI, agents, Hermes) should authenticate via a **trusted relationship**
 a stored secret. The workload presents a platform-signed document; MCPHub validates it
 against a configured trust rule and mints a short-lived credential. Nothing to leak.
 
-Supported trust types:
-
-- **OIDC JWT** (e.g. GitHub Actions): validate `iss`, `aud`, and a `sub` match against the
-  issuer's published keys.
-- **Kubernetes ServiceAccount token:** audience-bound projected token validated via the
-  cluster's OIDC issuer / TokenReview.
-- **SPIFFE / SVID:** a `spiffe://trust-domain/path` identity verified against the trust
-  bundle.
-- **Cloud instance identity:** AWS IAM, GCP, or Azure attestation.
-
-See [Tokens & Identity](tokens-and-identity.md) for the full model and examples.
+The supported trust types (OIDC JWT, Kubernetes ServiceAccount token, SPIFFE/SVID, and cloud
+instance identity) and full examples live in
+[Tokens & Identity](tokens-and-identity.md#tier-0--tokenless-preferred).
 
 ## Machines — fine-grained tokens (fallback)
 

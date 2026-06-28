@@ -5,17 +5,17 @@ behind them. This page summarizes the security properties and where to verify th
 
 ## Credential isolation
 
-- A connection's upstream credential is **referenced**, never inlined: `secretKeyRef` to a
+- A connector's upstream credential is **referenced**, never inlined: `secretKeyRef` to a
   Kubernetes `Secret` (Kubernetes backend) or an encrypted store-native secret
-  (Postgres/SQLite). The same `Mcp` definition can have several connections, each with its
-  own credential (e.g. a read connection and a write connection).
+  (Postgres/SQLite). Multiple credentialed variants (e.g. a read connector and a write
+  connector) are separate `McpConnector` objects, each with its own credential.
 - The controller **renders** the secret into the upstream MCP at call time (env vars for
   container MCPs, headers for remote MCPs), inside the cluster boundary.
 - Rendered values **never** appear in API responses, resource status, logs, or the web UI.
 - Callers (teammates, agents, CI) **never receive** the upstream credential. They present
-  their own MCPHub identity; the proxy injects the connection's secret. This is what makes
-  "share Grafana with an Okta team" safe — and lets you hand out a read connection widely
-  while keeping the write connection's admin credential narrow.
+  their own MCPHub identity; the proxy injects the connector's secret. This is what makes
+  "share Grafana with an Okta team" safe — and lets you hand out a read connector widely
+  while keeping the write connector's admin credential narrow.
 
 ## Identity & least privilege
 
@@ -35,12 +35,12 @@ behind them. This page summarizes the security properties and where to verify th
 
 ## Human-in-the-loop
 
-Sensitive tools (by tag, MCP setting, or bundle approval list) **pause** for explicit human
+Sensitive tools (by tag, connector setting, or bundle approval list) **pause** for explicit human
 approval before executing. Approvals are auditable.
 
 ## Audit
 
-Mint, revoke, policy change, MCP reconcile, and every tool call (allow/deny/approve) are
+Mint, revoke, policy change, connector reconcile, and every tool call (allow/deny/approve) are
 recorded with the acting subject. (Audit sink configuration is deployment-specific.)
 
 ## Trust boundaries

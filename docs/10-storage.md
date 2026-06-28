@@ -32,7 +32,7 @@ person, local development, or an embedded self-host deployment.
   product fork.
 - **Consistency.** Because the types and reconcile logic are identical, the UI, CLI, and
   GitOps all behave the same regardless of backend.
-- **UI ↔ CRD parity.** "Create MCP" in the UI is an API call that writes an `Mcp` object into
+- **UI ↔ CRD parity.** "Create Connector" in the UI is an API call that writes an `McpConnector` object into
   whichever backend is configured; the same object can be created with `kubectl apply` on the
   Kubernetes backend or seeded via SQL/migration on the others.
 

@@ -52,12 +52,12 @@ Locking terminates live sessions and blocks new ones — the emergency stop.
 A **Role** says what a subject may do, on two planes at once:
 
 - **Control plane (`rules`)** — which MCPHub resources you may *manage*
-  (`integration`, `connection`, `bundle`, `role`, `user`, `token`, …) and with which verbs
+  (`connector`, `bundle`, `role`, `user`, `token`, …) and with which verbs
   (`list`, `read`, `create`, `update`, `delete`, or `*`).
-- **Data plane (`tools`)** — which tools you may *call*, by `bundle`, `tag`, `connection`, or
-  `integration`, each with a tool glob. This is the same grant surface as
-  [`McpPolicy`](authorization.md); a `Role` is just the Teleport-style packaging of it that
-  also carries control-plane RBAC.
+- **Data plane (`tools`)** — which tools you may *call*, by `bundle`, `tag`, or `connector`,
+  each with a tool glob. These grants compile to the **same rule primitive** as a
+  [`Policy`](authorization.md#the-rule); a `Role` is just the Teleport-style packaging of
+  them that also carries control-plane RBAC.
 
 ```yaml
 apiVersion: mcphub.io/v1alpha1
@@ -67,12 +67,12 @@ spec:
   options: { maxSessionTtl: 8h }
   allow:
     rules:
-      - { resources: [integration, connection, bundle], verbs: [list, read] }
+      - { resources: [connector, bundle], verbs: [list, read] }
       - { resources: [token], verbs: [list, create, read, update, delete] }
     tools:
       - { bundle: devtools, tools: ["*"] }
       - { tag: infra, tools: ["status"] }
-    integrationLabels: { tags: ["code", "tickets"] }
+    connectorLabels: { tags: ["code", "tickets"] }
   deny:
     tools:
       - { tools: ["*delete*"] }
@@ -89,8 +89,11 @@ identity ──carries──▶ traits ──assigned──▶ roles ──conta
 2. Traits map to **roles** (directly via `User.spec.roles`, or via the connector's
    claim-to-role mapping for SSO).
 3. Roles contain **rules** (manage) and **tool grants** (call).
-4. Effective access = **union of every role's `allow`**, minus the **union of every role's
-   `deny`**. Deny wins, always.
+4. Every grant — from a role, a connector's `access`, or a global `Policy` — compiles to one
+   rule primitive, and the call resolves by **most-restrictive-wins** (`block >
+   require-approval > allow`). A `deny` is just a rule with `effect: block`, so "deny wins"
+   is the top of that order. See [Authorization → Resolution](authorization.md#resolution)
+   for the single algorithm.
 
 ### Templating with traits
 
@@ -106,9 +109,9 @@ spec:
 
 ### Label matching
 
-`integrationLabels` selects integrations by label, like Teleport's `node_labels`: multiple
+`connectorLabels` selects connectors by label, like Teleport's `node_labels`: multiple
 values under one key are **OR**, multiple keys are **AND**, and `'*': '*'` matches anything.
-New integrations carrying a matching label are picked up automatically.
+New connectors carrying a matching label are picked up automatically.
 
 ## Just-in-time access (optional)
 
