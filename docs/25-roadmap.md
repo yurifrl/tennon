@@ -19,7 +19,7 @@ catalog, approvals, and the UI. Pre-1.0: APIs and CRD schemas may change.
 
 ## Phase 3 — Authorization
 - `Policy` CRD compiled to Cedar, evaluated in-process.
-- Watched, cached policies; additive, most-restrictive-wins; allow/deny/require-approval.
+- Watched, cached policies; additive, most-restrictive-wins; allow/ask/block.
 - **Done when:** two subjects see different allowed tools; policy edits take effect live.
 
 ## Phase 4 — Tokenless identity & catalog

@@ -20,10 +20,10 @@ argument level.
 Every call resolves to exactly one of:
 
 - **Allow** — runs without interruption.
-- **Require approval** — pauses for a human (see [Approvals](#approvals)).
+- **Ask** — pauses for a human (see [Approvals](#approvals)).
 - **Block** — cannot be called.
 
-These are ordered by restrictiveness: `block > require-approval > allow`.
+These are ordered by restrictiveness: `block > ask > allow`.
 
 ## The rule
 
@@ -34,7 +34,7 @@ rule =
   subject     # user | group | email-domain | token | service-account
   × resource  # what it matches (see "Granularity" below)
   × when?     # optional condition over arguments / time / rate (ABAC)
-  × effect    # allow | require-approval | block
+  × effect    # allow | ask | block
 ```
 
 There is no separate "deny" concept: a deny **is** a rule with `effect: block`. This is what
@@ -49,7 +49,7 @@ is reading MCP JSON-RPC:
 2. **Tool glob** — `grafana/get_*`, `*/delete_*`.
 3. **Exact tool** — `internal-deploy/rollback`.
 4. **Tool + argument condition** (`when`) — `rollback` only when `args.env != "prod"`;
-   `send_mail` only when `args.to` ends in `@acme.com`; `require-approval` when
+   `send_mail` only when `args.to` ends in `@acme.com`; `ask` when
    `args.amount > 1000`.
 
 The same `resource` match also covers the other MCP objects the proxy exposes —
@@ -60,7 +60,7 @@ A worked set, increasing in precision:
 
 ```
 allow    sre         */get_*, */list_*
-approve  sre         internal-deploy/rollback   when args.env == "prod"
+ask      sre         internal-deploy/rollback   when args.env == "prod"
 block    contractor  */delete_*
 ```
 
@@ -104,7 +104,7 @@ One algorithm, evaluated on every call:
    `Policy` objects (cached in-memory; watched, not re-read per request).
 3. Evaluate each rule's `when` predicate against the live request (`arguments`, time, rate);
    drop rules whose condition fails.
-4. **Most-restrictive matching effect wins:** any `block` ⇒ block; else any `require-approval`
+4. **Most-restrictive matching effect wins:** any `block` ⇒ block; else any `ask`
    ⇒ pause; else an `allow` ⇒ allow.
 5. **No matching `allow` ⇒ block.** Access is default-deny; a tool runs only because some
    rule grants it.
@@ -145,14 +145,14 @@ when {
 };
 ```
 
-### Require-approval as an obligation
+### Ask as an obligation
 
-Cedar decides permit/forbid, not a third state. MCPHub models require-approval as a Cedar
+Cedar decides permit/forbid, not a third state. MCPHub models ask as a Cedar
 **obligation** (advice annotation): the policy permits the call but tags it for approval, and
 the proxy routes it into the approvals queue instead of forwarding.
 
 ```
-@advice("require-approval")
+@advice("ask")
 permit(
   principal in Group::"sre@example.com",
   action == Action::"call",
@@ -165,7 +165,7 @@ when { context.args.env == "prod" };
 
 ## Approvals
 
-When a call resolves to require-approval (or needs auth), the execution **pauses** and
+When a call resolves to ask (or needs auth), the execution **pauses** and
 becomes a first-class object with an id, subject, target tool, and arguments. A human
 approves or denies it from **Approvals** in the [Web UI](web-ui.md), or via the API/CLI
 (`mcphub resume --execution-id …`). The same mechanism handles pausing for an upstream auth

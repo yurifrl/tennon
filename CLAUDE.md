@@ -1,77 +1,87 @@
-# Project Instructions for AI Agents
+# CLAUDE.md — Agent directives
 
-This file provides instructions and context for AI coding agents working on this project.
+Read `docs/` for the full design. This file is the short list of rules an agent must not
+break. When in doubt, the docs win; when the docs are silent, these directives do.
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
-## Beads Issue Tracker
+## Prime directive: decoupling
 
-This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
+Every feature is a new file that implements an existing seam, not a change that reaches
+across one. If your change makes package A know about package B that it didn't before, stop —
+you're coupling. Extract the shared thing into `domain` and depend on the interface.
 
-### Quick Reference
+- **Packages only call down** (see `docs/05-project-structure.md`). `domain` at the bottom
+  imports nothing outward. Infra (`store`, `runtime`, `secret`, `auth`) implements `domain`
+  ports. Delivery (`api`, `proxy`, `controller`, `cli`) calls down into ports, never sideways.
+- **Control flows up only through interfaces the lower layer owns.** The proxy needs an
+  authz decision → it depends on `domain.Authorizer`, not on the auth package.
+- **One composition root.** Concrete types are wired in `cmd/` via Uber FX. No
+  package-level `var`, no `init()` wiring, no constructing your own dependencies.
 
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work
-bd close <id>         # Complete work
-```
+A change that crosses a layer is a bug even if it compiles. CI fails on import cycles and on
+`domain` importing infra — don't add a suppression, fix the direction.
 
-### Rules
+## The core engine must run without auth or authz
 
-- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
-- Run `bd prime` for detailed command reference and session close protocol
-- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+This is non-negotiable and the reason the seams exist. The MCP engine — proxy + container
+runtime + connectors + store — must boot and serve MCP with **authentication off and
+authorization off**. In that mode:
 
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
+- The `IdentityVerifier` is a no-op that resolves every caller to a fixed anonymous
+  `domain.Subject`.
+- The `Authorizer` is allow-all (`Decide` → `allow`).
+- No OIDC, no tokens, no Cedar, no approvals queue. Just MCP-over-HTTP routing to containers.
 
-## Agent Context Profiles
+Wire this via FX in `cmd/`: a flag (e.g. `--auth=off`, `--authz=off`) selects the no-op
+implementations. The core packages must not import the auth/authz packages — they only see
+the `domain` ports. If turning auth off requires touching `proxy` or `runtime`, the seam is
+wrong.
 
-The managed Beads block is task-tracking guidance, not permission to override repository, user, or orchestrator instructions.
+Default-deny (`docs/19-authorization.md`) is a property of the *real* `Authorizer`, not of
+the proxy. The proxy asks; the injected authorizer answers. Swap the authorizer, swap the
+behavior.
 
-- **Conservative (default)**: Use `bd` for task tracking. Do not run git commits, git pushes, or Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
-- **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same conservative git policy unless active instructions say otherwise.
-- **Team-maintainer**: Only when the repository explicitly opts in, agents may close beads, run quality gates, commit, and push as part of session close. A current "do not commit" or "do not push" instruction still wins.
+## Auth and permissions are plugins, not features
 
-## Session Completion
+The user/identity and policy systems are pluggable implementations behind these `domain`
+ports (`domain/ports.go`):
 
-This protocol applies when ending a Beads implementation workflow. It is subordinate to explicit user, repository, and orchestrator instructions.
+- `IdentityVerifier` — turns a presented credential into a `Subject` (OIDC/Okta, K8s SA,
+  SPIFFE, token minting, or the no-op).
+- `Authorizer` — turns `(Subject, ToolCall)` into an `allow | ask | block` `Decision`
+  (Cedar-compiled policy, or allow-all).
 
-1. **File issues for remaining work** - Create beads for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **Handle git/sync by active profile**:
-   ```bash
-   # Conservative/minimal/default: report status and proposed commands; wait for approval.
-   git status
+Adding a new identity provider or a new policy engine = a new implementation of one port,
+provided in `cmd/`. It is never an edit to `proxy`, `runtime`, `store`, or `domain`.
 
-   # Team-maintainer opt-in only, unless current instructions forbid it:
-   git pull --rebase
-   git push
-   git status
-   ```
-5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
+## Two teams, one contract
 
-**Critical rules:**
-- Explicit user or orchestrator instructions override this Beads block.
-- Do not commit or push without clear authority from the active profile or the current user request.
-- If a required sync or push is blocked, stop and report the exact command and error.
-<!-- END BEADS INTEGRATION -->
+Core engine and auth/authz are built in parallel. The **only** shared surface is the
+`domain` port interfaces and types (`Subject`, `ToolCall`, `Decision`, `IdentityVerifier`,
+`Authorizer`). Agree on those signatures first, then both sides build against them
+independently — the engine against the no-op impls, the auth team against the real ones.
 
+Rules that prevent a coding clash:
 
-## Build & Test
+- Change a `domain` port signature → it's a contract change. Surface it explicitly; both
+  sides re-agree. Never silently widen an interface to make your side compile.
+- The engine never imports the auth packages. The auth packages never import `proxy`/
+  `controller`/`api`. They meet only at `domain` and get composed in `cmd/`.
+- New behavior that the engine needs from "above" → add a port the engine owns in `domain`,
+  let the other side implement it. Don't reach up.
 
-_Add your build and test commands here_
+## Hooks for extension
 
-```bash
-# Example:
-# npm install
-# npm test
-```
+When the engine needs a decision or a side effect it shouldn't own (authz, audit, secret
+rendering, approval routing), it calls a `domain` port — that *is* the hook. Add a hook the
+same way: define the interface in `domain` next to its callers, default it to a no-op impl,
+wire the real one in `cmd/`. A hook with one real implementation still earns its place
+*only* because the no-op keeps the core runnable without it; don't add hooks for hypothetical
+extension points (YAGNI).
 
-## Architecture Overview
+## Checklist before you call it done
 
-_Add a brief overview of your project architecture_
-
-## Conventions & Patterns
-
-_Add your project-specific conventions here_
+- [ ] Did I add an import that points up or sideways? (no)
+- [ ] Does the core still boot with `--auth=off --authz=off`? (yes)
+- [ ] Is every concrete type I introduced wired in `cmd/`, not constructed inline? (yes)
+- [ ] If I touched a `domain` port, did I flag it as a contract change? (yes)
+- [ ] `go list -deps ./...` acyclic and `domain` import-lint clean? (yes)

@@ -91,7 +91,7 @@ identity ──carries──▶ traits ──assigned──▶ roles ──conta
 3. Roles contain **rules** (manage) and **tool grants** (call).
 4. Every grant — from a role, a connector's `access`, or a global `Policy` — compiles to one
    rule primitive, and the call resolves by **most-restrictive-wins** (`block >
-   require-approval > allow`). A `deny` is just a rule with `effect: block`, so "deny wins"
+   ask > allow`). A `deny` is just a rule with `effect: block`, so "deny wins"
    is the top of that order. See [Authorization → Resolution](authorization.md#resolution)
    for the single algorithm.
 

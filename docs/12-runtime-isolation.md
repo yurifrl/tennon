@@ -78,7 +78,7 @@ the status reports) is the [Capability Enforcement design](capability-architectu
 
 ### Filesystem access (what it can see/write)
 - Read-only root; only declared mounts are present.
-- Repo mounts attach a [Repo](repository-server.md design note) volume as `read` or
+- Repo mounts attach a [Repo](repository-server.md) (design note) volume as `read` or
   `read-write`; that is the only way an MCP touches shared files. (See the Repository Server
   note, see [Repository Server](repository-server.md).)
 

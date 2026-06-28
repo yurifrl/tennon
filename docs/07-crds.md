@@ -5,6 +5,9 @@ Every MCPHub object is a Kubernetes custom resource under the API group
 clicks and commands into these resources. The schemas are shown here for reference,
 GitOps, and automation.
 
+> How these CRDs are generated, installed, and versioned across backends is covered in
+> [CRD Lifecycle](crd-lifecycle.md).
+
 The CRD *schema* is fixed regardless of [storage backend](storage.md); on Postgres/SQLite
 the same objects are persisted as rows and behave identically.
 
@@ -185,7 +188,7 @@ spec:
     # guardrail: every tool tagged sensitive requires approval, everywhere
     - resource:
         tag: sensitive
-      effect: require-approval
+      effect: ask
     # guardrail: contractors can never reach internal connectors
     - subjects:
         - kind: Group
@@ -199,7 +202,7 @@ spec:
 Global rules are evaluated together with each connector's local `access` and every assigned
 `Role` by the single algorithm in [Authorization → Resolution](authorization.md#resolution):
 all rules are gathered and the **most-restrictive matching effect wins** (`block >
-require-approval > allow`), so a global guardrail can only tighten, never loosen. Subject
+ask > allow`), so a global guardrail can only tighten, never loosen. Subject
 kinds: `User`, `Group`, `EmailDomain`, `Token`, `ServiceAccount`. A rule's `resource` matches
 by `connector`, `tool` (glob), or `tag`, with an optional `when` condition over the
 call's arguments.

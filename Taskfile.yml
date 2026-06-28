@@ -10,9 +10,9 @@ tasks:
 
   docs:build:
     desc: Build the single scrolling page (docs/_all.md) from docs/[0-9]*.md
-    cmd: uv run docs/_review/build_docs.py
+    cmd: bun docs/_review/build_docs.ts
 
   docs:
     desc: Build the single page, then serve at http://127.0.0.1:8800
     deps: [docs:build]
-    cmd: uv run docs/_review/server.py
+    cmd: bun docs/_review/server.ts

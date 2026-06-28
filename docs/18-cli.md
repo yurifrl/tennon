@@ -51,7 +51,7 @@ mcphub connector share grafana \
 # org-wide guardrail (global Policy)
 mcphub policy list
 mcphub policy create sensitive-needs-approval \
-  --where "tag:sensitive" --effect require-approval
+  --where "tag:sensitive" --effect ask
 ```
 
 ## Tokens & service accounts

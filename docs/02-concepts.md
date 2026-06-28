@@ -75,7 +75,7 @@ A **subject** is who or what is making a call:
 
 ## Policy
 
-A **policy** maps subjects to what they may do with tools: **allow**, **require approval**,
+A **policy** maps subjects to what they may do with tools: **allow**, **ask**,
 or **block**. Policy lives at two tiers:
 
 - **Local** — most policy lives **on the connector** (its `access` block): who may use this
@@ -84,7 +84,7 @@ or **block**. Policy lives at two tiers:
   and defaults that span everything (e.g. "all `sensitive` tools require approval").
 
 They resolve together: grants are additive, and a global guardrail can only **tighten** a
-local grant (force approval / deny), never loosen it. See [Authorization](authorization.md).
+local grant (force ask or block), never loosen it. See [Authorization](authorization.md).
 
 ## Service account & token
 

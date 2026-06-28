@@ -144,8 +144,7 @@ const TITLES = {
   serviceaccounts:['Service Accounts','Machine identities & trust'],
   oauthapps:['OAuth Apps','Reusable OAuth clients'],
   identity:['Identity Providers','OIDC & machine trust'],
-  storage:['Storage','Pluggable CRD backend'],
-  config:['Config','Users, roles, identity & storage'],
+  config:['Config','Users, roles & identity'],
   secrets:['Secrets','Kubernetes Secrets, by convention'],
   users:['Users','Human identities — Teleport-style'],
   userdetail:['joe','User detail'],
@@ -294,7 +293,7 @@ PAGES.oauthapps = () => pagehead('OAuth Apps','A reusable OAuth client. Register
   card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>The client secret and minted tokens live in a Secrets provider, never inline. A connector references an app and adds its own account + scopes — so one Google app backs many credentialed connectors.</span></div>`,'mt-3');
 
 PAGES.config = (tab='users') => {
-  const tabs = [['users','Users'],['roles','Roles'],['identity','Identity Providers'],['storage','Storage']];
+  const tabs = [['users','Users'],['roles','Roles'],['identity','Identity Providers']];
   const bar = `<div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 flex-wrap mb-5">${tabs.map(([k,t])=>`<button onclick="setConfigTab('${k}')" class="${k===tab?'bg-[#00c29f] text-[#04121a]':'text-[#9aa4b5] hover:text-[#e6e9ef]'} rounded-md px-3.5 py-1.5 font-semibold text-[13px]">${t}</button>`).join('')}</div>`;
   return bar + PAGES[tab]();
 };
@@ -370,20 +369,6 @@ PAGES.identity = () => pagehead('Identity Providers','Pluggable OIDC for humans;
     ${[['GitHub Actions OIDC','iss token.actions.githubusercontent.com','trusted','green'],['Kubernetes ServiceAccounts','cluster OIDC · aud=mcphub','trusted','green'],['SPIFFE trust domain','spiffe://acme.internal','configure',''],['AWS IAM','arn:aws:iam::…:role/hermes','configure','']]
       .map(([n,d,s,c])=>`<tr>${td(`<b>${n}</b>`)}${td(`<span class="mono text-[#6b7587] text-xs">${d}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':''}">${s}</span>`)}</tr>`).join('')}
   </table>`),'mt-4')}`;
-
-PAGES.storage = () => pagehead('Storage','Every object is a CRD. The schema is fixed; where objects are <b>persisted</b> is pluggable. UI and CRD create each other.') + `
-  ${card(`<div class="p-4"><div class="font-semibold mb-2">Active backend</div>
-    <div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 flex-wrap">
-      <button class="bg-[#00c29f] text-[#04121a] rounded-md px-3.5 py-1.5 font-semibold text-[13px]">Kubernetes / etcd</button>
-      <button class="text-[#9aa4b5] px-3.5 py-1.5 font-semibold text-[13px]">Postgres</button>
-      <button class="text-[#9aa4b5] px-3.5 py-1.5 font-semibold text-[13px]">SQLite</button>
-    </div>
-    <p class="text-[#6b7587] text-xs mt-3">Switching backends changes <i>where</i> objects live, not <i>what</i> they are. The same types and reconcile loops run against any backend.</p>
-  </div>`,'mb-4')}
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-3">
-    ${[['Kubernetes / etcd','CRDs in-cluster via the API. Native kubectl + GitOps, RBAC, watches. For teams in a cluster.'],['Postgres','CRD objects as rows. Shared / HA external DB, runs outside a cluster.'],['SQLite','CRD objects in a local file. Single-node / one-person / embedded self-host.']]
-      .map(([t,d])=>card(`<div class="p-4"><b>${t}</b><p class="text-[#6b7587] text-xs">${d}</p></div>`)).join('')}
-  </div>`;
 
 PAGES.secrets = () => pagehead('Secrets','A connector’s credential is a Kubernetes Secret named by convention (<span class="mono">mcphub-&lt;connector&gt;</span>), assumed to exist and rendered at call time — never shown.', btnPri('+ Add Resolver','toast(\'Add secret resolver\')')) + `
   ${card(cardHd('Default store','<span class="tag tag-green">active</span>')+`<div class="p-4 flex flex-wrap items-center gap-3"><span class="flex-1 min-w-0 text-[#9aa4b5]">Pasted values are sealed and rendered in-cluster at call time. Never shown in API responses, status, logs, or this UI.</span><span class="tag tag-blue">in-cluster</span></div>`,'mb-4')}
@@ -529,7 +514,7 @@ function renderNav(){
 function go(p){
   document.getElementById('content').innerHTML = (PAGES[p]||PAGES.dashboard)();
   document.querySelectorAll('#nav a[data-nav]').forEach(a=>{
-    const on = a.getAttribute('data-nav')===(p==='newtoken'?'tokens':p==='mcpdetail'?'mcps':p==='userdetail'?'users':p==='roledetail'?'roles':['users','roles','identity','storage'].includes(p)?'config':p);
+    const on = a.getAttribute('data-nav')===(p==='newtoken'?'tokens':p==='mcpdetail'?'mcps':p==='userdetail'?'users':p==='roledetail'?'roles':['users','roles','identity'].includes(p)?'config':p);
     a.classList.toggle('bg-[#1b212d]',on); a.classList.toggle('text-[#e6e9ef]',on);
   });
   const t = TITLES[p]||TITLES.dashboard;

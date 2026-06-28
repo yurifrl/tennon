@@ -50,7 +50,7 @@ is as granular as a GitHub fine-grained token:
 ```
 token = (resources: connectors / tags)
       × (tools)
-      × (level: call / read / require-approval)
+      × (level: call / read / ask)
       × (expiry)
       × (owner)
 ```

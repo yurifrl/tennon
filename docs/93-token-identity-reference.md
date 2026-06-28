@@ -117,43 +117,12 @@ GitHub OIDC, SPIFFE/SPIRE, and Kubernetes bound tokens all converge:
 
 ---
 
-## 5. Ideas for MCPHub (synthesis)
+## 5. Synthesis → the shipped design
 
-A tiered model — same system, scaling from one person (R1) to a team, with tokenless as the
-preferred path:
-
-### Tier 0 — Tokenless service account + trusted relationship (preferred, for Hermes)
-- Define a **ServiceAccount** object (org-owned, Tailscale-style; survives its creator).
-- Attach a **trust relationship** instead of a secret (Teleport-style): an OIDC/JWT trust
-  rule (issuer + audience + subject claims), a K8s SA token rule, SPIFFE ID match, or a
-  cloud instance-identity rule.
-- At call time the caller presents its platform document; MCPHub validates it and **mints a
-  short-lived (≈1h, non-renewable) proxy credential** scoped to that service account's
-  policy. **Nothing to leak.** This is the Hermes path: Hermes runs with a workload
-  identity, MCPHub trusts it, no token is copied around.
-
-### Tier 1 — Fine-grained service token (fallback, GitHub-style)
-- When tokenless isn't possible, mint a **fine-grained token** with: resources (MCPs /
-  tags) × tools × level (call / read / require-approval) × **mandatory expiry** ×
-  owner.
-- **Tags are the sharing primitive** (Tailscale): grant `tag:observability` and it follows
-  new Grafana-tagged MCPs automatically.
-- Org/owner **approval policy** for sensitive grants; **enforceable max lifetime**;
-  **revoke = kill all derived tokens immediately**; audit every mint.
-
-### How R2 (Grafana → Okta team) plays out
-- Owner registers the `grafana` connector with a `secretKeyRef` credential (never exposed).
-- Owner shares via `Policy` to the **Okta group** `observability` (resolved from the
-  OIDC `groups` claim — no per-person edits; Okta membership drives access).
-- A teammate authenticates via Okta (user OIDC), or **Hermes authenticates tokenless via
-  its workload identity**; the proxy injects the owner's Grafana credential and enforces the
-  group's tool grants + approvals. Members call Grafana tools; they never see the credential.
-
-### Outcome / lifetime rules to standardize
-- Default proxy credential TTL ~1h, **no refresh** (re-mint), revocation by expiry + an
-  instant **lock** for emergencies (Teleport).
-- Three decision outcomes preserved: allow / deny / require-approval (the approval obligation
-  from the Cedar authorization design).
+The tiered model these notes converge on (Tier 0 tokenless service account + trusted
+relationship, Tier 1 fine-grained token fallback, tags as the sharing primitive, and the
+Grafana → Okta R2 flow) is the canonical design. It is documented in
+[Tokens & Identity](tokens-and-identity.md) and is not repeated here.
 
 ---
 

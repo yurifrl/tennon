@@ -24,7 +24,7 @@ behind them. This page summarizes the security properties and where to verify th
   minted per call after validating a platform-signed document.
 - **Machines (fallback):** fine-grained, short-lived tokens scoped to resources × tools ×
   level × expiry, with an org-enforceable maximum lifetime.
-- Authorization is per-tool, additive, most-restrictive-wins, with allow / require-approval /
+- Authorization is per-tool, additive, most-restrictive-wins, with allow / ask /
   block. See [Authorization](authorization.md).
 
 ## Short-lived by default & revocation
@@ -40,7 +40,7 @@ approval before executing. Approvals are auditable.
 
 ## Audit
 
-Mint, revoke, policy change, connector reconcile, and every tool call (allow/deny/approve) are
+Mint, revoke, policy change, connector reconcile, and every tool call (allow/ask/block) are
 recorded with the acting subject. (Audit sink configuration is deployment-specific.)
 
 ## Trust boundaries
