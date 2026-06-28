@@ -82,18 +82,18 @@
   <div id="palette" class="hidden fixed inset-0 z-50 px-4 pt-[12vh]">
     <div onclick="closePalette()" class="absolute inset-0 bg-black/60"></div>
     <div class="relative w-full max-w-xl mx-auto bg-[#141821] border border-[#28303f] rounded-2xl shadow-2xl overflow-hidden">
-      <input id="palInput" oninput="renderPalette()" placeholder="Search integrations, tools, or jump to a page…" class="w-full bg-transparent border-b border-[#28303f] px-4 py-3.5 outline-none">
+      <input id="palInput" oninput="renderPalette()" placeholder="Search connectors, tools, or jump to a page…" class="w-full bg-transparent border-b border-[#28303f] px-4 py-3.5 outline-none">
       <div id="palList" class="max-h-[50vh] overflow-y-auto p-2"></div>
       <div class="px-4 py-2 border-t border-[#28303f] text-[#6b7587] text-xs flex gap-3"><span><span class="kbd">↑↓</span> navigate</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">esc</span> close</span></div>
     </div>
   </div>
 
-  <!-- Connect integration modal -->
+  <!-- Connect connector modal -->
   <div id="connectModal" class="hidden fixed inset-0 z-50 grid place-items-center px-4">
     <div onclick="closeConnect()" class="absolute inset-0 bg-black/60"></div>
     <div class="relative w-full max-w-lg bg-[#141821] border border-[#28303f] rounded-2xl p-5 shadow-2xl">
       <div class="flex items-start gap-2">
-        <div><h3 class="m-0 text-lg font-semibold">Connect an integration</h3>
+        <div><h3 class="m-0 text-lg font-semibold">Connect a connector</h3>
           <p class="m-0 mt-0.5 text-[#6b7587] text-xs">Search the preset library, or paste a URL to auto-detect.</p></div>
         <button onclick="closeConnect()" class="ml-auto text-[#6b7587] hover:text-[#e6e9ef] text-lg leading-none">×</button>
       </div>
@@ -104,7 +104,7 @@
         <button class="border border-[#28303f] bg-[#1b212d] rounded-lg px-3 py-1.5 text-xs font-semibold hover:border-[#3a4658]">OpenAPI</button>
         <button class="border border-[#28303f] bg-[#1b212d] rounded-lg px-3 py-1.5 text-xs font-semibold hover:border-[#3a4658]">GraphQL</button>
       </div>
-      <div class="text-[#6b7587] text-xs mt-4 mb-1.5">Popular integrations</div>
+      <div class="text-[#6b7587] text-xs mt-4 mb-1.5">Popular connectors</div>
       <div class="flex flex-col gap-1.5">
         <button onclick="closeConnect();go('mcpdetail')" class="flex items-center gap-3 text-left border border-[#28303f] rounded-lg px-3 py-2 hover:border-[#3a4658] bg-[#0d0f14]"><span class="w-7 h-7 shrink-0 rounded-lg grid place-items-center font-bold bg-[#1b212d] text-[#4c8dff]">G</span><span class="flex-1 min-w-0"><b class="text-[13px]">Google</b><span class="block text-[#6b7587] text-xs truncate">Gmail, Calendar, Drive, Docs and more</span></span><span class="tag tag-blue">openapi</span></button>
         <button onclick="closeConnect();go('mcpdetail')" class="flex items-center gap-3 text-left border border-[#28303f] rounded-lg px-3 py-2 hover:border-[#3a4658] bg-[#0d0f14]"><span class="w-7 h-7 shrink-0 rounded-lg grid place-items-center font-bold bg-[#1b212d] text-[#a06bff]">S</span><span class="flex-1 min-w-0"><b class="text-[13px]">Stripe</b><span class="block text-[#6b7587] text-xs truncate">Payments, subscriptions, customers</span></span><span class="tag tag-blue">openapi</span></button>
@@ -120,11 +120,9 @@
 <script>
 /* ---------------- nav ---------------- */
 const NAV = [
-  {g:'Catalog'},
+  {g:'Workspace'},
   {k:'dashboard', ic:'▣', t:'Dashboard'},
-  {k:'mcps', ic:'⬡', t:'Integrations'},
-  {k:'catalog', ic:'⌕', t:'Tool Catalog'},
-  {k:'bundles', ic:'❏', t:'Bundles'},
+  {k:'mcps', ic:'⬡', t:'Connectors'},
   {g:'Access'},
   {k:'tokens', ic:'⚷', t:'Tokens'},
   {k:'serviceaccounts', ic:'⚿', t:'Service Accounts'},
@@ -139,10 +137,8 @@ const NAV = [
 ];
 const TITLES = {
   dashboard:['Dashboard','Cluster overview'],
-  mcps:['Integrations','Tool providers — MCP, OpenAPI & GraphQL'],
-  mcpdetail:['github','Integration detail'],
-  catalog:['Tool Catalog','Search every tool across every integration'],
-  bundles:['Bundles','Composed tool endpoints'],
+  mcps:['Connectors','Tool providers — MCP, OpenAPI & GraphQL'],
+  mcpdetail:['github','Connector detail'],
   tokens:['Tokens','Granular service tokens'],
   newtoken:['New Token','Authentication & permission builder'],
   serviceaccounts:['Service Accounts','Machine identities & trust'],
@@ -150,7 +146,7 @@ const TITLES = {
   identity:['Identity Providers','OIDC & machine trust'],
   storage:['Storage','Pluggable CRD backend'],
   config:['Config','Users, roles, identity & storage'],
-  secrets:['Secrets','Pluggable credential providers'],
+  secrets:['Secrets','Kubernetes Secrets, by convention'],
   users:['Users','Human identities — Teleport-style'],
   userdetail:['joe','User detail'],
   roles:['Roles','RBAC — allow/deny, manage + call'],
@@ -181,25 +177,25 @@ const runtimeChip = r => ({
 })[r] || `<span class="tag">${r}</span>`;
 
 /* ---------------- data ---------------- */
-// runtime: how the integration actually runs. container=image, npx=npm pkg, uvx=python/uv pkg, remote=hosted URL
-const INTEGRATIONS = [
+// runtime: how the connector actually runs. container=image, npx=npm pkg, uvx=python/uv pkg, remote=hosted URL
+const CONNECTORS = [
   {n:'github', kind:'mcp', kc:'blue', runtime:'container', src:'ghcr.io/github/github-mcp-server:latest', conns:2, tools:'18 / 42', tags:['code','prod'], s:'green', st:'Ready'},
-  {n:'google', kind:'openapi', kc:'blue', runtime:'remote', src:'googleapis.com (OpenAPI bundle)', conns:1, tools:'38 / 214', tags:['productivity'], s:'green', st:'Ready'},
+  {n:'google', kind:'openapi', kc:'blue', runtime:'remote', src:'googleapis.com (OpenAPI discovery)', conns:1, tools:'38 / 214', tags:['productivity'], s:'green', st:'Ready'},
   {n:'jira', kind:'mcp', kc:'blue', runtime:'npx', src:'npx @atlassian/mcp-jira', conns:1, tools:'12 / 18', tags:['tickets'], s:'green', st:'Ready'},
   {n:'linear', kind:'graphql', kc:'amber', runtime:'remote', src:'api.linear.app/graphql', conns:1, tools:'9 / 47', tags:['tickets'], s:'green', st:'Ready'},
   {n:'aws-tools', kind:'mcp', kc:'blue', runtime:'uvx', src:'uvx awslabs.aws-mcp', conns:1, tools:'6 / 31', tags:['infra'], s:'green', st:'Ready'},
   {n:'internal-deploy', kind:'mcp', kc:'blue', runtime:'container', src:'registry.acme/deploy-mcp:2.1', conns:1, tools:'4 / 4', tags:['infra','sensitive'], s:'amber', st:'Degraded'},
 ];
 const TOOLS = [
-  {t:'github_search_repositories', mcp:'github', kind:'read', c:'green', l:'allow'},
-  {t:'github_get_issue', mcp:'github', kind:'read', c:'green', l:'allow'},
-  {t:'github_create_pull_request', mcp:'github', kind:'write', c:'amber', l:'require approval'},
-  {t:'github_delete_repo', mcp:'github', kind:'destructive', c:'red', l:'blocked'},
-  {t:'jira_create_issue', mcp:'jira', kind:'write', c:'amber', l:'require approval'},
-  {t:'jira_search', mcp:'jira', kind:'read', c:'green', l:'allow'},
-  {t:'linear_list_issues', mcp:'linear', kind:'read', c:'green', l:'allow'},
-  {t:'aws_describe_instances', mcp:'aws-tools', kind:'read', c:'green', l:'allow'},
-  {t:'internal-deploy_rollback', mcp:'internal-deploy', kind:'destructive', c:'amber', l:'require approval'},
+  {t:'github_search_repositories', connector:'github', kind:'read', c:'green', l:'allow'},
+  {t:'github_get_issue', connector:'github', kind:'read', c:'green', l:'allow'},
+  {t:'github_create_pull_request', connector:'github', kind:'write', c:'amber', l:'require approval'},
+  {t:'github_delete_repo', connector:'github', kind:'destructive', c:'red', l:'blocked'},
+  {t:'jira_create_issue', connector:'jira', kind:'write', c:'amber', l:'require approval'},
+  {t:'jira_search', connector:'jira', kind:'read', c:'green', l:'allow'},
+  {t:'linear_list_issues', connector:'linear', kind:'read', c:'green', l:'allow'},
+  {t:'aws_describe_instances', connector:'aws-tools', kind:'read', c:'green', l:'allow'},
+  {t:'internal-deploy_rollback', connector:'internal-deploy', kind:'destructive', c:'amber', l:'require approval'},
 ];
 
 /* ---------------- pages ---------------- */
@@ -207,12 +203,12 @@ const PAGES = {};
 
 PAGES.dashboard = () => `
   <div class="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-4">
-    ${[['6','Integrations','● 5 Ready · 1 Degraded','#00c29f'],['3','Bundles','38 tools exposed','#6b7587'],['12','Active tokens','2 expiring soon','#6b7587'],['2','Pending approvals','needs attention','#f5a623']]
+    ${[['6','Connectors','● 5 Ready · 1 Degraded','#00c29f'],['12','Active tokens','2 expiring soon','#6b7587'],['2','Pending approvals','needs attention','#f5a623']]
       .map(([n,l,d,c])=>card(`<div class="p-4"><div class="text-2xl sm:text-3xl font-bold">${n}</div><div class="text-[#6b7587] text-xs mt-0.5">${l}</div><div class="text-[11px] mt-2" style="color:${c}">${d}</div></div>`)).join('')}
   </div>
   <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-    ${card(cardHd('Integration Health', btn('View all','','go(\'mcps\')'))+wrapTable(`<table class="w-full border-collapse">
-      ${INTEGRATIONS.slice(0,5).map(i=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">${td(`${dot(i.s)} <b class="ml-1">${i.n}</b>`)}${td(runtimeChip(i.runtime))}${td(`<span class="text-[#6b7587] mono">${i.tools}</span>`)}${td(`<span class="tag ${i.s==='green'?'tag-green':'tag-amber'}">${i.st}</span>`)}</tr>`).join('')}
+    ${card(cardHd('Connector Health', btn('View all','','go(\'mcps\')'))+wrapTable(`<table class="w-full border-collapse">
+      ${CONNECTORS.slice(0,5).map(i=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">${td(`${dot(i.s)} <b class="ml-1">${i.n}</b>`)}${td(runtimeChip(i.runtime))}${td(`<span class="text-[#6b7587] mono">${i.tools}</span>`)}${td(`<span class="tag ${i.s==='green'?'tag-green':'tag-amber'}">${i.st}</span>`)}</tr>`).join('')}
     </table>`))}
     ${card(cardHd('Recent activity')+wrapTable(`<table class="w-full border-collapse">
       ${[['call','github_create_pull_request','2m','blue'],['approval','rollback paused','8m','amber'],['token','ci-runner created','1h','green'],['mcp','aws-tools reconciled','3h','purple']]
@@ -220,20 +216,20 @@ PAGES.dashboard = () => `
     </table>`))}
   </div>`;
 
-PAGES.mcps = () => pagehead('Integrations','Tool providers in this workspace — MCP servers (container, npx, uvx or remote), OpenAPI &amp; GraphQL services.', btnPri('+ Connect','openConnect()')) +
-  `<div class="flex flex-wrap gap-2 mb-3 items-center">${search('Filter integrations…','filterTable(this,\'#mcpRows\')')}
+PAGES.mcps = () => pagehead('Connectors','Tool providers in this workspace — MCP servers (container, npx, uvx or remote), OpenAPI &amp; GraphQL services.', btnPri('+ Connect','openConnect()')) +
+  `<div class="flex flex-wrap gap-2 mb-3 items-center">${search('Filter connectors…','filterTable(this,\'#mcpRows\')')}
      <div class="flex gap-1.5 text-xs">${['all','mcp','openapi','graphql'].map((f,i)=>`<button onclick="filterKind(this,'${f}')" class="px-2.5 py-1 rounded-full border ${i===0?'border-[#00c29f] text-[#00c29f]':'border-[#28303f] text-[#9aa4b5]'}">${f}</button>`).join('')}</div></div>` +
   card(wrapTable(`<table class="w-full border-collapse">
-    <thead><tr>${th('Name')}${th('Kind')}${th('Runtime')}${th('Source')}${th('Conns')}${th('Tools')}${th('Tags')}${th('Status')}</tr></thead><tbody id="mcpRows">
-    ${INTEGRATIONS.map(i=>`<tr data-kind="${i.kind}" class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">
+    <thead><tr>${th('Name')}${th('Kind')}${th('Runtime')}${th('Source')}${th('Tools')}${th('Tags')}${th('Status')}</tr></thead><tbody id="mcpRows">
+    ${CONNECTORS.map(i=>`<tr data-kind="${i.kind}" class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">
         ${td(`<b>${i.n}</b>`)}${td(`<span class="tag tag-${i.kc}">${i.kind}</span>`)}${td(runtimeChip(i.runtime))}
-        ${td(`<span class="mono text-[#6b7587] text-xs break-all">${i.src}</span>`)}${td(`<span class="mono text-[#9aa4b5]">${i.conns}</span>`)}${td(i.tools)}
+        ${td(`<span class="mono text-[#6b7587] text-xs break-all">${i.src}</span>`)}${td(i.tools)}
         ${td(i.tags.map(t=>`<span class="tag ${t==='sensitive'?'tag-red':''}">${t}</span>`).join(' '))}
         ${td(`<span class="tag ${i.s==='green'?'tag-green':'tag-amber'}">${i.st}</span>`)}</tr>`).join('')}
     </tbody></table>`));
 
 PAGES.mcpdetail = () => `
-  <div class="text-[#6b7587] text-[13px] mb-1"><a onclick="go('mcps')" class="cursor-pointer text-[#6b7587]">Integrations</a> / github</div>
+  <div class="text-[#6b7587] text-[13px] mb-1"><a onclick="go('mcps')" class="cursor-pointer text-[#6b7587]">Connectors</a> / github</div>
   ${pagehead('github <span class="tag tag-blue align-middle">mcp</span> <span class="tag tag-blue align-middle">container</span> <span class="tag tag-green align-middle">● Ready</span>','Proxied at <span class="mono">/mcp/github</span> · 42 discovered · 18 exposed', btn('Edit')+' '+btn('Rebuild tools','','toast(\'Rebuilding tools…\')')+' '+btn('Delete','!text-[#f25c5c] !border-[#4a2a2f]'))}
   <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
     ${card(cardHd('Configuration', btn('Edit'))+`<div class="p-4">
@@ -248,21 +244,9 @@ PAGES.mcpdetail = () => `
       <p class="text-[#6b7587] text-xs mt-3">Resolved from <span class="mono">github-credentials</span> and injected into the server. Never shown in API responses, status, logs, or this UI.</p>
     </div>`)}
   </div>
-  ${card(cardHd('Connections', btn('+ Add connection'))+`<div class="p-4">
-    <p class="text-[#6b7587] text-xs mt-0">A connection is a credentialed instance — same provider, different account or scope. Each MCP connection gets its own proxied URL.</p>
-    ${[['github-read','API key · read-only token','green','<span class="mono text-[#6b7587]">/mcp/github-read</span> · allow get_*, list_*'],['github-write','OAuth · app: github-acme','amber','<span class="mono text-[#6b7587]">/mcp/github-write</span> · writes need approval']]
-      .map(([n,auth,c,meta])=>card(`<div class="p-3 flex flex-col sm:flex-row sm:items-center gap-2"><span class="flex-1 min-w-0"><b>${n}</b> <span class="tag ${c==='green'?'tag-green':'tag-amber'}">${auth}</span><div class="text-[#6b7587] text-xs">${meta}</div></span>${btn('Edit')}</div>`,'mb-2')).join('')}
-  </div>`,'mt-4')}
   ${card(cardHd('Exposed tools (18)', search('Filter tools…','filterTable(this,\'#detTools\')'))+wrapTable(`<table class="w-full border-collapse"><tbody id="detTools">
-    ${TOOLS.filter(t=>t.mcp==='github').map(t=>`<tr>${td(`<span class="mono">${t.t}</span>`)}${td(`<span class="tag tag-${t.c}">${t.l}</span>`)}</tr>`).join('')}
+    ${TOOLS.filter(t=>t.connector==='github').map(t=>`<tr>${td(`<span class="mono">${t.t}</span>`)}${td(`<span class="tag tag-${t.c}">${t.l}</span>`)}</tr>`).join('')}
   </tbody></table>`),'mt-4')}
-  ${card(cardHd('Access &amp; sharing', btnPri('Share','toast(\'Share dialog\')'))+`<div class="p-4">
-    <p class="text-[#6b7587] text-xs mt-0">Who may use <b>this</b> MCP, and which of its tools. This is the MCP's <b>local policy</b> — it lives here, with the server. Org-wide guardrails (set in Global Policies) can only tighten it.</p>
-    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-purple">group: okta:observability</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag tag-green">all exposed</span><span class="ml-auto tag tag-green">allow</span></div>`,'mb-2')}
-    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag">token: ci-runner</span><span class="text-[#6b7587] text-xs">tools</span><span class="tag">get_*</span><span class="ml-auto tag tag-green">allow</span></div>`,'mb-2')}
-    ${card(`<div class="p-3 flex flex-wrap gap-3 items-center"><span class="tag tag-purple">you (owner)</span><span class="ml-auto tag tag-green">full</span></div>`)}
-    <div class="flex gap-2 items-center flex-wrap mt-3"><span class="text-[#6b7587] text-xs w-20">Approval</span><span class="tag tag-amber">create_pull_request</span><span class="text-[#6b7587] text-xs">+ global: tag:sensitive</span></div>
-  </div>`,'mt-4')}
   ${card(cardHd('Sandbox &amp; capabilities', '<span class="tag tag-green">✓ Fully enforced</span>')+`<div class="p-4">
     <p class="text-[#6b7587] text-xs mt-0">What this container is allowed to do. Everything not listed is blocked. You list intent; MCPHub compiles it to the strongest enforcement the cluster offers.</p>
     ${sumBox(
@@ -275,46 +259,11 @@ PAGES.mcpdetail = () => `
     <p class="text-[#6b7587] text-xs mt-3">Status per plane: network <span class="tag tag-green">enforced · cilium</span> · process/file <span class="tag tag-green">enforced · kubearmor</span> · sandbox <span class="tag tag-green">enforced · gvisor</span></p>
   </div>`,'mt-4')}`;
 
-PAGES.catalog = () => pagehead('Tool Catalog','Every tool from every integration, indexed and searchable by intent. Inspect a tool to see its schema and policy.', btn('Manage policies','','go(\'policies\')')) +
-  `<div class="mb-3">${search('Search tools by name or intent…','filterTable(this,\'#catRows\')')}</div>` +
-  card(wrapTable(`<table class="w-full border-collapse">
-    <thead><tr>${th('Tool')}${th('Integration')}${th('Kind')}${th('Effective policy')}</tr></thead><tbody id="catRows">
-    ${TOOLS.map(t=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('mcpdetail')">${td(`<span class="mono">${t.t}</span>`)}${td(`<span class="tag tag-blue">${t.mcp}</span>`)}${td(`<span class="text-[#6b7587] text-xs">${t.kind}</span>`)}${td(`<span class="tag tag-${t.c}">${t.l}</span>`)}</tr>`).join('')}
-  </tbody></table>`)) +
-  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span><b>Blocked</b> tools are hidden from agent search and fail at invoke. <b>Require approval</b> tools pause for a human in the Approvals queue. Policy resolves local (per connection) + global guardrails — most restrictive wins.</span></div>`,'mt-3');
-
-PAGES.bundles = () => pagehead('Bundles','A bundle composes curated tools from many integrations behind one endpoint. A bundle is its own authorization boundary.', btnPri('+ New Bundle','toast(\'New bundle\')')) + `
-  ${card(cardHd('Connect an agent','<span class="tag tag-green">streamable HTTP</span>')+`<div class="p-4">
-    <p class="text-[#6b7587] text-xs mt-0">Point any MCP client at a bundle endpoint. Auth is the gate — pass a token in the header.</p>
-    <div class="inline-flex bg-[#1b212d] border border-[#28303f] rounded-lg p-1 gap-1 mb-3">
-      <button class="bg-[#00c29f] text-[#04121a] rounded-md px-3 py-1.5 font-semibold text-[13px]">Remote HTTP</button>
-      <button class="text-[#9aa4b5] px-3 py-1.5 font-semibold text-[13px]">Standard I/O</button>
-    </div>
-    <div class="flex items-center gap-2"><div class="flex-1 bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2.5 mono text-xs text-[#9aa4b5] overflow-x-auto whitespace-nowrap">npx add-mcp https://mcphub.example.com/bundle/devtools --transport http --name devtools --header 'Authorization: Bearer mh_svc_…'</div>${btn('Copy','shrink-0','copyText(this.previousElementSibling.innerText)')}</div>
-  </div>`,'mb-4')}
-  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-    ${card(cardHd('devtools','<span class="tag tag-green">/bundle/devtools</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Core tools for platform engineering. 9 tools from 3 integrations.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">github → gh_*</span><span class="tag tag-blue">jira → jira_*</span><span class="tag tag-blue">internal-deploy → rollback,status</span></div></div>`)}
-    ${card(cardHd('support','<span class="tag tag-green">/bundle/support</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Help-desk read tools. 6 tools from 2 integrations.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">slack → read</span><span class="tag tag-blue">jira → search,get</span></div></div>`)}
-    ${card(cardHd('code-tools','<span class="tag tag-green">/bundle/code-tools</span>')+`<div class="p-4"><p class="mt-0 text-[#9aa4b5]">Auto-composed from every integration tagged <span class="tag">code</span>. Membership updates as integrations are tagged.</p><div class="flex flex-wrap gap-1.5"><span class="tag tag-purple">tag: code</span><span class="tag tag-blue">github</span><span class="tag tag-blue">gitlab</span></div></div>`)}
-  </div>
-  ${card(cardHd('Composition — devtools', btn('+ Add source'))+`<div class="p-4">
-    <p class="text-[#6b7587] text-xs mt-0">Add a source by picking a specific integration, or by <b>tag</b> to include every integration carrying it. Optionally rename tools and flag which need approval. Saved automatically.</p>
-    ${[['mcp','github',['search_*','get_*','list_*'],'gh_‹tool›'],['mcp','jira',['create_issue','get_issue','search'],'jira_‹tool›'],['tag','tag: code',['*'],'—']]
-      .map(([kind,src,tools,rename])=>card(`<div class="p-3 flex flex-col sm:flex-row gap-3 sm:items-center">
-        <select class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-1.5 sm:w-40"><option>${kind==='tag'?'By tag':'By integration'}</option></select>
-        <select class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-1.5 sm:w-40"><option>${src}</option></select>
-        <div class="flex-1 min-w-0"><span class="text-[#6b7587] text-xs">tools</span><div class="flex flex-wrap gap-1.5">${tools.map(t=>`<span class="tag tag-green">${t}</span>`).join('')}</div></div>
-        <div><span class="text-[#6b7587] text-xs">rename</span><div>${rename==='—'?'<span class="text-[#6b7587]">—</span>':`<span class="tag tag-blue">${rename}</span>`}</div></div>
-      </div>`,'mb-2.5')).join('')}
-    <div class="h-px bg-[#28303f] my-3"></div>
-    <div class="flex gap-2 items-center flex-wrap"><span class="text-[#6b7587] w-20 text-xs">Approval</span><span class="tag tag-amber">jira_create_issue</span><span class="tag tag-amber">rollback</span></div>
-  </div>`,'mt-4')}`;
-
-PAGES.tokens = () => pagehead('Tokens','Granular service tokens. Scope each to MCPs, tools, groups, or tags.', btnPri('+ New Token','go(\'newtoken\')')) +
+PAGES.tokens = () => pagehead('Tokens','Granular service tokens. Scope each to connectors, tools, groups, or tags.', btnPri('+ New Token','go(\'newtoken\')')) +
   `<div class="mb-3">${search('Filter tokens…','filterTable(this,\'#tokRows\')')}</div>` +
   card(wrapTable(`<table class="w-full border-collapse">
     <thead><tr>${th('Name')}${th('Scope')}${th('Subject / Groups')}${th('Expires')}${th('Status')}${th('')}</tr></thead><tbody id="tokRows">
-    ${[['ci-runner','mh_svc_8f3c…','<span class="tag tag-blue">bundle:devtools</span>','<span class="tag tag-purple">group: sre@example.com</span>','in 90d','green','active'],
+    ${[['ci-runner','mh_svc_8f3c…','<span class="tag tag-blue">tag:code</span>','<span class="tag tag-purple">group: sre@example.com</span>','in 90d','green','active'],
        ['support-bot','mh_svc_2a71…','<span class="tag tag-blue">tag: chat</span> <span class="tag tag-blue">tools: 4</span>','<span class="tag">token subject</span>','in 7d','amber','expiring'],
        ['readonly-analyst','mh_svc_b0c9…','<span class="tag tag-blue">tools: get_*, list_*</span>','<span class="tag tag-purple">group: data@example.com</span>','never','green','active']]
       .map(([n,id,sc,su,e,c,s])=>`<tr>${td(`<b>${n}</b><div class="text-[#6b7587] text-xs mono">${id}</div>`)}${td(sc)}${td(su)}${td(e)}${td(`<span class="tag tag-${c}">${s}</span>`)}${td(btn('Revoke','!text-[#f25c5c] !border-[#4a2a2f]','toast(\'Token revoked\')'))}</tr>`).join('')}
@@ -323,8 +272,8 @@ PAGES.tokens = () => pagehead('Tokens','Granular service tokens. Scope each to M
 PAGES.serviceaccounts = () => pagehead('Service Accounts','Org-owned identities that survive their creator. Prefer a <b>trusted relationship</b> over a stored secret.', btnPri('+ New','go(\'newtoken\')')) +
   card(wrapTable(`<table class="w-full border-collapse">
     <thead><tr>${th('Name')}${th('Auth method')}${th('Trust / credential')}${th('Grants')}${th('Status')}</tr></thead><tbody>
-    ${[['hermes','platform-team','tokenless','green','OIDC iss: token.actions…<br>sub: repo:acme/hermes:…','<span class="tag tag-blue">bundle:devtools</span> <span class="tag tag-blue">tag:observability</span>','active','green'],
-       ['ci-runner','platform-team','tokenless','green','K8s SA: ci/runner<br>aud: mcphub','<span class="tag tag-blue">bundle:devtools</span>','active','green'],
+    ${[['hermes','platform-team','tokenless','green','OIDC iss: token.actions…<br>sub: repo:acme/hermes:…','<span class="tag tag-blue">tag:code</span> <span class="tag tag-blue">tag:observability</span>','active','green'],
+       ['ci-runner','platform-team','tokenless','green','K8s SA: ci/runner<br>aud: mcphub','<span class="tag tag-blue">tag:code</span>','active','green'],
        ['support-bot','support','fine-grained token','amber','mh_svc_2a71… · 1h TTL','<span class="tag tag-blue">tag:chat</span>','expiring','amber']]
       .map(([n,o,m,mc,tr,gr,st,sc])=>`<tr>${td(`<b>${n}</b><div class="text-[#6b7587] text-xs">owner: ${o}</div>`)}${td(`<span class="tag tag-${mc}">${m}</span>`)}${td(`<span class="mono text-[#6b7587] text-xs">${tr}</span>`)}${td(gr)}${td(`<span class="tag tag-${sc}">${st}</span>`)}</tr>`).join('')}
   </tbody></table>`)) +
@@ -334,15 +283,15 @@ PAGES.serviceaccounts = () => pagehead('Service Accounts','Org-owned identities 
     <div><b>Revocation</b><p class="text-[#6b7587] text-xs">Expiry is the default cutoff. Revoking kills all derived credentials; emergency lock terminates live sessions.</p></div>
   </div>`,'mt-4');
 
-PAGES.oauthapps = () => pagehead('OAuth Apps','A reusable OAuth client. Register a provider once, then connect many accounts against it — each connection requests its own scopes.', btnPri('+ Register App','toast(\'Register OAuth app\')')) +
+PAGES.oauthapps = () => pagehead('OAuth Apps','A reusable OAuth client. Register a provider once, then connect many accounts against it — each connector requests its own scopes.', btnPri('+ Register App','toast(\'Register OAuth app\')')) +
   card(wrapTable(`<table class="w-full border-collapse">
-    <thead><tr>${th('App')}${th('Provider')}${th('Client ID')}${th('Connections')}${th('Secret')}${th('Status')}</tr></thead><tbody>
+    <thead><tr>${th('App')}${th('Provider')}${th('Client ID')}${th('Connectors')}${th('Secret')}${th('Status')}</tr></thead><tbody>
     ${[['github-acme','GitHub','Iv1.8a3f…','2','vault:github-oauth','green','enabled'],
        ['google-workspace','Google','9182…apps.googleusercontent.com','3','1password:google','green','enabled'],
        ['slack-acme','Slack','—','0','—','','configure']]
       .map(([n,p,cid,conns,sec,c,s])=>`<tr>${td(`<b>${n}</b>`)}${td(`<span class="tag tag-blue">${p}</span>`)}${td(`<span class="mono text-[#6b7587] text-xs break-all">${cid}</span>`)}${td(`<span class="mono">${conns}</span>`)}${td(`<span class="mono text-[#6b7587] text-xs">${sec}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':''}">${s}</span>`)}</tr>`).join('')}
   </tbody></table>`)) +
-  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>The client secret and minted tokens live in a Secrets provider, never inline. A connection references an app and adds its own account + scopes — so one Google app backs many credentialed connections.</span></div>`,'mt-3');
+  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>The client secret and minted tokens live in a Secrets provider, never inline. A connector references an app and adds its own account + scopes — so one Google app backs many credentialed connectors.</span></div>`,'mt-3');
 
 PAGES.config = (tab='users') => {
   const tabs = [['users','Users'],['roles','Roles'],['identity','Identity Providers'],['storage','Storage']];
@@ -384,9 +333,9 @@ PAGES.roles = () => pagehead('Roles','RBAC the Teleport way: each role has <b>al
   card(wrapTable(`<table class="w-full border-collapse">
     <thead><tr>${th('Role')}${th('Manages (rules)')}${th('Calls (tools)')}${th('Session TTL')}${th('Assigned')}</tr></thead><tbody>
     ${[['admin','<span class="tag">* / *</span>','<span class="tag tag-green">all</span>','8h','3'],
-       ['devtools-user','<span class="tag">integration:read</span> <span class="tag">token:*</span>','<span class="tag tag-blue">bundle:devtools</span>','8h','1'],
-       ['data-readonly','<span class="tag">catalog:read</span>','<span class="tag tag-blue">tools:get_*,list_*</span>','12h','1'],
-       ['prod-admin','<span class="tag">connection:*</span>','<span class="tag tag-amber">tag:infra</span>','1h · JIT','1'],
+       ['devtools-user','<span class="tag">connector:read</span> <span class="tag">token:*</span>','<span class="tag tag-blue">tag:code</span>','8h','1'],
+       ['data-readonly','<span class="tag">connector:read</span>','<span class="tag tag-blue">tools:get_*,list_*</span>','12h','1'],
+       ['prod-admin','<span class="tag">connector:*</span>','<span class="tag tag-amber">tag:infra</span>','1h · JIT','1'],
        ['reviewer','<span class="tag">accessRequest:update</span>','<span class="text-[#6b7587]">—</span>','8h','1']]
       .map(([n,manage,call,ttl,asg])=>`<tr class="hover:bg-[#1b212d] cursor-pointer" onclick="go('roledetail')">${td(`<b>${n}</b>`)}${td(manage)}${td(call)}${td(`<span class="mono text-xs">${ttl}</span>`)}${td(`<span class="mono">${asg}</span>`)}</tr>`).join('')}
   </tbody></table>`)) +
@@ -398,15 +347,15 @@ PAGES.roledetail = () => `
   <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
     ${card(cardHd('Allow','<span class="tag tag-green">grants</span>')+`<div class="p-4">
       <div class="font-semibold mb-2 text-[13px]">Manage (rules)</div>
-      ${[['integration, connection, bundle','list, read'],['token','list, create, read, update, delete']].map(([res,verbs])=>card(`<div class="p-3 flex flex-wrap gap-2 items-center"><span class="mono text-xs">${res}</span><span class="ml-auto tag tag-green">${verbs}</span></div>`,'mb-2')).join('')}
+      ${[['connector','list, read'],['token','list, create, read, update, delete']].map(([res,verbs])=>card(`<div class="p-3 flex flex-wrap gap-2 items-center"><span class="mono text-xs">${res}</span><span class="ml-auto tag tag-green">${verbs}</span></div>`,'mb-2')).join('')}
       <div class="font-semibold mb-2 mt-3 text-[13px]">Call (tools)</div>
-      <div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">bundle:devtools → *</span><span class="tag tag-blue">tag:infra → status</span></div>
-      <div class="font-semibold mb-2 mt-3 text-[13px]">Integration labels</div>
+      <div class="flex flex-wrap gap-1.5"><span class="tag tag-blue">tag:code → *</span><span class="tag tag-blue">tag:infra → status</span></div>
+      <div class="font-semibold mb-2 mt-3 text-[13px]">Connector labels</div>
       <div class="flex flex-wrap gap-1.5"><span class="tag">tags: code</span><span class="tag">tags: tickets</span></div>
     </div>`)}
     ${card(cardHd('Deny','<span class="tag tag-red">wins over allow</span>')+`<div class="p-4">
       <div class="flex flex-wrap gap-1.5"><span class="tag tag-red">tools: *delete*</span></div>
-      <p class="text-[#6b7587] text-xs mt-3">Deny is evaluated after every allow across all assigned roles. A denied tool is hidden from catalog search and fails at invoke.</p>
+      <p class="text-[#6b7587] text-xs mt-3">Deny is evaluated after every allow across all assigned roles. A denied tool is hidden from tool search and fails at invoke.</p>
     </div>`)}
   </div>
   ${card(cardHd('Trait templating')+`<div class="p-4"><p class="text-[#6b7587] text-xs mt-0">Roles interpolate the subject's traits so one role serves many users:</p><div class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2.5 mono text-xs text-[#9aa4b5] overflow-x-auto">tools: [{ tag: "{{external.groups}}", tools: ["*"] }]</div></div>`,'mt-4')}
@@ -436,15 +385,15 @@ PAGES.storage = () => pagehead('Storage','Every object is a CRD. The schema is f
       .map(([t,d])=>card(`<div class="p-4"><b>${t}</b><p class="text-[#6b7587] text-xs">${d}</p></div>`)).join('')}
   </div>`;
 
-PAGES.secrets = () => pagehead('Secrets','Where a connection’s credential values live — the default in-cluster store for pasted values, or an external backend.', btnPri('+ Add Provider','toast(\'Add secret provider\')')) + `
+PAGES.secrets = () => pagehead('Secrets','A connector’s credential is a Kubernetes Secret named by convention (<span class="mono">mcphub-&lt;connector&gt;</span>), assumed to exist and rendered at call time — never shown.', btnPri('+ Add Resolver','toast(\'Add secret resolver\')')) + `
   ${card(cardHd('Default store','<span class="tag tag-green">active</span>')+`<div class="p-4 flex flex-wrap items-center gap-3"><span class="flex-1 min-w-0 text-[#9aa4b5]">Pasted values are sealed and rendered in-cluster at call time. Never shown in API responses, status, logs, or this UI.</span><span class="tag tag-blue">in-cluster</span></div>`,'mb-4')}
   ${card(cardHd('External backends')+wrapTable(`<table class="w-full border-collapse">
     ${[['Keychain','keychain','OS keychain on the node','green','enabled'],['Local file','file','Encrypted file on disk','green','enabled'],['1Password','onepassword','Resolve from a 1Password vault','','configure'],['HashiCorp Vault','vault','Resolve from a Vault path','','configure']]
       .map(([n,id,d,c,s])=>`<tr>${td(`<b>${n}</b> <span class="mono text-[#6b7587] text-xs">${id}</span>`)}${td(`<span class="text-[#6b7587] text-xs">${d}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':''}">${s}</span>`)}${td(c==='green'?btn('Configure'):btnPri('Add','toast(\'Add provider\')'))}</tr>`).join('')}
   </table>`),'mb-0')} `;
 
-PAGES.policies = () => pagehead('Global Policies','Org-wide <b>general</b> rules only. Sharing a specific MCP with a person or group lives on that MCP\'s Access panel — not here.', btnPri('+ New Global Rule','toast(\'New rule\')')) +
-  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>This page is for guardrails &amp; defaults that span everything (domain/tag defaults, mandatory approvals, blanket denies). To grant a team access to one MCP, open that MCP → <b>Access &amp; sharing</b>. Global rules can only <b>tighten</b> a local grant, never loosen it.</span></div>`,'mb-4') +
+PAGES.policies = () => pagehead('Global Policies','Org-wide <b>general</b> rules only — guardrails &amp; defaults. Granting a team access to one connector lives in a <b>Role</b>, not here.', btnPri('+ New Global Rule','toast(\'New rule\')')) +
+  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>This page is for guardrails &amp; defaults that span everything (domain/tag defaults, mandatory approvals, blanket denies). Per-team grants live in <b>Roles</b>. Global rules can only <b>tighten</b> a grant, never loosen it.</span></div>`,'mb-4') +
   card(cardHd('Org-wide rules','<span class="tag">guardrails tighten, never loosen</span>')+wrapTable(`<table class="w-full border-collapse">
     <thead><tr>${th('Rule')}${th('Applies to')}${th('Where')}${th('Effect')}</tr></thead><tbody>
     ${[['org-defaults','<span class="tag">domain: example.com</span>','<span class="tag tag-blue">tag: public</span>','<span class="tag tag-green">grant all</span>'],
@@ -453,7 +402,7 @@ PAGES.policies = () => pagehead('Global Policies','Org-wide <b>general</b> rules
       .map(([n,ap,wh,ef])=>`<tr>${td(`<b>${n}</b>`)}${td(ap)}${td(wh)}${td(ef)}</tr>`).join('')}
   </tbody></table>`),'mb-4') +
   card(cardHd('Global approval defaults','<span class="tag">most restrictive wins</span>')+`<div class="p-4">
-    <p class="text-[#6b7587] text-xs mt-0">Default approve/block behavior by tool-name pattern, applied everywhere. Pattern = exact id, trailing wildcard, or <span class="mono">*</span> (e.g. <span class="mono">*_delete_*</span>). <b>Blocked</b> tools are hidden from catalog search and fail at invoke. A specific MCP can be stricter, never looser.</p>
+    <p class="text-[#6b7587] text-xs mt-0">Default approve/block behavior by tool-name pattern, applied everywhere. Pattern = exact id, trailing wildcard, or <span class="mono">*</span> (e.g. <span class="mono">*_delete_*</span>). <b>Blocked</b> tools are hidden from tool search and fail at invoke. A specific connector can be stricter, never looser.</p>
     <div class="flex flex-col sm:flex-row gap-2 mb-3">
       <input value="*_delete_*" class="flex-1 bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 mono outline-none focus:border-[#00c29f]">
       <select class="bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"><option>Require approval</option><option>Always run</option><option>Block</option></select>
@@ -478,7 +427,7 @@ PAGES.approvals = () => pagehead('Approvals','Sensitive tool calls pause here fo
 let issuance='tokenless', curMode='tools';
 PAGES.newtoken = () => `
   <div class="text-[#6b7587] text-[13px] mb-1"><a onclick="go('tokens')" class="cursor-pointer text-[#6b7587]">Tokens</a> / new</div>
-  ${pagehead('Create granular token','Grant a token access to MCPs dynamically — by tools, groups, or tags.')}
+  ${pagehead('Create granular token','Grant a token access to connectors dynamically — by tools, groups, or tags.')}
   <div class="grid gap-4 grid-cols-1 lg:grid-cols-[1.6fr_1fr] items-start">
     ${card(`<div class="p-4">
       <label class="block mb-4"><span class="block font-semibold mb-1.5 text-[13px]">Token name</span>
@@ -515,7 +464,7 @@ PAGES.newtoken = () => `
           <button id="sm-tags" onclick="scopeMode('tags')" class="rounded-md px-3 py-1.5 font-semibold text-[13px] text-[#9aa4b5]">By Tag</button>
         </div>
         <div id="mode-tools">
-          <p class="text-[#6b7587] text-xs mt-0">Pick MCPs, then narrow to specific tools. The token can only call what you check.</p>
+          <p class="text-[#6b7587] text-xs mt-0">Pick connectors, then narrow to specific tools. The token can only call what you check.</p>
           <select class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 mb-3 outline-none focus:border-[#00c29f]"><option>github</option><option>jira</option></select>
           <div class="max-h-56 overflow-y-auto">
             ${chk('github_search_repositories','read · allow','green','allow',true)}
@@ -527,9 +476,9 @@ PAGES.newtoken = () => `
         </div>
         <div id="mode-groups" class="hidden">
           <p class="text-[#6b7587] text-xs mt-0">Access follows IdP groups. The token inherits whatever those groups are allowed.</p>
-          ${chk('sre@example.com','→ bundle:devtools, mcp:internal-deploy','purple','group',true)}
+          ${chk('sre@example.com','→ tag:code, connector:internal-deploy','purple','group',true)}
           ${chk('data@example.com','→ tools: get_*, list_*','purple','group',false)}
-          ${chk('support@example.com','→ bundle:support','purple','group',false)}
+          ${chk('support@example.com','→ tag:support','purple','group',false)}
         </div>
         <div id="mode-tags" class="hidden">
           <p class="text-[#6b7587] text-xs mt-0">Grant every tool whose MCP carries a tag. New MCPs with that tag are included automatically.</p>
@@ -605,8 +554,8 @@ function filterKind(b, kind){
 /* ---------------- command palette ---------------- */
 function paletteItems(){
   const pages = NAV.filter(n=>n.k && !n.href).map(n=>({label:n.t, sub:'Page', go:`go('${n.k}')`}));
-  const ints = INTEGRATIONS.map(i=>({label:i.n, sub:`Integration · ${i.kind} · ${i.runtime}`, go:`go('mcpdetail')`}));
-  const tools = TOOLS.map(t=>({label:t.t, sub:`Tool · ${t.mcp}`, go:`go('catalog')`}));
+  const ints = CONNECTORS.map(i=>({label:i.n, sub:`Connector · ${i.kind} · ${i.runtime}`, go:`go('mcpdetail')`}));
+  const tools = TOOLS.map(t=>({label:t.t, sub:`Tool · ${t.connector}`, go:`go('mcpdetail')`}));
   return [...pages,...ints,...tools];
 }
 function openPalette(){ const m=document.getElementById('palette'); m.classList.remove('hidden'); const i=document.getElementById('palInput'); i.value=''; renderPalette(); i.focus(); }
@@ -667,7 +616,7 @@ function renderSummary(){
   else if(curMode==='groups'){items=checkedLabels('groups');kind='Groups';}
   else{items=checkedLabels('tags');kind='Tags';}
   ss.innerHTML=sumBox(sumRow('Name',`<b class="mono">${name}</b>`)+sumRow('Method','<span class="tag tag-amber">fine-grained token</span>')+sumRow('Subject',subj)+sumRow('Grant by',`<span class="tag tag-blue">${kind}</span>`)+sumRow('Items',`<div class="flex flex-wrap gap-1">${items.map(i=>`<span class="tag">${i}</span>`).join('')||'<span class="text-[#6b7587] text-xs">none</span>'}</div>`)+sumRow('Lifetime',exp));
-  const noun = kind==='Tools'?'call these tools':(kind==='Groups'?'inherit access from these groups':'reach every MCP carrying these tags');
+  const noun = kind==='Tools'?'call these tools':(kind==='Groups'?'inherit access from these groups':'reach every connector carrying these tags');
   plain.innerHTML=`<div class="space-y-1.5"><div>✓ This token can <b>${noun}</b>: ${items.map(i=>`<span class="tag">${i}</span>`).join(' ')||'<span class="text-[#6b7587]">nothing yet</span>'}</div><div>✓ Expires in <b>${exp}</b> and can be revoked any time.</div><div>! Tools marked sensitive still pause for human approval.</div></div>`;
 }
 function generateToken(){

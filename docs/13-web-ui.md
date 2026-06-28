@@ -19,7 +19,7 @@ use the UI; they authenticate tokenless or with tokens.
 A collapsible sidebar (toggle with the button in the top bar) groups pages:
 
 ### Catalog
-- **Dashboard** — cluster overview: connector health, bundles, active tokens, pending
+- **Dashboard** — cluster overview: connector health, active tokens, pending
   approvals, recent activity.
 - **Connectors** — list and detail. Each connector shows its `kind` (mcp / openapi /
   graphql) and `runtime` (container image, **npx** package, **uvx** package, or **remote**
@@ -28,7 +28,6 @@ A collapsible sidebar (toggle with the button in the top bar) groups pages:
   tool list. Click-driven, no YAML.
 - **Tool Catalog** — search every tool across every connector by intent; inspect schemas
   and the effective policy.
-- **Bundles** — the composer: pick tools from connectors, rename them, flag approvals.
 
 ### Access
 - **Tokens** — list and the granular token builder (see below).

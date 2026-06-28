@@ -18,42 +18,40 @@ mcphub login --token mh_svc_…      # use a service token (CI)
 mcphub whoami                      # show resolved subject + groups
 ```
 
-## MCPs
+## Connectors
 
 ```bash
-mcphub mcp list
-mcphub mcp add github --container ghcr.io/github/github-mcp-server:latest \
+mcphub connector list
+# an MCP server (McpConnector)
+mcphub connector add github --container ghcr.io/github/github-mcp-server:latest \
   --transport stdio --expose-prefix github_ \
   --allow "search_*,get_*,list_*" --deny "delete_*" --tag code,prod
-mcphub mcp describe github
-mcphub mcp refresh github          # re-discover tools
-mcphub mcp delete github
+# an OpenAPI service (OpenApiConnector)
+mcphub connector add billing --openapi https://billing.acme.internal/openapi.json
+mcphub connector describe github
+mcphub connector refresh github          # re-discover/recompile tools
+mcphub connector delete github
 ```
 
 ## Secrets
 
 ```bash
 mcphub secret create github-credentials --from-literal=token=$GITHUB_TOKEN
-# referenced by an MCP as {{secret:github-credentials.token}}; value never printed back
+# referenced by a connector as {{secret:github-credentials.token}}; value never printed back
 ```
 
-## Bundles
+## Sharing & policy
 
 ```bash
-mcphub bundle list
-mcphub bundle create devtools \
-  --from github --select "search_*,get_*,list_*" --as "gh_{tool}" \
-  --from jira --select "create_issue,get_issue,search" --as "jira_{tool}" \
-  --require-approval "jira_create_issue"
-```
+# share a connector locally (most grants live here)
+mcphub connector share grafana \
+  --to "group:okta:observability" \
+  --tools "grafana_get_*,grafana_search_*"
 
-## Policies
-
-```bash
+# org-wide guardrail (global Policy)
 mcphub policy list
-mcphub policy create share-grafana \
-  --subject "group:okta:observability" \
-  --grant "mcp:grafana:grafana_get_*,grafana_search_*"
+mcphub policy create sensitive-needs-approval \
+  --where "tag:sensitive" --effect require-approval
 ```
 
 ## Tokens & service accounts
@@ -92,12 +90,11 @@ mcphub mcp serve --transport stdio
 mcphub mcp serve --transport streamable-http --port 8080
 
 # Available tools include:
-# - mcphub_mcp_list: List available MCPs and connections
-# - mcphub_mcp_create: Create a new MCP connection
-# - mcphub_secret_create: Create secrets
-# - mcphub_bundle_create: Create tool bundles
-# - mcphub_tool_call: Call tools through MCPHub
-# - mcphub_policy_manage: Manage access policies
+# - mcphub_connector_list:   List connectors
+# - mcphub_connector_create: Create a connector
+# - mcphub_secret_create:    Create secrets
+# - mcphub_tool_call:        Call tools through MCPHub
+# - mcphub_policy_manage:    Manage access policies
 ```
 
 This allows AI coding assistants (like Claude Code, Cursor, etc.) to connect to MCPHub

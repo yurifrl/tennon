@@ -8,7 +8,7 @@ gateway/security efforts.
 - [nsxbet/mcp-shield](https://github.com/nsxbet/mcp-shield) — the proxy + Kubernetes
   controller foundation, tool prefixing, and Kubernetes-native RBAC model. MCPHub keeps
   this skeleton but replaces the single config file with state-backed `Connector` resources,
-  swaps the CLI-minted JWT for OAuth2 + service tokens, and adds bundles.
+  swaps the CLI-minted JWT for OAuth2 + service tokens.
 - [RhysSullivan/executor](https://github.com/RhysSullivan/executor)
   ([DeepWiki](https://deepwiki.com/RhysSullivan/executor)) — the unified tool catalog,
   source auto-detection, intent-based discovery, and pause/resume (human-in-the-loop)
@@ -34,7 +34,7 @@ gateway/security efforts.
 | Config source | Single YAML file | Local store | State-backed `Connector` CRDs |
 | Auth | CLI JWT via SSO | Shared local creds/OAuth | OAuth2 + service tokens |
 | Authorization | `MCPPermission` CRDs | Policies | `Policy` CRDs |
-| Aggregation | One proxy endpoint | One catalog | Per-MCP URLs **+** bundles |
+| Aggregation | One proxy endpoint | One catalog | Per-MCP URLs |
 | Secrets | Env from config | Keychain | `Connector` `secretKeyRef`, rendered in-cluster |
 | Approvals | — | Pause/resume | Pause/resume on sensitive tools |
 | UI | Roadmap | React dashboard | Vite/React (`mcphub-web`) |

@@ -67,7 +67,7 @@ Reading the diagram top-to-bottom, every arrow points **down**:
 ```
 
 - **`domain` (bottom).** Types and rules: `Connector` (`McpConnector`, `OpenApiConnector`,
-  `GraphqlConnector`), `Bundle`, `Policy`,
+  `GraphqlConnector`), `Policy`,
   `Token`, `ServiceAccount`, `Subject`, authorization decisions. Also the **port
   interfaces** the upper layers must satisfy (`Store`, `Runtime`, `SecretRenderer`,
   `IdentityVerifier`). Imports nothing outward.

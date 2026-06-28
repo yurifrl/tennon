@@ -35,7 +35,7 @@ make deploy IMG=<registry>/mcphub-controller:tag
 # deploy mcphub-web similarly, expose via Ingress/Gateway
 ```
 
-On Kubernetes you get native `kubectl`/GitOps management of `McpConnector`/`Bundle`/`Policy`,
+On Kubernetes you get native `kubectl`/GitOps management of `McpConnector`/`Policy`,
 Kubernetes RBAC for the control plane, and watch-based reconciliation. Container-runtime
 connectors are scheduled as workloads.
 
@@ -51,7 +51,7 @@ connectors are scheduled as workloads.
 
 ## Agents
 
-Agents connect **directly** to `/mcp/<connector>` / `/bundle/<name>` over Streamable HTTP,
+Agents connect **directly** to `/mcp/<connector>` over Streamable HTTP,
 or — for clients that launch a stdio command — via the CLI's MCP server (`mcphub mcp serve
 --transport stdio`). See [Getting Started](getting-started.md#4-connect-an-agent).
 

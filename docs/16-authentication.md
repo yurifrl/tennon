@@ -50,54 +50,46 @@ bound to a subject and scoped to resources × tools × level × expiry. See
 
 ## Connecting a client — one login for every MCP
 
-You don't add upstream MCP servers to your client. You add **one MCPHub URL** — a single
-connection (`/mcp/<name>`) or a whole [bundle](bundles.md) (`/bundle/<name>`) — and MCPHub
+You don't add upstream MCP servers to your client. You add **one MCPHub URL** — the global
+endpoint (`/mcp`) or a single connector (`/mcp/<name>`) — and MCPHub
 proxies the MCPs you're allowed to use behind it.
 
 Authentication is **domain-based** against MCPHub itself: you log in **once** to the MCPHub
-domain and that session covers **every** MCP and bundle you reach through it. There is no
+domain and that session covers **every** connector you reach through it. There is no
 per-MCP login, and no upstream secret in your client config — MCPHub holds the upstream
 credentials and renders them in-cluster (see [Where credentials live](#where-credentials-live)).
 
-### Local MCP via the `mcphub` CLI (recommended)
+### Add the URL — browser login, no token (recommended)
 
-The [`mcphub` CLI](cli.md) embeds a local MCP server that presents MCPHub's proxied endpoints
-to any client that launches a stdio command, forwarding to the proxy. `mcphub login` runs the
-browser/device OIDC flow **once** and caches the token; that single domain login then covers
-every MCP and bundle you're allowed to use.
-
-```bash
-mcphub login            # browser/device flow → cached token (once, for all MCPs)
-```
-
-```jsonc
-{
-  "mcpServers": {
-    "mcphub": {
-      "command": "mcphub",
-      "args": ["mcp", "serve", "--transport", "stdio"],
-      "env": { "MCPHUB_URL": "https://mcphub.example.com" }
-    }
-  }
-}
-```
-
-### Browser login over HTTP (any client)
-
-Clients that speak Streamable HTTP can point straight at an MCPHub URL. On the first call
-MCPHub returns `401` with a `WWW-Authenticate` header, the client discovers MCPHub's
-authorization server, registers itself, and opens the **browser** for login + consent. It
-receives access + refresh tokens scoped to the MCPHub domain — refreshed automatically — so
-you authenticate once, not once per MCP. Stdio-only clients reach the same URL through
-`mcp-remote`:
+Clients that speak MCP over Streamable HTTP point **straight at an MCPHub URL with no token in
+the config**. On the first call MCPHub returns `401` with a `WWW-Authenticate` header; the
+client discovers MCPHub's authorization server, registers itself, and opens the **browser**
+for login + consent. It receives access + refresh tokens scoped to the MCPHub domain —
+refreshed automatically — so you authenticate **once**, not once per MCP. This is the
+Notion-style experience proven in `hack/pocs/mcp-auth/`.
 
 ```json
 {
   "mcpServers": {
     "mcphub": {
+      "type": "http",
+      "url": "https://mcphub.example.com/mcp"
+    }
+  }
+}
+```
+
+`/mcp` is the **global** endpoint (every connector you may use); target a single
+connector with `/mcp/<name>`. Stdio-only clients reach the
+same URL through `mcp-remote` — the same shape as Notion's hosted MCP:
+
+```json
+{
+  "mcpServers": {
+    "mcphub": {
+      "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "mcp-remote", "https://mcphub.example.com/mcp/<name>"],
-      "type": "stdio"
+      "args": ["-y", "mcp-remote", "https://mcphub.example.com/mcp"]
     }
   }
 }
@@ -111,10 +103,32 @@ authorization-code + **PKCE**, discovery via **RFC 9728** (protected-resource me
 **RFC 8414** (authorization-server metadata), **RFC 7591** dynamic client registration (no
 pre-shared secret), and **RFC 8707** resource indicators to bind the token to MCPHub.
 
-### Token header (non-interactive)
+### Or use the `mcphub` CLI bridge
 
-For agents/CI or when a browser isn't available, pass a [minted token](tokens-and-identity.md)
-as a header instead of logging in. The same `add-mcp` helper writes either form:
+Also token-free: [`mcphub login`](cli.md) runs the browser/device OIDC flow **once** and
+caches the token, then the CLI embeds a local MCP server that forwards to the proxy — handy
+for clients that only launch a stdio command and don't implement MCP OAuth.
+
+```bash
+mcphub login            # browser/device flow → cached token (once, for all MCPs)
+```
+
+```json
+{
+  "mcpServers": {
+    "mcphub": {
+      "command": "mcphub",
+      "args": ["mcp", "serve", "--transport", "stdio"]
+    }
+  }
+}
+```
+
+### Non-interactive (CI, agents)
+
+When there's no browser, authenticate the workload with [tokenless trust](tokens-and-identity.md)
+(its platform identity) or pass a [minted token](tokens-and-identity.md) as a header. The
+`add-mcp` helper writes either form:
 
 ```bash
 # Interactive: add by name, resolve the URL, log in via browser
@@ -126,8 +140,8 @@ npx add-mcp https://mcphub.example.com/mcp/<name> \
   --header 'Authorization: Bearer mh_svc_...'
 ```
 
-The URL can target a single MCP (`/mcp/<name>`) or a bundle (`/bundle/<name>`); the token's
-grants still decide which tools resolve.
+The URL can target the global endpoint (`/mcp`) or a single connector (`/mcp/<name>`); the
+token's grants still decide which tools resolve.
 
 ## Presenting credentials to the proxy
 

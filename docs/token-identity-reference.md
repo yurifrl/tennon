@@ -41,7 +41,7 @@ What to copy: the **OAuth 2.0 client-credentials → short-lived scoped token** 
 
 **MCPHub takeaway:** the *issuance* path can mirror this — an org-owned client/service
 account mints short-lived (≈1h) bearer tokens, scoped down at mint time, with **tags** as
-the sharing primitive that maps cleanly onto our existing MCP/bundle tags.
+the sharing primitive that maps cleanly onto our existing MCP tags.
 
 ---
 
@@ -92,7 +92,7 @@ owner`.
 - A token never exceeds the issuing user's own access.
 
 **MCPHub takeaway:** when a token *is* used, its grant must be expressible at this level:
-specific MCPs/bundles/tags **×** specific tools **×** read/call/approve **×** expiry **×**
+specific MCPs/tags **×** specific tools **×** read/call/approve **×** expiry **×**
 owner — which is exactly what the granular-token builder in the mockup and `Policy`
 already aim at. Add **org approval** for sensitive grants and an **enforceable max
 lifetime**.
@@ -134,7 +134,7 @@ preferred path:
 
 ### Tier 1 — Fine-grained service token (fallback, GitHub-style)
 - When tokenless isn't possible, mint a **fine-grained token** with: resources (MCPs /
-  bundles / tags) × tools × level (call / read / require-approval) × **mandatory expiry** ×
+  tags) × tools × level (call / read / require-approval) × **mandatory expiry** ×
   owner.
 - **Tags are the sharing primitive** (Tailscale): grant `tag:observability` and it follows
   new Grafana-tagged MCPs automatically.
@@ -142,7 +142,7 @@ preferred path:
   **revoke = kill all derived tokens immediately**; audit every mint.
 
 ### How R2 (Grafana → Okta team) plays out
-- Owner registers the `grafana` MCP with a `secretKeyRef` credential (never exposed).
+- Owner registers the `grafana` connector with a `secretKeyRef` credential (never exposed).
 - Owner shares via `Policy` to the **Okta group** `observability` (resolved from the
   OIDC `groups` claim — no per-person edits; Okta membership drives access).
 - A teammate authenticates via Okta (user OIDC), or **Hermes authenticates tokenless via

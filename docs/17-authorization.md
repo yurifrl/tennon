@@ -3,8 +3,8 @@
 Authorization decides, for every call, whether the subject may proceed — and whether a human
 must approve first. MCPHub has two planes:
 
-- **Control plane:** who may edit connectors, bundles, policies, roles, tokens. On the
-  Kubernetes backend this is native RBAC; on Postgres/SQLite it is an equivalent role check.
+- **Control plane:** who may edit connectors, policies, roles, tokens. On the Kubernetes backend
+  this is native RBAC; on Postgres/SQLite it is an equivalent role check.
   Coarse, low frequency. It lives in [`Role.rules`](users.md#roles).
 - **Data plane:** who may call which tool, evaluated on **every** proxied request. Fast,
   fine-grained, and the subject of this page.
@@ -77,7 +77,7 @@ approval" is a property of that connector, set by its owner, next to the credent
 scope it relates to. Most day-to-day policy lives here.
 
 ### Role — identity-side packaging
-A [`Role`](users.md#roles) bundles reusable grants and assigns them to subjects or personas.
+A [`Role`](users.md#roles) packages reusable grants and assigns them to subjects or personas.
 It carries **both** planes: control-plane RBAC (`rules`: resources × verbs) and data-plane
 tool grants. Use a Role when you manage access by persona ("devtools-user") rather than
 per-connector. A Role's tool grants compile to the *same rule primitive* as a connector's
@@ -173,7 +173,7 @@ step. Pending approvals have a timeout.
 
 ## Why not a relationship engine (OpenFGA/SpiceDB)?
 
-Those excel when permissions are a deep relationship graph (org → team → bundle → tool with
+Those excel when permissions are a deep relationship graph (org → team → connector → tool with
 overrides). MCPHub's needs are tool globs + group/tag membership + argument conditions, which
 Cedar handles in-process with no extra stateful service — preserving the embeddable SQLite
 story. If relationship inheritance becomes dominant, a relationship backend can be revisited.
@@ -181,5 +181,5 @@ story. If relationship inheritance becomes dominant, a relationship backend can 
 ## Scaling from one person to a team
 
 For a solo user there are typically no groups: rules bind directly to the user or a single
-service account. Adding a team is additive — grant a connector or bundle to a group — with no
+service account. Adding a team is additive — grant a connector to a group — with no
 change to the model. See [Requirements](requirements.md) (design note).

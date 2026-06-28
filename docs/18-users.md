@@ -52,9 +52,9 @@ Locking terminates live sessions and blocks new ones — the emergency stop.
 A **Role** says what a subject may do, on two planes at once:
 
 - **Control plane (`rules`)** — which MCPHub resources you may *manage*
-  (`connector`, `bundle`, `role`, `user`, `token`, …) and with which verbs
+  (`connector`, `role`, `user`, `token`, …) and with which verbs
   (`list`, `read`, `create`, `update`, `delete`, or `*`).
-- **Data plane (`tools`)** — which tools you may *call*, by `bundle`, `tag`, or `connector`,
+- **Data plane (`tools`)** — which tools you may *call*, by `tag` or `connector`,
   each with a tool glob. These grants compile to the **same rule primitive** as a
   [`Policy`](authorization.md#the-rule); a `Role` is just the Teleport-style packaging of
   them that also carries control-plane RBAC.
@@ -67,10 +67,10 @@ spec:
   options: { maxSessionTtl: 8h }
   allow:
     rules:
-      - { resources: [connector, bundle], verbs: [list, read] }
+      - { resources: [connector], verbs: [list, read] }
       - { resources: [token], verbs: [list, create, read, update, delete] }
     tools:
-      - { bundle: devtools, tools: ["*"] }
+      - { connector: github, tools: ["*"] }
       - { tag: infra, tools: ["status"] }
     connectorLabels: { tags: ["code", "tickets"] }
   deny:

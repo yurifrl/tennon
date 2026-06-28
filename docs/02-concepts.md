@@ -16,8 +16,8 @@ clients over the MCP protocol at `/mcp/<name>`. Three CRD kinds specialize it:
   **remote** endpoint reached directly over MCP **Streamable HTTP**. Package (`npx`/`uvx`)
   and stdio servers are wrapped with [Supergateway](runtime-isolation.md) and exposed over
   Streamable HTTP too — SSE is not used. Every locally-run MCP runs in a tightly jailed container.
-- **`OpenApiConnector`** — an OpenAPI/REST service, or a **bundle** of several (e.g. Google =
-  Gmail + Calendar + Drive + Docs). Tools are compiled from the spec and run in-process.
+- **`OpenApiConnector`** — an OpenAPI/REST service, or several grouped into one connector
+  (e.g. Google = Gmail + Calendar + Drive + Docs). Tools are compiled from the spec and run in-process.
 - **`GraphqlConnector`** — a GraphQL endpoint; tools are compiled from introspection and run
   in-process.
 
@@ -58,14 +58,6 @@ A **tool** is a single callable exposed by a connector (e.g.
 `github_create_pull_request`). Tools have input/output JSON schemas and can be flagged
 sensitive (requiring approval). MCPHub indexes every tool from every connector into one
 searchable **catalog**.
-
-## Bundle
-
-A **bundle** composes a curated set of tools from one or more connectors behind a single
-endpoint (e.g. `/bundle/devtools`), optionally renaming tools and flagging which need
-approval. A bundle is its own authorization boundary: grant a team the bundle without
-granting the underlying connectors. Backed by the [`Bundle`](crds.md#bundle)
-resource. See [Bundles](bundles.md).
 
 ## Tag
 
@@ -120,8 +112,6 @@ graph LR
   U[User / Agent / Machine] -->|OIDC or trust or token| P[MCPHub Proxy]
   P -->|policy check| POL[Policy]
   P -->|route| MCP[Connector]
-  P -->|route| B[Bundle]
-  B --> MCP
   MCP -->|rendered secret| EXT[External service]
   P -->|sensitive call| AP[Approval queue]
 ```

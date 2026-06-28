@@ -3,8 +3,7 @@
 ### How is MCPHub different from connecting an MCP server directly?
 
 A direct connection means per-server config in every client, credentials often sitting
-client-side, and no central authorization. MCPHub gives you one endpoint (per-MCP or a
-[bundle](bundles.md)), central [authentication](authentication.md) and
+client-side, and no central authorization. MCPHub gives you one per-connector endpoint, central [authentication](authentication.md) and
 [authorization](authorization.md), credentials that stay server-side, and human approvals on
 sensitive tools. See [The MCP Proxy](proxy.md).
 
@@ -49,12 +48,12 @@ against a trust rule and mints a short-lived credential per call. Nothing to lea
 ### Does it work for just me?
 
 Yes. Solo is the degenerate case: one subject, no groups, SQLite store. Adding a team later is
-additive — you share existing connectors/bundles to a group — with no reconfiguration.
+additive — you share existing connectors to a group — with no reconfiguration.
 
 ### Which agents can connect?
 
 Any MCP-capable client (Claude Code, Cursor, OpenCode). Agents connect **directly** to a
-`/mcp/...` or `/bundle/...` URL over Streamable HTTP, or — for clients that launch a stdio
+`/mcp/...` URL over Streamable HTTP, or — for clients that launch a stdio
 command — via the CLI's MCP server (`mcphub mcp serve`).
 
 ### What happens when a tool needs approval?

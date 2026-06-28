@@ -48,35 +48,35 @@ No users found — first-run bootstrap.
 Open that URL (or run `mcphub open`), then create your first [User](users.md). The token
 expires in 1h or the moment the first user exists. After that, sign in with Google or Okta.
 
-## 2. Add a credentialed MCP (Grafana)
+## 2. Add a credentialed connector (Grafana)
 
-From the web UI: **MCPs → Add MCP**. Paste the Grafana MCP URL; MCPHub detects the transport
-and discovers tools. Add the credential as a secret reference (the value is stored in the
-configured secret backend and never shown again).
+From the web UI: **Connectors → Add connector**. Paste the Grafana MCP server URL; MCPHub
+detects the transport and discovers tools. Add the credential as a secret reference (the
+value is stored in the configured secret backend and never shown again).
 
 From the CLI:
 
 ```bash
 mcphub secret create grafana-creds --from-literal=token=$GRAFANA_TOKEN
-mcphub mcp add grafana \
+mcphub connector add grafana \
   --remote https://grafana.example.com/mcp --transport streamable-http \
   --header "Authorization=Bearer {{secret:grafana-creds.token}}" \
   --expose-prefix grafana_ --tag observability
 ```
 
-The credential lives with the MCP. Anyone you share it with calls Grafana **through the
+The credential lives with the connector. Anyone you share it with calls Grafana **through the
 proxy**; they never receive the token.
 
 ## 3. Share it with an Okta team
 
-Sharing is a **local** decision on the connection — not a separate global policy. From the
-web UI: open the `grafana` MCP → **Access & sharing** → **Share**, pick subject **Group →
+Sharing is a **local** decision on the connector — not a separate global policy. From the
+web UI: open the `grafana` connector → **Access & sharing** → **Share**, pick subject **Group →
 Okta → `observability`**, choose which tools, save.
 
 From the CLI:
 
 ```bash
-mcphub connection share grafana-read \
+mcphub connector share grafana \
   --to "group:okta:observability" \
   --tools "grafana_get_*,grafana_search_*,grafana_list_*"
 ```
@@ -88,48 +88,55 @@ tighten this grant.
 
 ## 4. Connect an agent
 
-Tokenless (preferred, e.g. for CI/Hermes): configure a [trusted relationship](tokens-and-identity.md)
-and let the workload authenticate with its platform identity.
+You add **one MCPHub URL** to your client — **no token in the config**. The first call opens a
+**browser login** (the same experience Notion ships at `https://mcp.notion.com/mcp`): your
+client discovers MCPHub's authorization server, registers itself (RFC 7591), runs the
+authorization-code + PKCE flow against your IdP, and caches the token — reused silently on
+every later call and across **every** MCP behind that URL. MCPHub injects each upstream's own
+credential server-side, so you never hold it. This is the flow proven in
+`hack/pocs/mcp-auth/` and documented in [Authentication](authentication.md).
 
-With a token, via the CLI's MCP server (for clients that launch a stdio command):
+Stdio clients bridge to the URL with `mcp-remote` — same shape as the Notion example:
 
-```jsonc
+```json
 {
   "mcpServers": {
     "mcphub": {
-      "command": "mcphub",
-      "args": ["mcp", "serve", "--transport", "stdio"],
-      "env": {
-        "MCPHUB_URL": "https://mcphub.example.com",
-        "MCPHUB_TOKEN": "mh_svc_…"
-      }
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "mcp-remote", "https://mcphub.example.com/mcp"]
     }
   }
 }
 ```
 
-Or point directly at a proxied endpoint over HTTP:
+`/mcp` is the **global** endpoint — every connector you're allowed to use, behind
+one login. Point at a single connector instead with `/mcp/grafana`.
 
-```jsonc
+Clients that speak MCP over Streamable HTTP natively need just the URL — no headers:
+
+```json
 {
   "mcpServers": {
-    "mcphub-grafana": {
-      "type": "streamable-http",
-      "url": "https://mcphub.example.com/mcp/grafana",
-      "headers": { "Authorization": "Bearer <oidc-or-service-token>" }
+    "mcphub": {
+      "type": "http",
+      "url": "https://mcphub.example.com/mcp"
     }
   }
 }
 ```
+
+**Non-interactive (CI, agents like Hermes):** there's no browser, so use
+[tokenless trust](tokens-and-identity.md) (the workload's platform identity) or pass a minted
+token as an `Authorization` header.
 
 ## 5. Try a tool, see an approval
 
-Call a read tool — it runs immediately. Call a tool flagged sensitive (or one under a
-bundle's approval list) and the execution **pauses**; approve it from **Approvals** in the
+Call a read tool — it runs immediately. Call a tool flagged sensitive and the execution
+**pauses**; approve it from **Approvals** in the
 UI (or `mcphub resume`).
 
 ## Next steps
 
-- Compose a [Bundle](bundles.md) to give a team exactly the tools they need.
 - Mint a [granular token or set up tokenless trust](tokens-and-identity.md).
 - Tune [Authorization](authorization.md).

@@ -22,14 +22,18 @@ but differ in how tools are produced and where they run:
 | **OpenApiConnector** | compiled from an OpenAPI spec | in-process in the server (no Pod) |
 | **GraphqlConnector** | compiled from a GraphQL endpoint | in-process |
 
+How spec connectors are built, authenticated, versioned, and how provider-specific cases like
+Google are handled is covered in [Spec Connectors](spec-connectors.md); the strategy for new
+and special connectors is in [Connector Extensibility](connector-extensibility.md).
+
 **Credentials by convention.** A connector reads a Kubernetes `Secret` named
 `mcphub-<connector-name>`, assumed to already exist; the value is rendered at call time and
 never exposed. Multiple accounts of the same upstream (a work and a personal Google) are
 simply **two connectors** with two Secrets — there is no separate connection object.
 
-**Local sharing** lives on the connector in its `access` block (who may use it, which tools,
-which require approval). Org-wide guardrails live in a global [`Policy`](#policy); see
-[Authorization](authorization.md).
+**Who may use a connector** — and which calls require approval — is **not** part of the
+connector; that is the [Authorization](authorization.md) domain. A connector defines only how
+to reach the upstream and which tools it exposes.
 
 ### McpConnector
 
@@ -57,10 +61,6 @@ spec:
   capabilityProfile: github-jail # container runtime only
   tools:
     exposePrefix: "github_"
-  access:                        # local sharing — who may use THIS connector
-    - subject:
-        group: "okta:dev"
-      tools: ["*"]
   tags: ["code"]
 status:
   phase: Ready                   # Pending | Ready | Degraded | Failed
@@ -99,12 +99,6 @@ spec:
   tools:
     allow: ["get_*", "search_*", "list_*"]     # scope which operations become tools
     exposePrefix: "grafana_"
-  access:
-    - subject:
-        group: "okta:observability"
-      tools: ["*"]
-  approvals:
-    require: ["delete_*"]
   tags: ["observability", "read"]
 status:
   phase: Ready
@@ -165,34 +159,6 @@ paste the `clientId`/secret from the provider's console. The minted access/refre
 written to the connector's Secret and renewed on expiry — they never appear in API responses,
 status, logs, or the UI.
 
-## Bundle
-
-A curated, renamed set of tools from one or more **connectors** (of any kind) behind a single
-endpoint.
-
-```yaml
-apiVersion: mcphub.io/v1alpha1
-kind: Bundle
-metadata: { name: devtools, namespace: mcphub }
-spec:
-  tools:
-    - from: github               # a connector name
-      select: ["search_*", "get_*", "list_*"]
-      as: "gh_{{ .tool }}"
-    - from: jira
-      select: ["create_issue", "get_issue", "search"]
-      as: "jira_{{ .tool }}"
-    - from: internal-deploy
-      select: ["status", "rollback"]
-  approvals:
-    require: ["jira_create_issue", "rollback"]
-status:
-  url: /bundle/devtools
-  exposedTools: 9
-```
-
-See [Bundles](bundles.md).
-
 ## Policy
 
 Org-wide **general** rules only — guardrails and defaults that span many connectors. Per-connector
@@ -235,7 +201,7 @@ Global rules are evaluated together with each connector's local `access` and eve
 all rules are gathered and the **most-restrictive matching effect wins** (`block >
 require-approval > allow`), so a global guardrail can only tighten, never loosen. Subject
 kinds: `User`, `Group`, `EmailDomain`, `Token`, `ServiceAccount`. A rule's `resource` matches
-by `connector`, `tool` (glob), `tag`, or `bundle`, with an optional `when` condition over the
+by `connector`, `tool` (glob), or `tag`, with an optional `when` condition over the
 call's arguments.
 
 ## User
@@ -286,13 +252,13 @@ spec:
   allow:
     # Control-plane RBAC: which MCPHub resources this role may manage, and how.
     rules:
-      - resources: [connector, bundle]
+      - resources: [connector]
         verbs: [list, read]
       - resources: [token]
         verbs: [list, create, read, update, delete]
     # Data-plane: which tools this role may call.
     tools:
-      - bundle: devtools
+      - connector: github
         tools: ["*"]
       - tag: infra
         tools: ["status"]
@@ -307,7 +273,7 @@ spec:
 ```
 
 Verbs are `list, create, read, update, delete` (or `*`); resource kinds include
-`connector, bundle, role, user, token, serviceAccount, policy, secret, capabilityProfile`.
+`connector, role, user, token, serviceAccount, policy, secret, capabilityProfile`.
 Trait templating mirrors Teleport: `{{internal.<trait>}}` for local user traits and
 `{{external.<claim>}}` for SSO claims, interpolated into `tools`, label selectors, etc. The
 data-plane `tools` grants and a [`Policy`](#policy)'s rules **compile to the same rule

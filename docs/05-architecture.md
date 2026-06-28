@@ -7,7 +7,7 @@ desired state is persisted in a **pluggable backing store** (Kubernetes/etcd, Po
 SQLite).
 
 The MCP surface agents connect to **is the proxy itself**: it speaks MCP over
-streamable-HTTP, so any MCP client points straight at a connector or bundle URL. There is no
+streamable-HTTP, so any MCP client points straight at a connector URL. There is no
 separate agent-side package to install.
 
 ## Components at a glance
@@ -15,7 +15,7 @@ separate agent-side package to install.
 | Component | Language | Role |
 |-----------|----------|------|
 | `mcphub` (server) | Go | Controller + management API + MCP proxy + **embedded web UI**. One self-contained binary. |
-| `mcphub` (CLI) | Go | Operator/dev CLI: manage connectors/bundles/policies/tokens, discovery, resume |
+| `mcphub` (CLI) | Go | Operator/dev CLI: manage connectors/policies/tokens, discovery, resume |
 
 The server is a single static binary (also shipped as a container image). The web UI is
 **embedded** into it, so a solo user runs one binary and gets the API, proxy, and UI. Larger
@@ -27,7 +27,7 @@ deployments can optionally run the UI as a separate front tier, but nothing requ
 
 One self-contained process, multiple responsibilities:
 
-- **Controller.** Watches `McpConnector`, `Bundle`, `Policy`, `Token`, and
+- **Controller.** Watches `McpConnector`, `Policy`, `Token`, and
   `ServiceAccount` objects. Reconciles them into runtime state: spawns/tears down MCP
   workloads, resolves and renders referenced secrets, keeps the proxy routing table current.
   On the Kubernetes backend it **installs its own CRDs** on first run (or `mcphub install`),
@@ -35,7 +35,7 @@ One self-contained process, multiple responsibilities:
 - **API.** REST/JSON used by the web UI, CLI, and automation. CRUD over all objects, tool
   discovery, execution control (pause/resume), token/identity management.
 - **MCP proxy.** The data plane and the MCP surface. Each `Connector` is reachable at
-  its own URL; each `Bundle` at an aggregated endpoint. The proxy authenticates the
+  its own URL. The proxy authenticates the
   caller, applies policy, renders the connector's secret, and forwards the call — speaking
   MCP over streamable-HTTP directly to agents.
 - **Web UI.** The Vite/React UI is **embedded** in the binary and served by it (can be
@@ -50,8 +50,8 @@ AI agents. See [CLI](cli.md).
 
 ### The MCP surface (proxy direct, or the CLI's MCP server)
 
-Agents connect **directly to the proxy** over streamable-HTTP at a connector or bundle URL
-(e.g. `/mcp/grafana-read`, `/bundle/devtools`), presenting their token. There is no separate
+Agents connect **directly to the proxy** over streamable-HTTP at a connector URL
+(e.g. `/mcp/grafana-read`), presenting their token. There is no separate
 npm package or sidecar to install.
 
 For clients that can only launch a local **stdio** command (Claude Code, Cursor, etc.), the
@@ -61,7 +61,7 @@ stdio bridge is just the CLI you already have — not a distinct component. See 
 
 ## State model
 
-Every object — `McpConnector`, `Bundle`, `Policy`, `Token`, `ServiceAccount` — is defined as a
+Every object — `McpConnector`, `Policy`, `Token`, `ServiceAccount` — is defined as a
 CRD (schema, validation, versioning). Two layers of state:
 
 1. **Desired state + audit — the configured store.** CRD objects (created via `kubectl`,

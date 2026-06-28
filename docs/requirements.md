@@ -39,8 +39,8 @@ Requirements this implies:
   OAuth2/OIDC providers; group/team membership comes from the provider's claims. (The
   earlier "Google-only" sketch is superseded: it is OIDC, with Okta as a first-class
   provider for team identity and groups.)
-- **Granular sharing.** Sharing can be the whole connector, a subset of its tools, or a
-  bundle — scoped to the group, and optionally gated by approval for sensitive tools. It is
+- **Granular sharing.** Sharing can be the whole connector or a subset of its tools —
+  scoped to the group, and optionally gated by approval for sensitive tools. It is
   authored in the connector's local `access` block; org-wide guardrails live in a global
   [`Policy`](crds.md#policy). See [Authorization](authorization.md).
 

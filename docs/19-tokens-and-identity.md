@@ -48,7 +48,7 @@ When tokenless is not possible, mint a [`Token`](crds.md#token) bound to a subje
 is as granular as a GitHub fine-grained token:
 
 ```
-token = (resources: MCPs / bundles / tags)
+token = (resources: connectors / tags)
       × (tools)
       × (level: call / read / require-approval)
       × (expiry)
@@ -70,7 +70,7 @@ token = (resources: MCPs / bundles / tags)
 
 ## Sharing flow (Grafana → Okta team), end to end
 
-1. Owner registers the `grafana` MCP with a `secretKeyRef` credential (never exposed).
+1. Owner registers the `grafana` connector with a `secretKeyRef` credential (never exposed).
 2. Owner shares via policy to the Okta group `observability`.
 3. A teammate authenticates via Okta (human OIDC), **or** Hermes authenticates tokenless via
    its workload identity.

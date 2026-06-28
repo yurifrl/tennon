@@ -35,7 +35,7 @@ behind them. This page summarizes the security properties and where to verify th
 
 ## Human-in-the-loop
 
-Sensitive tools (by tag, connector setting, or bundle approval list) **pause** for explicit human
+Sensitive tools (by tag or connector setting) **pause** for explicit human
 approval before executing. Approvals are auditable.
 
 ## Audit

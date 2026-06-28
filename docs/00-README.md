@@ -3,7 +3,7 @@
 > The Kubernetes-native control plane and proxy for Model Context Protocol (MCP) servers.
 
 MCPHub lets one person or a whole team register MCP servers, share them safely (credentials
-never leave the platform), compose curated tool **bundles**, and govern every tool call with
+never leave the platform), and govern every tool call with
 fine-grained authorization, short-lived tokens, and human-in-the-loop approvals — all driven
 from a click-through web UI that translates to Kubernetes custom resources behind the scenes.
 
@@ -27,15 +27,16 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 ## Documentation map
 
 ### Concepts & design
-- [Concepts](concepts.md) — MCP, bundle, policy, token, service account, tags.
+- [Concepts](concepts.md) — MCP, policy, token, service account, tags.
 - [Architecture](architecture.md) — the binaries, the proxy, the control loop.
-- [Custom Resources (CRDs)](crds.md) — `McpConnector`, `Bundle`, `Policy`, `Token`, `ServiceAccount`.
+- [Custom Resources (CRDs)](crds.md) — `McpConnector`, `Policy`, `Token`, `ServiceAccount`.
+- [Spec Connectors (OpenAPI & GraphQL)](spec-connectors.md) — compiling tools from a spec; Google via Discovery.
+- [Connector Extensibility](connector-extensibility.md) — how new and provider-specific connectors are supported (design note).
 - [Storage backends](storage.md) — Kubernetes/etcd, Postgres, SQLite.
 
 ### Using MCPHub
 - [Getting Started](getting-started.md)
-- [The MCP Proxy](proxy.md) — per-MCP URLs and bundle endpoints.
-- [Bundles](bundles.md) — composing curated tool sets.
+- [The MCP Proxy](proxy.md) — per-connector URLs.
 - [Web UI](web-ui.md)
 - [CLI](cli.md)
 
