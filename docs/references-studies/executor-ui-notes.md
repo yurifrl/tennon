@@ -1,6 +1,6 @@
 # Executor UI — scrape notes (localhost:4789, v1.5.13 BETA)
 
-Live reference app for MCPHub. Light theme, Instrument Serif page titles, Inter body,
+Live reference app for Tennon. Light theme, Instrument Serif page titles, Inter body,
 JetBrains Mono for code. Token-gated (`auth.json` bearer; login screen: "paste the
 server's token" or `executor open`).
 
@@ -38,7 +38,7 @@ server's token" or `executor open`).
   "Select a tool / Choose from the list to see what it does."
 - `/tools` **Tools** — same master-detail, `Manage policies` button top-right.
 
-## Functional takeaways for MCPHub mock
+## Functional takeaways for Tennon mock
 1. **Secrets = pluggable credential providers** (default store / Keychain / Local file / 1Password) — distinct page, not just per-MCP inline secrets.
 2. **Policies = pattern→action approval model** (Require approval / Always run / Block), most-restrictive-wins, blocked tools hidden from search and fail at invoke.
 3. **Connect-an-agent onboarding**: copyable `npx add-mcp` for Remote HTTP vs stdio, with a resume-approvals advanced toggle.

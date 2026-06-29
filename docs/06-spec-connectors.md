@@ -1,10 +1,10 @@
 # Spec Connectors (OpenAPI & GraphQL)
 
 `OpenApiConnector` and `GraphqlConnector` turn an API **specification** into MCP tools. Unlike
-an [`McpConnector`](crds.md#mcpconnector) — which connects to an MCP server and *discovers*
+an [`TennonConnector`](crds.md#tennonconnector) — which connects to an MCP server and *discovers*
 its tools — a spec connector **compiles** tools from a document and runs **in-process** in the
 controller/proxy. There is no Pod, no container, and nothing to sandbox: a tool call is just
-an outbound HTTP or GraphQL request that MCPHub makes on the caller's behalf.
+an outbound HTTP or GraphQL request that Tennon makes on the caller's behalf.
 
 This page covers how spec connectors are built, authenticated, versioned, and how
 provider-specific cases like **Google** are handled without bespoke code. For the extension
@@ -38,7 +38,7 @@ on identically.
 ## Authentication
 
 A spec connector reads its credential from a Kubernetes `Secret` by convention
-(`mcphub-<connector-name>`) and declares *how* it is applied:
+(`tennon-<connector-name>`) and declares *how* it is applied:
 
 ```yaml
 spec:
@@ -48,7 +48,7 @@ spec:
     format: "Bearer {{ .value }}"
 ```
 
-For OpenAPI, MCPHub can **derive** candidate auth methods from the spec's `securitySchemes`
+For OpenAPI, Tennon can **derive** candidate auth methods from the spec's `securitySchemes`
 and pre-fill them in the UI; if none are found it surfaces "No authentication detected — add a
 method, or connect without auth." OAuth2 upstreams reference a reusable
 [`OAuthApp`](crds.md#oauthapp); the minted token lands in the connector's Secret and is
@@ -57,7 +57,7 @@ refreshed on expiry.
 ## Versioning & refresh
 
 - The fetched spec is **content-hashed** into `status.specHash`; this is the tools cache key.
-- Re-fetching is explicit (`mcphubctl connector refresh <name>`) or, where configured, on the
+- Re-fetching is explicit (`tctl connector refresh <name>`) or, where configured, on the
   next apply. When the hash changes, tools are rebuilt; sharing, credentials, and policy are
   preserved across the rebuild.
 - There is no dependency or package version to pin — the "library" is a remote document, so a
@@ -70,7 +70,7 @@ runtime. Google is an `OpenApiConnector` fed by Google's **API Discovery** docum
 the controller converts to OpenAPI 3.x in-process and then compiles like any other spec:
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: OpenApiConnector
 metadata:
   name: google-gmail
@@ -79,7 +79,7 @@ spec:
   auth:
     in: header
     name: Authorization
-    format: "Bearer {{ .value }}"   # OAuth2 token from an OAuthApp; mcphub-google-gmail Secret
+    format: "Bearer {{ .value }}"   # OAuth2 token from an OAuthApp; tennon-google-gmail Secret
 ```
 
 The only Google-specific *code* is the Discovery→OpenAPI converter. Everything else is data:
@@ -94,7 +94,7 @@ is no connection sub-resource. See [Connectors](crds.md#connectors).
 
 ## Runtime contrast
 
-| | spec connector | `McpConnector` (container) |
+| | spec connector | `TennonConnector` (container) |
 |--|----------------|----------------------------|
 | Tools | compiled from a spec | discovered by connecting |
 | Runs | in-process, no Pod | a jailed container/Pod |

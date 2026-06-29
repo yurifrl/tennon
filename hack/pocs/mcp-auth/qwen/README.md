@@ -23,7 +23,7 @@ Based on the Notion MCP implementation, this POC includes:
 
 1. **Start the server using the task system:**
 ```bash
-cd /Users/yuri/Workdir/Yuri/mcphub/hack/pocs/mcp-auth
+cd /Users/yuri/Workdir/Yuri/tennon/hack/pocs/mcp-auth
 task run:qwen
 ```
 

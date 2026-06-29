@@ -1,6 +1,6 @@
 # Security Model
 
-MCPHub's job is to let people share access to powerful tools without sharing the credentials
+Tennon's job is to let people share access to powerful tools without sharing the credentials
 behind them. This page summarizes the security properties and where to verify them.
 
 ## Credential isolation
@@ -8,12 +8,12 @@ behind them. This page summarizes the security properties and where to verify th
 - A connector's upstream credential is **referenced**, never inlined: `secretKeyRef` to a
   Kubernetes `Secret` (Kubernetes backend) or an encrypted store-native secret
   (Postgres/SQLite). Multiple credentialed variants (e.g. a read connector and a write
-  connector) are separate `McpConnector` objects, each with its own credential.
+  connector) are separate `TennonConnector` objects, each with its own credential.
 - The controller **renders** the secret into the upstream MCP at call time (env vars for
   container MCPs, headers for remote MCPs), inside the cluster boundary.
 - Rendered values **never** appear in API responses, resource status, logs, or the web UI.
 - Callers (teammates, agents, CI) **never receive** the upstream credential. They present
-  their own MCPHub identity; the proxy injects the connector's secret. This is what makes
+  their own Tennon identity; the proxy injects the connector's secret. This is what makes
   "share Grafana with an Okta team" safe — and lets you hand out a read connector widely
   while keeping the write connector's admin credential narrow.
 
@@ -46,9 +46,9 @@ recorded with the acting subject. (Audit sink configuration is deployment-specif
 ## Trust boundaries
 
 - The embedded web UI holds no secrets and no business logic — it calls the API like any
-  other client. The proxy and API surfaces of `mcphub` can be exposed or kept internal
+  other client. The proxy and API surfaces of `tennon` can be exposed or kept internal
   independently.
-- The CLI's MCP server (`mcphubctl mcp serve`) is a thin local stdio bridge; it carries the
+- The CLI's MCP server (`tctl mcp serve`) is a thin local stdio bridge; it carries the
   caller's credential but performs no authorization or secret rendering — those stay in the
   controller.
 

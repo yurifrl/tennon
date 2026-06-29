@@ -10,18 +10,18 @@ How MCP servers are run, transported, and sandboxed. Two principles:
 ## Transport: Streamable HTTP via Supergateway
 
 Many MCP servers only speak **stdio**. To put them on the network as Streamable HTTP without
-writing a bridge per server, MCPHub runs each stdio server behind
+writing a bridge per server, Tennon runs each stdio server behind
 [**Supergateway**](https://github.com/supercorp-ai/supergateway) inside the same container.
 
 - Supergateway wraps the stdio MCP process and exposes it as **Streamable HTTP** at `/mcp`:
   `supergateway --stdio "<server cmd>" --outputTransport streamableHttp --port 8000`.
 - It ships as a container image (`ghcr.io/supercorp-ai/supergateway`, also `:uvx` / `:deno`
   variants), so it drops straight into the MCP pod/container as the entrypoint.
-- MCPHub's proxy connects to that `/mcp` endpoint over Streamable HTTP. Servers that are
+- Tennon's proxy connects to that `/mcp` endpoint over Streamable HTTP. Servers that are
   already remote Streamable HTTP are used directly; **SSE is never used**.
 
 So a container's shape is: `supergateway (Streamable HTTP :8000) → stdio MCP server`, and the
-MCPHub proxy is the only client allowed to reach it.
+Tennon proxy is the only client allowed to reach it.
 
 ## Where MCPs run (Docker locally, Pods in Kubernetes)
 
@@ -31,7 +31,7 @@ container differs:
 - **Local / single host:** MCP servers are **Docker containers** the controller starts and
   stops (gVisor runtime, `--read-only`, `--cap-drop ALL`, seccomp/AppArmor, an egress proxy
   or firewall rules). This is the solo / SQLite-Postgres mode — no cluster.
-- **Kubernetes:** MCP servers are **Pods** created from the `McpConnector` CRD
+- **Kubernetes:** MCP servers are **Pods** created from the `TennonConnector` CRD
   (`runtimeClass` for gVisor/Kata, `securityContext`, NetworkPolicy/Cilium, KubeArmor
   policy). The controller reconciles them like any operator.
 
@@ -41,7 +41,7 @@ locally or to Pod settings + policy CRDs in Kubernetes.
 ## Container isolation ("tightly jailed")
 
 MCP code is untrusted, so containers are hardened in layers. All of this is config-driven per
-`McpConnector`.
+`TennonConnector`.
 
 ### Sandboxed runtime (kernel isolation)
 Run MCP containers under a **sandbox runtime**, selected via a `runtimeClass`:
@@ -73,7 +73,7 @@ with fallbacks where it isn't present:
   domain awareness.
 - **Egress proxy** (Envoy/Squid) — domain allowlist off-cluster or where no CNI policy.
 
-Ingress is locked down to just the MCPHub proxy. How a profile chooses among these (and what
+Ingress is locked down to just the Tennon proxy. How a profile chooses among these (and what
 the status reports) is the [Capability Enforcement design](capability-architecture.md).
 
 ### Filesystem access (what it can see/write)
@@ -84,7 +84,7 @@ the status reports) is the [Capability Enforcement design](capability-architectu
 
 ## Config knobs (per MCP)
 
-Surfaced on the `McpConnector` spec (set via the UI, no YAML required):
+Surfaced on the `TennonConnector` spec (set via the UI, no YAML required):
 
 - `runtime.sandbox`: `gvisor | kata | none` (maps to a `runtimeClass`).
 - `runtime.egress`: `deny` (default) + `allow: [host:port, CIDR]` (compiled to NetworkPolicy

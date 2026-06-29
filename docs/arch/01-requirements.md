@@ -1,4 +1,4 @@
-# MCPHub — Core Requirements
+# Tennon — Core Requirements
 
 Durable, must-not-forget requirements that shape the architecture and authorization model.
 
@@ -28,7 +28,7 @@ The headline use case:
 
 Requirements this implies:
 - **Credential ownership stays with the owner.** The Grafana credential is read by the
-  connector from its `mcphub-grafana` Secret (rendered in-cluster / in the secret store),
+  connector from its `tennon-grafana` Secret (rendered in-cluster / in the secret store),
   never handed to the people it's shared with. Shared users call the connector through the
   proxy; the proxy injects the owner's credential. Members never see or hold it.
 - **Sharing targets an IdP group, not individuals.** I grant access to the Okta team/group
@@ -50,8 +50,8 @@ The owner's credentialed connector plus a `Policy` that shares it with an Okta t
 the connector defines only reachability and tools; sharing lives in the Policy:
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
-kind: McpConnector
+apiVersion: tennon.io/v1alpha1
+kind: TennonConnector
 metadata:
   name: grafana
 spec:
@@ -61,9 +61,9 @@ spec:
   transport: streamable-http
   tools:
     exposePrefix: "grafana_"
-  # credential: the mcphub-grafana Secret, injected by the proxy, never exposed
+  # credential: the tennon-grafana Secret, injected by the proxy, never exposed
 ---
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Policy
 metadata: { name: grafana-observability }
 spec:

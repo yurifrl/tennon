@@ -1,4 +1,4 @@
-# MCPHub Review Comments
+# Tennon Review Comments
 
 Append-only log. Each entry: timestamp, surface, page, the original text, and the comment.
 
@@ -39,7 +39,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ---
 
-## 2026-06-28T13:22:02-03:00 — docs · MCPHub Documentation · /#/?id=why-cedar-for-policies
+## 2026-06-28T13:22:02-03:00 — docs · Tennon Documentation · /#/?id=why-cedar-for-policies
 
 - **state:** done
 - **type:** link
@@ -53,7 +53,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ---
 
-## 2026-06-28T13:24:05-03:00 — docs · MCPHub Documentation · /#/?id=why-cedar-for-policies
+## 2026-06-28T13:24:05-03:00 — docs · Tennon Documentation · /#/?id=why-cedar-for-policies
 
 - **state:** done
 - **type:** content
@@ -67,7 +67,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ---
 
-## 2026-06-28T13:24:31-03:00 — docs · MCPHub Documentation · /#/?id=why-cedar-for-policies
+## 2026-06-28T13:24:31-03:00 — docs · Tennon Documentation · /#/?id=why-cedar-for-policies
 
 - **state:** done
 - **type:** content
@@ -81,7 +81,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ---
 
-## 2026-06-28T14:46:53-03:00 — docs · MCPHub Documentation · /#/
+## 2026-06-28T14:46:53-03:00 — docs · Tennon Documentation · /#/
 
 - **state:** done
 - **type:** 
@@ -89,11 +89,11 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 **Original:**
 
-> apiVersion: mcphub.io/v1alpha1
-> kind: McpConnector
+> apiVersion: tennon.io/v1alpha1
+> kind: TennonConnector
 > metadata:
 >   name: github
->   namespace: mcphub
+>   namespace: tennon
 >   labels:
 >     tags: code
 > spec:
@@ -124,7 +124,7 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 ---
 
-## 2026-06-28T14:47:34-03:00 — docs · MCPHub Documentation · /#/
+## 2026-06-28T14:47:34-03:00 — docs · Tennon Documentation · /#/
 
 - **state:** done
 - **type:** 
@@ -132,11 +132,11 @@ Append-only log. Each entry: timestamp, surface, page, the original text, and th
 
 **Original:**
 
-> apiVersion: mcphub.io/v1alpha1
+> apiVersion: tennon.io/v1alpha1
 > kind: OpenApiConnector
 > metadata:
 >   name: grafana-read
->   namespace: mcphub
+>   namespace: tennon
 >   labels:
 >     tags: observability
 > spec:

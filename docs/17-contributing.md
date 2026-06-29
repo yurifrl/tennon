@@ -1,16 +1,16 @@
 # Contributing
 
-Thanks for your interest in MCPHub. This document covers how to get set up, the conventions
+Thanks for your interest in Tennon. This document covers how to get set up, the conventions
 we follow, and how to propose changes.
 
 ## Repository layout
 
-- `cmd/mcphub` — Go: the **server** binary (controller (Kubebuilder), API, MCP proxy, and the
+- `cmd/tennon` — Go: the **server** binary (controller (Kubebuilder), API, MCP proxy, and the
   embedded Vite/React web UI). One self-contained binary / container image.
-- `cmd/mcphubctl` — Go: the **client** CLI; also ships an embedded **MCP server**
-  (`mcphubctl mcp serve`) as the local stdio bridge for clients that launch a command.
+- `cmd/tctl` — Go: the **client** CLI; also ships an embedded **MCP server**
+  (`tctl mcp serve`) as the local stdio bridge for clients that launch a command.
 - `web/` — Vite/React UI sources, embedded into the server binary at build time.
-- `charts/mcphub` — the Helm chart.
+- `charts/tennon` — the Helm chart.
 - `docs/` — the user guide; `docs/arch/` — the design/research notes.
 
 ## Development setup
@@ -25,7 +25,7 @@ Build, run, and test commands live in the `Makefile` / package scripts; run `mak
 ## Conventions
 
 - **Keep the planes separate.** Authorization, secret rendering, and routing live in the
-  `mcphub` server. The embedded UI and the CLI's MCP bridge are thin and hold no secrets.
+  `tennon` server. The embedded UI and the CLI's MCP bridge are thin and hold no secrets.
 - **CRDs are the source of truth.** UI and CLI actions must go through the API and result in
   CRD objects; do not add side channels that bypass reconciliation.
 - **No YAML in the UI.** The interface is click-driven; it translates to resources.

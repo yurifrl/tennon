@@ -1,6 +1,6 @@
 # Architecture
 
-MCPHub is a Kubernetes control plane for MCP servers. It ships as **self-contained Go
+Tennon is a Kubernetes control plane for MCP servers. It ships as **self-contained Go
 binaries** (no build step, no repo required) and a set of Custom Resource Definitions (CRDs).
 Configuration is **not** a single YAML file — every object is modeled as a CRD, and the
 desired state is persisted in a **pluggable backing store** (Kubernetes/etcd, Postgres, or
@@ -14,8 +14,8 @@ separate agent-side package to install.
 
 | Component | Language | Role |
 |-----------|----------|------|
-| `mcphub` (server) | Go | Controller + management API + MCP proxy + **embedded web UI**. One self-contained binary. |
-| `mcphubctl` (CLI) | Go | Operator/dev CLI: manage connectors/policies/tokens, discovery, resume. Separate binary, same repo. |
+| `tennon` (server) | Go | Controller + management API + MCP proxy + **embedded web UI**. One self-contained binary. |
+| `tctl` (CLI) | Go | Operator/dev CLI: manage connectors/policies/tokens, discovery, resume. Separate binary, same repo. |
 
 The server is a single static binary (also shipped as a container image). The web UI is
 **embedded** into it, so a solo user runs one binary and gets the API, proxy, and UI. Larger
@@ -23,14 +23,14 @@ deployments can optionally run the UI as a separate front tier, but nothing requ
 
 ## Binaries
 
-### `mcphub` server (controller + API + proxy + UI)
+### `tennon` server (controller + API + proxy + UI)
 
 One self-contained process, multiple responsibilities:
 
-- **Controller.** Watches `McpConnector`, `Policy`, `Token`, and
+- **Controller.** Watches `TennonConnector`, `Policy`, `Token`, and
   `ServiceAccount` objects. Reconciles them into runtime state: spawns/tears down MCP
   workloads, resolves and renders referenced secrets, keeps the proxy routing table current.
-  On the Kubernetes backend it **installs its own CRDs** on first run (or `mcphubctl install`),
+  On the Kubernetes backend it **installs its own CRDs** on first run (or `tctl install`),
   so there is no `kubectl apply` of a repo manifest required.
 - **API.** REST/JSON used by the web UI, CLI, and automation. CRUD over all objects, tool
   discovery, execution control (pause/resume), token/identity management.
@@ -41,7 +41,7 @@ One self-contained process, multiple responsibilities:
 - **Web UI.** The Vite/React UI is **embedded** in the binary and served by it (can be
   disabled or fronted separately).
 
-### `mcphubctl` CLI
+### `tctl` CLI
 
 A standalone client over the API (authenticating with an OIDC token or service token). It
 never touches the store directly, so the same validation, policy, and audit apply. The CLI also
@@ -55,13 +55,13 @@ Agents connect **directly to the proxy** over streamable-HTTP at a connector URL
 npm package or sidecar to install.
 
 For clients that can only launch a local **stdio** command (Claude Code, Cursor, etc.), the
-`mcphubctl` **ships its own MCP server**: running `mcphubctl mcp serve` exposes an MCP endpoint
+`tctl` **ships its own MCP server**: running `tctl mcp serve` exposes an MCP endpoint
 locally that bridges to the hub (carrying your token, honoring policy and approvals). So the
 stdio bridge is just the CLI you already have — not a distinct component. See [CLI](cli.md).
 
 ## State model
 
-Every object — `McpConnector`, `Policy`, `Token`, `ServiceAccount` — is defined as a
+Every object — `TennonConnector`, `Policy`, `Token`, `ServiceAccount` — is defined as a
 CRD (schema, validation, versioning). Two layers of state:
 
 1. **Desired state + audit — the configured store.** CRD objects (created via `kubectl`,
@@ -88,7 +88,7 @@ environment:
   controller starts/stops containers, mounts volumes, and applies the sandbox/egress config
   directly to them. This is the mode for a solo user on the SQLite/Postgres backends — no
   cluster needed.
-- **Kubernetes:** MCP servers run as **Pods**, driven by the `McpConnector` CRD.
+- **Kubernetes:** MCP servers run as **Pods**, driven by the `TennonConnector` CRD.
   The controller creates the Pods (with `runtimeClass`, securityContext, NetworkPolicy, and
   KubeArmor policy) and reconciles them like any operator.
 
@@ -101,7 +101,7 @@ container differs (Docker engine vs the kube scheduler).
 There is one **controller** exposing one **API**, and every surface is a client of it:
 
 - the **web UI** is a client (it calls the API),
-- the **CLI** ([`mcphubctl`](cli.md)) is a client,
+- the **CLI** ([`tctl`](cli.md)) is a client,
 - your own automation/CI is a client,
 - on Kubernetes, `kubectl`/GitOps is an additional path that writes the same CRD objects.
 
@@ -113,10 +113,10 @@ validation, policy, and audit are uniform. See [API](api.md).
 
 ```mermaid
 graph TD
-  Browser -->|HTTPS| UI[mcphub server: embedded web UI]
-  UI -->|API| API[mcphub server: API]
-  CLI[mcphubctl CLI] -->|API + token| API
-  Agent[Agent / MCP client] -->|MCP over streamable-HTTP + OIDC/token/trust| Proxy[mcphub server: proxy]
+  Browser -->|HTTPS| UI[tennon server: embedded web UI]
+  UI -->|API| API[tennon server: API]
+  CLI[tctl CLI] -->|API + token| API
+  Agent[Agent / MCP client] -->|MCP over streamable-HTTP + OIDC/token/trust| Proxy[tennon server: proxy]
   API --> Store[(runtime state)]
   Proxy --> Store
   Proxy --> Up[Upstream MCP workloads]

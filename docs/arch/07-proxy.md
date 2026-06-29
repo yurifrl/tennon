@@ -1,19 +1,19 @@
 # The MCP Proxy
 
-The proxy is MCPHub's data plane. Every tool call from an agent flows through it. It exposes
+The proxy is Tennon's data plane. Every tool call from an agent flows through it. It exposes
 two kinds of endpoint and does the same work on each request: authenticate, authorize, render
 the upstream credential, route, and (if needed) pause for approval.
 
 ## Endpoints
 
-- **Per-connector URL** — every [`Connector`](crds.md#mcpconnector) is reachable at
+- **Per-connector URL** — every [`Connector`](crds.md#tennonconnector) is reachable at
   `/mcp/<name>` (e.g. `/mcp/grafana-read`, `/mcp/grafana-write`). The client sees that
   connector's exposed, credentialed tool set. Several connectors can front the same provider
   with different credentials and scopes.
 
 Agents point an MCP client **directly** at a `/mcp/...` URL over Streamable
 HTTP. For clients that can only launch a stdio command, the CLI's MCP server
-(`mcphubctl mcp serve --transport stdio`) presents these endpoints locally and forwards to the
+(`tctl mcp serve --transport stdio`) presents these endpoints locally and forwards to the
 proxy.
 
 ## Per-request flow
@@ -58,7 +58,7 @@ The proxy also exposes a discovery surface so agents can find tools by intent at
 
 ## Comparison with a direct MCP connection
 
-| | Direct MCP | Through MCPHub |
+| | Direct MCP | Through Tennon |
 |--|-----------|----------------|
 | Config | Per server, in client | One URL (per connector) |
 | Auth | Per server, often secrets in client config | Central OIDC / tokenless / token |

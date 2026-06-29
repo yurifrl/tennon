@@ -1,9 +1,9 @@
 # FAQ
 
-### How is MCPHub different from connecting an MCP server directly?
+### How is Tennon different from connecting an MCP server directly?
 
 A direct connection means per-server config in every client, credentials often sitting
-client-side, and no central authorization. MCPHub gives you one per-connector endpoint, central [authentication](authentication.md) and
+client-side, and no central authorization. Tennon gives you one per-connector endpoint, central [authentication](authentication.md) and
 [authorization](authorization.md), credentials that stay server-side, and human approvals on
 sensitive tools. See [The MCP Proxy](proxy.md).
 
@@ -21,7 +21,7 @@ the UI and CRDs stay in sync.
 
 ### Can I share an MCP that needs a credential without giving the credential away?
 
-Yes — this is the core use case. The credential is owned by the [`McpConnector`](crds.md#mcpconnector) and
+Yes — this is the core use case. The credential is owned by the [`TennonConnector`](crds.md#tennonconnector) and
 rendered into the upstream server at call time. People you share with call the MCP through
 the proxy and never receive the secret. See [Getting Started](getting-started.md) and
 [Security](security.md).
@@ -41,7 +41,7 @@ identity) or fine-grained tokens.
 ### What does "tokenless" mean?
 
 The machine proves its identity with a platform-signed document (e.g. a GitHub Actions OIDC
-token or a Kubernetes ServiceAccount token) instead of a stored secret. MCPHub validates it
+token or a Kubernetes ServiceAccount token) instead of a stored secret. Tennon validates it
 against a trust rule and mints a short-lived credential per call. Nothing to leak. See
 [Tokens & Identity](tokens-and-identity.md).
 
@@ -54,12 +54,12 @@ additive — you share existing connectors to a group — with no reconfiguratio
 
 Any MCP-capable client (Claude Code, Cursor, OpenCode). Agents connect **directly** to a
 `/mcp/...` URL over Streamable HTTP, or — for clients that launch a stdio
-command — via the CLI's MCP server (`mcphubctl mcp serve`).
+command — via the CLI's MCP server (`tctl mcp serve`).
 
 ### What happens when a tool needs approval?
 
 The execution pauses and appears in the **Approvals** queue. A human approves or denies it in
-the UI (or via `mcphubctl resume`), then it continues or is rejected. See
+the UI (or via `tctl resume`), then it continues or is rejected. See
 [Authorization → Approvals](authorization.md#approvals).
 
 ### Why Cedar for policies?
@@ -72,4 +72,4 @@ SQLite story. You author [`Policy`](crds.md#policy); Cedar is the compilation ta
 
 ### Is it production ready?
 
-Not yet — MCPHub is pre-1.0 and under active design. See the [Roadmap](roadmap.md).
+Not yet — Tennon is pre-1.0 and under active design. See the [Roadmap](roadmap.md).

@@ -15,7 +15,7 @@ import { mcpAuthRouter, getOAuthProtectedResourceMetadataUrl } from '@modelconte
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
 import { z } from 'zod';
 
-// Load mcphub/.env (Google creds) if not already in the environment, so the server
+// Load tennon/.env (Google creds) if not already in the environment, so the server
 // works no matter how it's launched (task, bare `node server.js`, etc.).
 if (!process.env.GOOGLE_CLIENT_ID) {
   try { process.loadEnvFile(new URL('../../../../.env', import.meta.url)); } catch {}

@@ -1,145 +1,170 @@
-# Graph Report - .  (2026-06-19)
+# Graph Report - .  (2026-06-28)
 
 ## Corpus Check
 - cluster-only mode — file stats not available
 
 ## Summary
-- 266 nodes · 381 edges · 27 communities (20 shown, 7 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 27 edges (avg confidence: 0.8)
+- 234 nodes · 228 edges · 28 communities (19 shown, 9 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
+## Graph Freshness
+- Built from commit: `6453865f`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
+
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Authentication Logic|Authentication Logic]]
-- [[_COMMUNITY_Server Lifecycle Mocks|Server Lifecycle Mocks]]
-- [[_COMMUNITY_Configuration Management|Configuration Management]]
-- [[_COMMUNITY_MCP Proxy Server|MCP Proxy Server]]
-- [[_COMMUNITY_MCP Server Implementation|MCP Server Implementation]]
-- [[_COMMUNITY_Kubernetes Client Factory|Kubernetes Client Factory]]
-- [[_COMMUNITY_E2E Test Utilities|E2E Test Utilities]]
-- [[_COMMUNITY_Kubernetes Runtime Operations|Kubernetes Runtime Operations]]
-- [[_COMMUNITY_Multi-Server Management|Multi-Server Management]]
-- [[_COMMUNITY_Tool Registry|Tool Registry]]
-- [[_COMMUNITY_MCP Server Controller|MCP Server Controller]]
-- [[_COMMUNITY_Custom Resource Definitions|Custom Resource Definitions]]
-- [[_COMMUNITY_Initialization Registry|Initialization Registry]]
-- [[_COMMUNITY_OpenSpec Change Management|OpenSpec Change Management]]
-- [[_COMMUNITY_MCP Core Types|MCP Core Types]]
-- [[_COMMUNITY_Auth Error Handling|Auth Error Handling]]
-- [[_COMMUNITY_Controller Test Suite|Controller Test Suite]]
-- [[_COMMUNITY_E2E Test Suite|E2E Test Suite]]
-- [[_COMMUNITY_Post-Install Script|Post-Install Script]]
-- [[_COMMUNITY_MCP Shield Components|MCP Shield Components]]
-- [[_COMMUNITY_Project Metadata|Project Metadata]]
-- [[_COMMUNITY_OpenSpec Exploration|OpenSpec Exploration]]
+- [[_COMMUNITY_Community 0|Community 0]]
+- [[_COMMUNITY_Community 1|Community 1]]
+- [[_COMMUNITY_Community 2|Community 2]]
+- [[_COMMUNITY_Community 3|Community 3]]
+- [[_COMMUNITY_Community 4|Community 4]]
+- [[_COMMUNITY_Community 5|Community 5]]
+- [[_COMMUNITY_Community 6|Community 6]]
+- [[_COMMUNITY_Community 7|Community 7]]
+- [[_COMMUNITY_Community 8|Community 8]]
+- [[_COMMUNITY_Community 9|Community 9]]
+- [[_COMMUNITY_Community 10|Community 10]]
+- [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
+- [[_COMMUNITY_Community 15|Community 15]]
+- [[_COMMUNITY_Community 16|Community 16]]
+- [[_COMMUNITY_Community 17|Community 17]]
+- [[_COMMUNITY_Community 18|Community 18]]
+- [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
+- [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
+- [[_COMMUNITY_Community 23|Community 23]]
+- [[_COMMUNITY_Community 24|Community 24]]
+- [[_COMMUNITY_Community 25|Community 25]]
+- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 27|Community 27]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `KubernetesRuntime` - 16 edges
-2. `MCPServer` - 13 edges
-3. `Run()` - 11 edges
-4. `MCPServers` - 10 edges
-5. `MockRuntime` - 10 edges
-6. `Call` - 10 edges
-7. `New()` - 9 edges
-8. `Context` - 9 edges
-9. `NewMCPServer()` - 8 edges
-10. `NewProxy()` - 7 edges
+1. `TennonConnector CRD` - 6 edges
+2. `rotateRefresh()` - 5 edges
+3. `Tennon Core Requirements & Architecture` - 5 edges
+4. `issueTokens()` - 4 edges
+5. `scripts` - 4 edges
+6. `MCP Proxy` - 4 edges
+7. `closePop()` - 3 edges
+8. `scripts` - 3 edges
+9. `issueTokens()` - 3 edges
+10. `scripts` - 3 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `OpenSpec Config` --references--> `OPSX: Propose`  [INFERRED]
-  openspec/config.yaml → .claude/commands/opsx/propose.md
-- `StartServer()` --calls--> `NewKubernetesRuntimeFactoryWithKubeconfig()`  [INFERRED]
-  .references/mcpshield/cmd/server/server.go → .references/mcpshield/pkg/runtime/kubernetes.go
-- `main()` --calls--> `New()`  [INFERRED]
-  .references/mcpshield/controller/cmd/main.go → .references/mcpshield/pkg/auth/auth.go
-- `getMetricsOutput()` --calls--> `Run()`  [INFERRED]
-  .references/mcpshield/controller/test/e2e/e2e_test.go → .references/mcpshield/controller/test/utils/utils.go
-- `UncommentCode()` --calls--> `New()`  [INFERRED]
-  .references/mcpshield/controller/test/utils/utils.go → .references/mcpshield/pkg/auth/auth.go
+- `Tennon Server` --references--> `MCP Proxy`  [INFERRED]
+  cmd/tennon/main.go → docs/arch/07-proxy.md
+- `Decoupling Directive` --references--> `Domain Ports`  [EXTRACTED]
+  CLAUDE.md → domain/ports.go
+- `MCP Proxy` --calls--> `Domain Ports`  [EXTRACTED]
+  docs/arch/07-proxy.md → domain/ports.go
+- `tctl CLI` --calls--> `MCP Proxy`  [EXTRACTED]
+  cmd/tctl/main.go → docs/arch/07-proxy.md
+- `Tennon Server` --implements--> `Domain Ports`  [INFERRED]
+  cmd/tennon/main.go → domain/ports.go
 
 ## Import Cycles
 - None detected.
 
-## Communities (27 total, 7 thin omitted)
+## Communities (28 total, 9 thin omitted)
 
-### Community 0 - "Authentication Logic"
-Cohesion: 0.10
-Nodes (13): New(), TestAuth_CompleteFlow(), main(), Interface, Object, Principal, McpServer, McpServerList (+5 more)
+### Community 0 - "Community 0"
+Cohesion: 0.12
+Nodes (20): app, authCodes, authenticate(), clients, handleMcp(), issueAuthCode(), ISSUER, issueTokens() (+12 more)
 
-### Community 1 - "Server Lifecycle Mocks"
-Cohesion: 0.13
-Nodes (14): Call, Controller, TestMCPServerLifecycle(), MockRuntimeFactoryMockRecorder, MockRuntimeMockRecorder, NewMockRuntime(), NewMockRuntimeFactory(), MockRuntime (+6 more)
+### Community 1 - "Community 1"
+Cohesion: 0.12
+Nodes (15): app, authCodes, clients, CLIENTS_FILE, ISSUER, issueTokens(), JWT_SECRET, logins (+7 more)
 
-### Community 2 - "Configuration Management"
-Cohesion: 0.11
-Nodes (13): APIConfig, AuthConfig, LogConfig, MCPServerConfig, APIConfig, AuthConfig, KubernetesConfig, LogConfig (+5 more)
+### Community 2 - "Community 2"
+Cohesion: 0.12
+Nodes (18): Tennon Core Requirements & Architecture, Repository Server Design, Token & Identity Reference, Cedar Policy Engine, Tennon Helm Chart, Decoupling Directive, tctl CLI, Tennon Server (+10 more)
 
-### Community 3 - "MCP Proxy Server"
-Cohesion: 0.15
-Nodes (11): NewProxy(), MCPServers, Config, Config, Context, MCPRequest, MCPResponse, Request (+3 more)
+### Community 3 - "Community 3"
+Cohesion: 0.12
+Nodes (15): dependencies, cors, express, google-auth-library, openid-client, uuid, description, devDependencies (+7 more)
 
-### Community 4 - "MCP Server Implementation"
+### Community 4 - "Community 4"
 Cohesion: 0.14
-Nodes (12): CancelFunc, InitializationRegistry, MCPServer, NewMCPServer(), Context, MCPRequest, MCPResponse, Runtime (+4 more)
+Nodes (13): app, authCodes, clients, ISSUER, issueTokens(), JWT_SECRET, logins, PORT (+5 more)
 
-### Community 5 - "Kubernetes Client Factory"
-Cohesion: 0.22
-Nodes (14): ClientConfig, Clientset, Runtime, RuntimeFactory, T, CreateKubernetesClient(), CreateKubernetesClientWithKubeconfig(), NewKubernetesRuntimeFactory() (+6 more)
-
-### Community 6 - "E2E Test Utilities"
-Cohesion: 0.21
-Nodes (14): Cmd, getMetricsOutput(), tokenRequest, GetNonEmptyLines(), GetProjectDir(), InstallCertManager(), InstallPrometheusOperator(), IsCertManagerCRDsInstalled() (+6 more)
-
-### Community 7 - "Kubernetes Runtime Operations"
-Cohesion: 0.28
-Nodes (4): KubernetesConfig, Config, Context, KubernetesRuntime
-
-### Community 8 - "Multi-Server Management"
+### Community 5 - "Community 5"
 Cohesion: 0.17
-Nodes (7): MCPServers, NewServers(), Config, Context, MCPRequest, MCPResponse, RuntimeFactory
+Nodes (11): dependencies, express, jose, @modelcontextprotocol/sdk, name, private, scripts, dev (+3 more)
 
-### Community 9 - "Tool Registry"
-Cohesion: 0.32
-Nodes (3): NewToolRegistry(), ToolRegistry, RWMutex
+### Community 6 - "Community 6"
+Cohesion: 0.17
+Nodes (11): dependencies, google-auth-library, jose, @modelcontextprotocol/sdk, name, private, scripts, dev (+3 more)
 
-### Community 10 - "MCP Server Controller"
-Cohesion: 0.20
-Nodes (7): Client, McpServerReconciler, Manager, Context, Request, Result, Scheme
+### Community 7 - "Community 7"
+Cohesion: 0.17
+Nodes (11): dependencies, express, jose, @modelcontextprotocol/sdk, name, private, scripts, check (+3 more)
 
-### Community 11 - "Custom Resource Definitions"
-Cohesion: 0.33
-Nodes (7): ListMeta, ObjectMeta, McpServer, McpServerList, McpServerSpec, McpServerStatus, TypeMeta
+### Community 8 - "Community 8"
+Cohesion: 0.17
+Nodes (4): clients, pendingCodes, server, tokens
 
-### Community 12 - "Initialization Registry"
+### Community 9 - "Community 9"
+Cohesion: 0.18
+Nodes (9): app, authCodes, clients, cors, express, refreshTokens, tokens, users (+1 more)
+
+### Community 10 - "Community 10"
+Cohesion: 0.22
+Nodes (8): dependencies, name, scripts, dev, start, test, type, version
+
+### Community 11 - "Community 11"
+Cohesion: 0.25
+Nodes (5): cb, challenge, code, loginId, verifier
+
+### Community 12 - "Community 12"
+Cohesion: 0.25
+Nodes (3): authQ, challenge, verifier
+
+### Community 13 - "Community 13"
+Cohesion: 0.25
+Nodes (4): Bucket, buckets, DOCS, reg
+
+### Community 14 - "Community 14"
+Cohesion: 0.25
+Nodes (5): COMMENTS, HERE, MIME, ROOT, server
+
+### Community 15 - "Community 15"
 Cohesion: 0.43
-Nodes (3): NewInitializationRegistry(), InitializationRegistry, MCPResponse
+Nodes (5): clearHover(), closePop(), context(), openPop(), save()
 
-### Community 13 - "OpenSpec Change Management"
-Cohesion: 0.29
-Nodes (7): openspec-apply-change, openspec-archive-change, OpenSpec Config, openspec-propose, OPSX: Apply, OPSX: Archive, OPSX: Propose
+### Community 16 - "Community 16"
+Cohesion: 0.33
+Nodes (5): claude, glm, gpt, kimi, qwen
 
-### Community 14 - "MCP Core Types"
-Cohesion: 0.40
-Nodes (4): MCPRequest, MCPResponse, Runtime, RuntimeFactory
+### Community 18 - "Community 18"
+Cohesion: 0.67
+Nodes (3): base64url, crypto, runDemo()
+
+### Community 19 - "Community 19"
+Cohesion: 0.67
+Nodes (3): Prior Art & Inspirations, Executor Feature Specification, Executor UI Scrape Notes
 
 ## Knowledge Gaps
-- **60 isolated node(s):** `mcp-shield`, `Config`, `post-install.sh script`, `ObjectMeta`, `ListMeta` (+55 more)
+- **129 isolated node(s):** `DOCS`, `buckets`, `Bucket`, `reg`, `HERE` (+124 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `NewMCPServer()` connect `MCP Server Implementation` to `Multi-Server Management`, `Tool Registry`, `Initialization Registry`, `Server Lifecycle Mocks`?**
-  _High betweenness centrality (0.178) - this node is a cross-community bridge._
-- **Why does `NewServers()` connect `Multi-Server Management` to `MCP Proxy Server`, `MCP Server Implementation`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
-- **Why does `TestMCPServerLifecycle()` connect `Server Lifecycle Mocks` to `MCP Server Implementation`?**
-  _High betweenness centrality (0.086) - this node is a cross-community bridge._
-- **What connects `mcp-shield`, `Config`, `post-install.sh script` to the rest of the system?**
-  _60 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Authentication Logic` be split into smaller, more focused modules?**
-  _Cohesion score 0.09885057471264368 - nodes in this community are weakly interconnected._
-- **Should `Server Lifecycle Mocks` be split into smaller, more focused modules?**
-  _Cohesion score 0.12698412698412698 - nodes in this community are weakly interconnected._
-- **Should `Configuration Management` be split into smaller, more focused modules?**
-  _Cohesion score 0.10952380952380952 - nodes in this community are weakly interconnected._
+- **What connects `DOCS`, `buckets`, `Bucket` to the rest of the system?**
+  _131 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Community 0` be split into smaller, more focused modules?**
+  _Cohesion score 0.11666666666666667 - nodes in this community are weakly interconnected._
+- **Should `Community 1` be split into smaller, more focused modules?**
+  _Cohesion score 0.11695906432748537 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.12418300653594772 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.125 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._

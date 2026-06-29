@@ -1,6 +1,6 @@
 # Project Structure
 
-How the MCPHub codebase is laid out, and the one rule that keeps it honest:
+How the Tennon codebase is laid out, and the one rule that keeps it honest:
 **packages only call down — never up, never sideways.**
 
 This page is organized like every design page in these docs:
@@ -66,7 +66,7 @@ Reading the diagram top-to-bottom, every arrow points **down**:
                        domain                          ← core (no imports out)
 ```
 
-- **`domain` (bottom).** Types and rules: `Connector` (`McpConnector`, `OpenApiConnector`,
+- **`domain` (bottom).** Types and rules: `Connector` (`TennonConnector`, `OpenApiConnector`,
   `GraphqlConnector`), `Policy`,
   `Token`, `ServiceAccount`, `Subject`, authorization decisions. Also the **port
   interfaces** the upper layers must satisfy (`Store`, `Runtime`, `SecretRenderer`,
@@ -104,10 +104,10 @@ This is the inversion that keeps the graph acyclic.
 ### Proposed package tree
 
 ```
-mcphub/
+tennon/
 ├── cmd/
-│   ├── mcphub/            # server binary: controller + api + proxy + ui
-│   └── mcphubctl/         # cli binary (also `mcp serve` bridge)
+│   ├── tennon/            # server binary: controller + api + proxy + ui
+│   └── tctl/         # cli binary (also `mcp serve` bridge)
 ├── domain/               # core types + port interfaces (no outward imports)
 │   ├── connector.go
 │   ├── policy.go

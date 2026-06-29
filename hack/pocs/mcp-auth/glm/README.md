@@ -72,7 +72,7 @@ That's the whole loop: add one URL, log in once in the browser, make authorized
 tool calls. That's the hypothesis the POC set out to prove.
 
 For the real Google login, the Taskfile task auto-loads the Google credentials
-from `mcphub/.env` (`task run:glm` sources `{{.TASKFILE_DIR}}/../../../.env`),
+from `tennon/.env` (`task run:glm` sources `{{.TASKFILE_DIR}}/../../../.env`),
 so just running the task is enough — no manual env vars. To skip Google and
 exercise the rest of the flow, start the stub-IdP variant instead so the browser
 opens a fake `/authorize`:

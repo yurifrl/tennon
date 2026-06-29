@@ -1,0 +1,9 @@
+.git/
+.beads/
+.references/
+graphify-out/
+node_modules/
+hack/pocs/*/node_modules/
+.agents/
+.claude/
+*.lock

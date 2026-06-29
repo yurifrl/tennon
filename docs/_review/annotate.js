@@ -1,4 +1,4 @@
-/* Shared annotation widget for the MCPHub docs + mockup.
+/* Shared annotation widget for the Tennon docs + mockup.
    Adds a "+ Comment" button. In comment mode, hovering highlights a text block;
    click it (or select text first) to attach a comment. Comments POST to /api/comment
    and are appended to comments.md with the original text. */

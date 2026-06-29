@@ -2,12 +2,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "mcphub.fullname" . }}
+  name: {{ include "tennon.fullname" . }}
   labels:
-    {{- include "mcphub.labels" . | nindent 4 }}
+    {{- include "tennon.labels" . | nindent 4 }}
 rules:
   # Own CRD objects: connectors, policies, identities, tokens, capability profiles.
-  - apiGroups: ["mcphub.io"]
+  - apiGroups: ["tennon.io"]
     resources: ["*"]
     verbs: ["*"]
   # Connector workloads + their credentials/wiring.
@@ -39,26 +39,26 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "mcphub.fullname" . }}
+  name: {{ include "tennon.fullname" . }}
   labels:
-    {{- include "mcphub.labels" . | nindent 4 }}
+    {{- include "tennon.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "mcphub.fullname" . }}
+  name: {{ include "tennon.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "mcphub.serviceAccountName" . }}
+    name: {{ include "tennon.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 ---
 # Leader election for replicaCount > 1.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "mcphub.fullname" . }}-leader-election
+  name: {{ include "tennon.fullname" . }}-leader-election
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "mcphub.labels" . | nindent 4 }}
+    {{- include "tennon.labels" . | nindent 4 }}
 rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
@@ -67,16 +67,16 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "mcphub.fullname" . }}-leader-election
+  name: {{ include "tennon.fullname" . }}-leader-election
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "mcphub.labels" . | nindent 4 }}
+    {{- include "tennon.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "mcphub.fullname" . }}-leader-election
+  name: {{ include "tennon.fullname" . }}-leader-election
 subjects:
   - kind: ServiceAccount
-    name: {{ include "mcphub.serviceAccountName" . }}
+    name: {{ include "tennon.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

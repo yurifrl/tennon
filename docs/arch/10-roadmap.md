@@ -7,11 +7,11 @@ catalog, approvals, and the UI. Pre-1.0: APIs and CRD schemas may change.
 The end-to-end goal: **register an MCP, attach it to an agent, and let the agent call its
 tools using the connector's credentials** — no credential ever exposed to the caller.
 
-- `McpConnector` CRD and reconciler (container + remote runtimes).
+- `TennonConnector` CRD and reconciler (container + remote runtimes).
 - State-backed routing (no single config file).
 - Proxy with per-MCP URLs and tool prefixing/allow-deny.
 - Credential rendered from the connector's Secret into the upstream call at request time.
-- **Done when:** applying an `McpConnector` spawns/connects the server and proxies its tools at
+- **Done when:** applying an `TennonConnector` spawns/connects the server and proxies its tools at
   `/mcp/<name>` with the configured prefix, and an agent calls those tools using the
   connector's stored credential.
 

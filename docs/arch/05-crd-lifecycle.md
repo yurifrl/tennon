@@ -1,6 +1,6 @@
 # CRD Lifecycle
 
-How MCPHub's `mcphub.io/v1alpha1` CRDs are **created** (schema authored), **delivered**
+How Tennon's `tennon.io/v1alpha1` CRDs are **created** (schema authored), **delivered**
 (installed), and **updated** (evolved) — without breaking the "one binary, any backend"
 promise. For the schemas themselves, see [Custom Resources (CRDs)](crds.md).
 
@@ -45,7 +45,7 @@ an admission webhook largely redundant with code you must write anyway.
 ### Delivery — install
 
 `kustomize` bundles CRDs + RBAC + Deployment into **one versioned release manifest**
-(`mcphub.yaml`) — the same pattern Cluster API uses for its `components.yaml`. Two install
+(`tennon.yaml`) — the same pattern Cluster API uses for its `components.yaml`. Two install
 paths consume it:
 
 - **Self-install (default, k8s backend).** The controller embeds the generated CRDs and applies
@@ -75,9 +75,9 @@ with the Go types, so the embedded CRDs can never rot.
 
 Cluster API ships a dedicated CLI (`clusterctl`) and an inter-provider "API contract" because
 it orchestrates many independent providers and bootstraps workload clusters from a management
-cluster. MCPHub is a single control plane, so neither applies — `mcphubctl install` / self-install
+cluster. Tennon is a single control plane, so neither applies — `tctl install` / self-install
 is the right-sized equivalent. Argo CD's pure-declarative model (no self-install, controller
-has zero CRD permissions) fits a Kubernetes-only tool; MCPHub also runs off-cluster, so
+has zero CRD permissions) fits a Kubernetes-only tool; Tennon also runs off-cluster, so
 self-install is the better default.
 
 **ponytail:** webhooks stay out of the Helm chart until a real `v1beta1` exists. Everything
@@ -99,11 +99,11 @@ self-installed.
 
 ```bash
 # Self-install (default): just run the controller; it applies its embedded CRDs.
-helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace
+helm install tennon oci://ghcr.io/acme/charts/tennon -n tennon --create-namespace
 
 # GitOps: let the chart manage CRDs declaratively, controller stays out of the schema.
-helm install mcphub oci://ghcr.io/acme/charts/mcphub --set crds.install=true --set crds.keep=true
-# (or apply the generated bundle: kubectl apply -f mcphub.yaml)
+helm install tennon oci://ghcr.io/acme/charts/tennon --set crds.install=true --set crds.keep=true
+# (or apply the generated bundle: kubectl apply -f tennon.yaml)
 ```
 
 Note: the chart currently ships **open-schema** CRDs (`x-kubernetes-preserve-unknown-fields`) as a

@@ -1,15 +1,19 @@
 apiVersion: v2
-name: mcphub
-description: Kubernetes-native control plane and proxy for Model Context Protocol (MCP) servers.
+name: tennon
+description: The joinery for AI integrations. Kubernetes-native control plane for MCP, OpenAPI, and GraphQL connectors.
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
-home: https://github.com/acme/mcphub
+home: https://github.com/yurifrl/tennon
 sources:
-  - https://github.com/acme/mcphub
+  - https://github.com/yurifrl/tennon
 keywords:
+  - ai
+  - integration
   - mcp
+  - openapi
+  - graphql
   - proxy
   - control-plane
 maintainers:
-  - name: MCPHub maintainers
+  - name: Tennon maintainers

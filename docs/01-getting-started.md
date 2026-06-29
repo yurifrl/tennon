@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide gets MCPHub running and walks the flagship flow: register a credentialed MCP and
+This guide gets Tennon running and walks the flagship flow: register a credentialed connector and
 share it with a teammate — without exposing the credential.
 
 ## Prerequisites
@@ -15,11 +15,11 @@ share it with a teammate — without exposing the credential.
 Solo / local (SQLite backend) — one binary, UI embedded:
 
 ```bash
-mcphub \
-  --store=sqlite --store-path=./mcphub.db \
+tennon \
+  --store=sqlite --store-path=./tennon.db \
   --api-addr=:8080 --proxy-addr=:8081 \
   --oidc-issuer=https://accounts.google.com \
-  --oidc-client-id=mcphub
+  --oidc-client-id=tennon
 ```
 
 The API, MCP proxy, and web UI are all served by this one process (the UI on the API port).
@@ -27,15 +27,15 @@ The API, MCP proxy, and web UI are all served by this one process (the UI on the
 Team / cluster (Kubernetes backend) — install with Helm:
 
 ```bash
-helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace \
-  --set oidc.issuer=https://accounts.google.com --set oidc.clientId=mcphub
+helm install tennon oci://ghcr.io/yurifrl/charts/tennon -n tennon --create-namespace \
+  --set oidc.issuer=https://accounts.google.com --set oidc.clientId=tennon
 ```
 
 The controller installs its own CRDs on first start, so there is no separate CRD step. If you
 prefer a single declarative manifest, apply the released bundle instead:
 
 ```bash
-kubectl apply -f https://github.com/acme/mcphub/releases/latest/download/mcphub.yaml
+kubectl apply -f https://github.com/yurifrl/tennon/releases/latest/download/tennon.yaml
 ```
 
 On an empty store the controller logs a one-time **bootstrap admin token** so you can get in
@@ -43,24 +43,24 @@ before any identity provider is wired up:
 
 ```
 No users found — first-run bootstrap.
-  → Open:  http://localhost:8080/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphubctl open
+  → Open:  http://localhost:8080/?token=tn_boot_8f3c1d9a7be240xZ
+  → Or run: tctl open
 ```
 
-Open that URL (or run `mcphubctl open`), then create your first [User](users.md). The token
+Open that URL (or run `tctl open`), then create your first [User](users.md). The token
 expires in 1h or the moment the first user exists. After that, sign in with Google or Okta.
 
 ## 2. Add a credentialed connector (Grafana)
 
-From the web UI: **Connectors → Add connector**. Paste the Grafana MCP server URL; MCPHub
+From the web UI: **Connectors → Add connector**. Paste the Grafana MCP server URL; Tennon
 detects the transport and discovers tools. Add the credential as a secret reference (the
 value is stored in the configured secret backend and never shown again).
 
 From the CLI:
 
 ```bash
-mcphubctl secret create grafana-creds --from-literal=token=$GRAFANA_TOKEN
-mcphubctl connector add grafana \
+tctl secret create grafana-creds --from-literal=token=$GRAFANA_TOKEN
+tctl connector add grafana \
   --remote https://grafana.example.com/mcp --transport streamable-http \
   --header "Authorization=Bearer {{secret:grafana-creds.token}}" \
   --expose-prefix grafana_ --tag observability
@@ -78,7 +78,7 @@ Okta → `observability`**, choose which tools, save.
 From the CLI (sugar that authors a `Policy` rule):
 
 ```bash
-mcphubctl connector share grafana \
+tctl connector share grafana \
   --to "group:okta:observability" \
   --tools "grafana_get_*,grafana_search_*,grafana_list_*"
 ```
@@ -90,11 +90,11 @@ tighten this grant.
 
 ## 4. Connect an agent
 
-You add **one MCPHub URL** to your client — **no token in the config**. The first call opens a
+You add **one Tennon URL** to your client — **no token in the config**. The first call opens a
 **browser login** (the same experience Notion ships at `https://mcp.notion.com/mcp`): your
-client discovers MCPHub's authorization server, registers itself (RFC 7591), runs the
+client discovers Tennon's authorization server, registers itself (RFC 7591), runs the
 authorization-code + PKCE flow against your IdP, and caches the token — reused silently on
-every later call and across **every** MCP behind that URL. MCPHub injects each upstream's own
+every later call and across **every** MCP behind that URL. Tennon injects each upstream's own
 credential server-side, so you never hold it. This is the flow proven in
 `hack/pocs/mcp-auth/` and documented in [Authentication](authentication.md).
 
@@ -103,10 +103,10 @@ Stdio clients bridge to the URL with `mcp-remote` — same shape as the Notion e
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "mcp-remote", "https://mcphub.example.com/mcp"]
+      "args": ["-y", "mcp-remote", "https://tennon.example.com/mcp"]
     }
   }
 }
@@ -120,9 +120,9 @@ Clients that speak MCP over Streamable HTTP natively need just the URL — no he
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "http",
-      "url": "https://mcphub.example.com/mcp"
+      "url": "https://tennon.example.com/mcp"
     }
   }
 }
@@ -136,7 +136,7 @@ token as an `Authorization` header.
 
 Call a read tool — it runs immediately. Call a tool flagged sensitive and the execution
 **pauses**; approve it from **Approvals** in the
-UI (or `mcphubctl resume`).
+UI (or `tctl resume`).
 
 ## Next steps
 

@@ -16,7 +16,7 @@ Share a repository — concretely an **Obsidian vault** (a folder of Markdown wi
 The shape we are going with:
 
 1. **Add a Repo.** A `Repo` is a first-class resource backed by a git remote or a directory
-   — effectively a **shared filesystem volume** that MCPHub manages (clone/pull/commit/push,
+   — effectively a **shared filesystem volume** that Tennon manages (clone/pull/commit/push,
    credential for push, sync schedule/webhook).
 2. **It comes with a driver MCP.** Adding a Repo auto-provisions a **filesystem MCP** or a
    **git MCP** bound to that volume, so you can query and change the repo immediately
@@ -57,7 +57,7 @@ Parse Markdown into a queryable model and index it:
 
 Query surface options:
 
-- **MCP tools** (fits MCPHub best): `vault_search(query)`, `vault_get_note(path)`,
+- **MCP tools** (fits Tennon best): `vault_search(query)`, `vault_get_note(path)`,
   `vault_by_tag(tag)`, `vault_backlinks(path)`, `vault_query({frontmatter, tag, link})`,
   `vault_list_tasks(filter)`.
 - **REST/GraphQL** for non-agent consumers.
@@ -100,16 +100,16 @@ patch ops (2)**. That covers "handle multiple writes" for agents and small teams
 new storage substrate. Add per-note leases (3) as an option, and consider CRDT (4) only if
 real-time co-editing becomes a goal.
 
-## How it maps to MCPHub
+## How it maps to Tennon
 
 - A new kind **`Repo`**: a git remote or directory + push credential reference + sync policy.
   It is the shared filesystem volume and the unit of sharing/authorization.
 - Adding a `Repo` auto-creates its **driver MCP** (`runtime: filesystem | git`) mounted
-  read-write on the volume. This is a normal `McpConnector` whose backing store is the Repo volume.
-- Other MCPs **attach** via a mount declaration, e.g. on the `McpConnector` spec:
+  read-write on the volume. This is a normal `TennonConnector` whose backing store is the Repo volume.
+- Other MCPs **attach** via a mount declaration, e.g. on the `TennonConnector` spec:
   `repoMounts: [{ repo: vault, mode: read|read-write, path: /vault }]`. The controller mounts
   the Repo volume into that MCP's runtime at `path` with the requested mode.
-- Everything inherits MCPHub auth/policy/approval: per-tool policy still applies (e.g.
+- Everything inherits Tennon auth/policy/approval: per-tool policy still applies (e.g.
   read tools allowed, write tools require approval), and a Repo is shared to a group exactly
   like Grafana (R2) — attaching a read-only MCP to a vault shared with an Okta team is the
   natural "let the team query my notes" flow.

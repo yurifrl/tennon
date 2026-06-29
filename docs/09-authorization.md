@@ -1,7 +1,7 @@
 # Authorization
 
 Authorization decides, for every call, whether the subject may proceed — and whether a human
-must approve first. MCPHub has two planes:
+must approve first. Tennon has two planes:
 
 - **Control plane:** who may edit connectors, policies, roles, tokens. On the Kubernetes backend
   this is native RBAC; on Postgres/SQLite it is an equivalent role check.
@@ -140,7 +140,7 @@ when {
 
 ### Ask as an obligation
 
-Cedar decides permit/forbid, not a third state. MCPHub models ask as a Cedar
+Cedar decides permit/forbid, not a third state. Tennon models ask as a Cedar
 **obligation** (advice annotation): the policy permits the call but tags it for approval, and
 the proxy routes it into the approvals queue instead of forwarding.
 
@@ -161,13 +161,13 @@ when { context.args.env == "prod" };
 When a call resolves to ask (or needs auth), the execution **pauses** and
 becomes a first-class object with an id, subject, target tool, and arguments. A human
 approves or denies it from **Approvals** in the [Web UI](web-ui.md), or via the API/CLI
-(`mcphubctl resume --execution-id …`). The same mechanism handles pausing for an upstream auth
+(`tctl resume --execution-id …`). The same mechanism handles pausing for an upstream auth
 step. Pending approvals have a timeout.
 
 ## Why not a relationship engine (OpenFGA/SpiceDB)?
 
 Those excel when permissions are a deep relationship graph (org → team → connector → tool with
-overrides). MCPHub's needs are tool globs + group/tag membership + argument conditions, which
+overrides). Tennon's needs are tool globs + group/tag membership + argument conditions, which
 Cedar handles in-process with no extra stateful service — preserving the embeddable SQLite
 story. If relationship inheritance becomes dominant, a relationship backend can be revisited.
 

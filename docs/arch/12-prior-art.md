@@ -1,18 +1,18 @@
 # Prior Art & Inspirations
 
-MCPHub draws directly from two projects and sits alongside a broader set of MCP
+Tennon draws directly from two projects and sits alongside a broader set of MCP
 gateway/security efforts.
 
 ## Primary inspirations
 
 - [nsxbet/mcp-shield](https://github.com/nsxbet/mcp-shield) — the proxy + Kubernetes
-  controller foundation, tool prefixing, and Kubernetes-native RBAC model. MCPHub keeps
+  controller foundation, tool prefixing, and Kubernetes-native RBAC model. Tennon keeps
   this skeleton but replaces the single config file with state-backed `Connector` resources,
   swaps the CLI-minted JWT for OAuth2 + service tokens.
 - [RhysSullivan/executor](https://github.com/RhysSullivan/executor)
   ([DeepWiki](https://deepwiki.com/RhysSullivan/executor)) — the unified tool catalog,
   source auto-detection, intent-based discovery, and pause/resume (human-in-the-loop)
-  execution model. MCPHub adapts these to a Kubernetes-native, multi-tenant control plane.
+  execution model. Tennon adapts these to a Kubernetes-native, multi-tenant control plane.
 
 ## Related work
 
@@ -27,9 +27,9 @@ gateway/security efforts.
 - [Teleport MCP access RFD](https://github.com/gravitational/teleport/blob/master/rfd/0209-mcp-access.md)
   — access-control design for MCP.
 
-## How MCPHub differs
+## How Tennon differs
 
-| Dimension | MCP Shield | Executor | MCPHub |
+| Dimension | MCP Shield | Executor | Tennon |
 |-----------|-----------|----------|--------|
 | Config source | Single YAML file | Local store | State-backed `Connector` CRDs |
 | Auth | CLI JWT via SSO | Shared local creds/OAuth | OAuth2 + service tokens |
@@ -37,5 +37,5 @@ gateway/security efforts.
 | Aggregation | One proxy endpoint | One catalog | Per-MCP URLs |
 | Secrets | Env from config | Keychain | `Connector` `secretKeyRef`, rendered in-cluster |
 | Approvals | — | Pause/resume | Pause/resume on sensitive tools |
-| UI | Roadmap | React dashboard | Vite/React (embedded in `mcphub`) |
+| UI | Roadmap | React dashboard | Vite/React (embedded in `tennon`) |
 | Runtime | K8s containers | QuickJS sandbox | K8s containers + remote MCPs |

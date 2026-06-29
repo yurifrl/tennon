@@ -1,6 +1,6 @@
 # Authentication
 
-MCPHub separates **humans** (interactive OIDC) from **machines** (tokenless trust, or
+Tennon separates **humans** (interactive OIDC) from **machines** (tokenless trust, or
 short-lived tokens). Identity is always resolved to a **subject** that authorization acts on.
 
 ## Humans — OIDC (Google & Okta)
@@ -11,10 +11,10 @@ pluggable; **Google** and **Okta** are first-class.
 ```mermaid
 sequenceDiagram
   participant User
-  participant Web as mcphub (web UI)
+  participant Web as tennon (web UI)
   participant IdP as Google / Okta
-  participant API as mcphub (API)
-  User->>Web: Open MCPHub
+  participant API as tennon (API)
+  User->>Web: Open Tennon
   Web->>IdP: Authorize (code + PKCE)
   User->>IdP: Authenticate & consent
   IdP->>Web: Code → tokens (identity + groups)
@@ -32,12 +32,12 @@ sequenceDiagram
 
 Configure providers under **Admin → Identity Providers** in the UI; the schema is the
 [`IdentityProvider`](crds.md#identityprovider) CRD, whose `claimsToRoles` mapping turns IdP
-group claims into MCPHub roles.
+group claims into Tennon roles.
 
 ## Machines — tokenless trust (preferred)
 
 Machines (CI, agents, Hermes) should authenticate via a **trusted relationship** instead of
-a stored secret. The workload presents a platform-signed document; MCPHub validates it
+a stored secret. The workload presents a platform-signed document; Tennon validates it
 against a configured trust rule and mints a short-lived credential. Nothing to leak.
 
 The supported trust types (OIDC JWT, Kubernetes ServiceAccount token, SPIFFE/SVID, and cloud
@@ -52,30 +52,30 @@ bound to a subject and scoped to resources × tools × effect × expiry. See
 
 ## Connecting a client — one login for every MCP
 
-You don't add upstream MCP servers to your client. You add **one MCPHub URL** — the global
-endpoint (`/mcp`) or a single connector (`/mcp/<name>`) — and MCPHub
+You don't add upstream MCP servers to your client. You add **one Tennon URL** — the global
+endpoint (`/mcp`) or a single connector (`/mcp/<name>`) — and Tennon
 proxies the MCPs you're allowed to use behind it.
 
-Authentication is **domain-based** against MCPHub itself: you log in **once** to the MCPHub
+Authentication is **domain-based** against Tennon itself: you log in **once** to the Tennon
 domain and that session covers **every** connector you reach through it. There is no
-per-MCP login, and no upstream secret in your client config — MCPHub holds the upstream
+per-MCP login, and no upstream secret in your client config — Tennon holds the upstream
 credentials and renders them in-cluster (see [Where credentials live](#where-credentials-live)).
 
 ### Add the URL — browser login, no token (recommended)
 
-Clients that speak MCP over Streamable HTTP point **straight at an MCPHub URL with no token in
-the config**. On the first call MCPHub returns `401` with a `WWW-Authenticate` header; the
-client discovers MCPHub's authorization server, registers itself, and opens the **browser**
-for login + consent. It receives access + refresh tokens scoped to the MCPHub domain —
+Clients that speak MCP over Streamable HTTP point **straight at an Tennon URL with no token in
+the config**. On the first call Tennon returns `401` with a `WWW-Authenticate` header; the
+client discovers Tennon's authorization server, registers itself, and opens the **browser**
+for login + consent. It receives access + refresh tokens scoped to the Tennon domain —
 refreshed automatically — so you authenticate **once**, not once per MCP. This is the
 Notion-style experience proven in `hack/pocs/mcp-auth/`.
 
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "http",
-      "url": "https://mcphub.example.com/mcp"
+      "url": "https://tennon.example.com/mcp"
     }
   }
 }
@@ -88,38 +88,38 @@ same URL through `mcp-remote` — the same shape as Notion's hosted MCP:
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "mcp-remote", "https://mcphub.example.com/mcp"]
+      "args": ["-y", "mcp-remote", "https://tennon.example.com/mcp"]
     }
   }
 }
 ```
 
-`mcp-remote` caches the MCPHub tokens locally (`~/.mcp-auth`, override with
+`mcp-remote` caches the Tennon tokens locally (`~/.mcp-auth`, override with
 `MCP_REMOTE_CONFIG_DIR`; clear with `rm -rf ~/.mcp-auth`).
 
 This is standard MCP OAuth 2.1 ([Authorization spec, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization)):
 authorization-code + **PKCE**, discovery via **RFC 9728** (protected-resource metadata) and
 **RFC 8414** (authorization-server metadata), **RFC 7591** dynamic client registration (no
-pre-shared secret), and **RFC 8707** resource indicators to bind the token to MCPHub.
+pre-shared secret), and **RFC 8707** resource indicators to bind the token to Tennon.
 
-### Or use the `mcphub` CLI bridge
+### Or use the `tennon` CLI bridge
 
-Also token-free: [`mcphubctl login`](cli.md) runs the browser/device OIDC flow **once** and
+Also token-free: [`tctl login`](cli.md) runs the browser/device OIDC flow **once** and
 caches the token, then the CLI embeds a local MCP server that forwards to the proxy — handy
 for clients that only launch a stdio command and don't implement MCP OAuth.
 
 ```bash
-mcphubctl login            # browser/device flow → cached token (once, for all MCPs)
+tctl login            # browser/device flow → cached token (once, for all MCPs)
 ```
 
 ```json
 {
   "mcpServers": {
-    "mcphub": {
-      "command": "mcphub",
+    "tennon": {
+      "command": "tennon",
       "args": ["mcp", "serve", "--transport", "stdio"]
     }
   }
@@ -134,11 +134,11 @@ When there's no browser, authenticate the workload with [tokenless trust](tokens
 
 ```bash
 # Interactive: add by name, resolve the URL, log in via browser
-npx add-mcp '<mcp name>' --name mcphub
+npx add-mcp '<mcp name>' --name tennon
 
 # Non-interactive: add the URL directly with a bearer token
-npx add-mcp https://mcphub.example.com/mcp/<name> \
-  --transport http --name mcphub \
+npx add-mcp https://tennon.example.com/mcp/<name> \
+  --transport http --name tennon \
   --header 'Authorization: Bearer mh_svc_...'
 ```
 

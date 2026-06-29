@@ -1,6 +1,6 @@
 # Connector Extensibility (design note)
 
-> Design decision for how MCPHub supports new and provider-specific connectors. Captures the
+> Design decision for how Tennon supports new and provider-specific connectors. Captures the
 > options considered and the chosen path. See [Spec Connectors](spec-connectors.md) for the
 > mechanics this builds on.
 

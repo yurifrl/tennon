@@ -1,42 +1,42 @@
 # CLI
 
-`mcphubctl` is a standalone Go binary (separate from the `mcphub` server): a thin client over
+`tctl` is a standalone Go binary (separate from the `tennon` server): a thin client over
 the server API. It authenticates with an OIDC token or a service token and never touches the
 store directly, so the same validation, policy, and audit apply as the UI.
 
 The CLI also **embeds an MCP server** that exposes CLI operations as tools, allowing AI
-agents to interact with MCPHub programmatically through the Model Context Protocol.
+agents to interact with Tennon programmatically through the Model Context Protocol.
 
-Command names below are indicative of the planned surface; run `mcphubctl --help` for the
+Command names below are indicative of the planned surface; run `tctl --help` for the
 authoritative list in your build.
 
 ## Auth
 
 ```bash
-mcphubctl login                       # OIDC device/browser flow → cached token
-mcphubctl login --token mh_svc_…      # use a service token (CI)
-mcphub whoami                      # show resolved subject + groups
+tctl login                       # OIDC device/browser flow → cached token
+tctl login --token mh_svc_…      # use a service token (CI)
+tennon whoami                      # show resolved subject + groups
 ```
 
 ## Connectors
 
 ```bash
-mcphubctl connector list
-# an MCP server (McpConnector)
-mcphubctl connector add github --container ghcr.io/github/github-mcp-server:latest \
+tctl connector list
+# an MCP server (TennonConnector)
+tctl connector add github --container ghcr.io/github/github-mcp-server:latest \
   --transport stdio --expose-prefix github_ \
   --allow "search_*,get_*,list_*" --deny "delete_*" --tag code,prod
 # an OpenAPI service (OpenApiConnector)
-mcphubctl connector add billing --openapi https://billing.acme.internal/openapi.json
-mcphubctl connector describe github
-mcphubctl connector refresh github          # re-discover/recompile tools
-mcphubctl connector delete github
+tctl connector add billing --openapi https://billing.acme.internal/openapi.json
+tctl connector describe github
+tctl connector refresh github          # re-discover/recompile tools
+tctl connector delete github
 ```
 
 ## Secrets
 
 ```bash
-mcphubctl secret create github-credentials --from-literal=token=$GITHUB_TOKEN
+tctl secret create github-credentials --from-literal=token=$GITHUB_TOKEN
 # referenced by a connector as {{secret:github-credentials.token}}; value never printed back
 ```
 
@@ -44,13 +44,13 @@ mcphubctl secret create github-credentials --from-literal=token=$GITHUB_TOKEN
 
 ```bash
 # share a connector (sugar that authors a Policy rule)
-mcphubctl connector share grafana \
+tctl connector share grafana \
   --to "group:okta:observability" \
   --tools "grafana_get_*,grafana_search_*"
 
 # org-wide guardrail (Policy)
-mcphubctl policy list
-mcphubctl policy create sensitive-needs-approval \
+tctl policy list
+tctl policy create sensitive-needs-approval \
   --where "tag:sensitive" --effect ask
 ```
 
@@ -58,46 +58,46 @@ mcphubctl policy create sensitive-needs-approval \
 
 ```bash
 # tokenless (preferred)
-mcphub sa create hermes --owner platform-team \
+tennon sa create hermes --owner platform-team \
   --trust oidc --issuer https://token.actions.githubusercontent.com \
-  --audience mcphub --subject "repo:acme/hermes:ref:refs/heads/main"
+  --audience tennon --subject "repo:acme/hermes:ref:refs/heads/main"
 
 # fine-grained token (fallback)
-mcphubctl token create support-bot --grant "tag:chat" --ttl 1h
-mcphubctl token revoke support-bot
+tctl token create support-bot --grant "tag:chat" --ttl 1h
+tctl token revoke support-bot
 ```
 
 ## Tools: discover, inspect, call, resume
 
 ```bash
-mcphub tools search "open a pull request"
-mcphub tools describe github_create_pull_request
-mcphub call github_get_issue '{"owner":"acme","repo":"app","number":12}'
-mcphubctl resume --execution-id exec_123    # approve/continue a paused call
+tennon tools search "open a pull request"
+tennon tools describe github_create_pull_request
+tennon call github_get_issue '{"owner":"acme","repo":"app","number":12}'
+tctl resume --execution-id exec_123    # approve/continue a paused call
 ```
 
 ## Embedded MCP Server
 
 The CLI embeds an MCP server that exposes CLI operations as tools, enabling AI agents to
-interact with MCPHub programmatically:
+interact with Tennon programmatically:
 
 ```bash
 # Start the embedded MCP server (stdio — for clients that launch a command)
-mcphubctl mcp serve
-mcphubctl mcp serve --transport stdio
+tctl mcp serve
+tctl mcp serve --transport stdio
 
-# Or expose it over Streamable HTTP (SSE is not used anywhere in MCPHub)
-mcphubctl mcp serve --transport streamable-http --port 8080
+# Or expose it over Streamable HTTP (SSE is not used anywhere in Tennon)
+tctl mcp serve --transport streamable-http --port 8080
 
 # Available tools include:
-# - mcphub_connector_list:   List connectors
-# - mcphub_connector_create: Create a connector
-# - mcphub_secret_create:    Create secrets
-# - mcphub_tool_call:        Call tools through MCPHub
-# - mcphub_policy_manage:    Manage access policies
+# - tennon_connector_list:   List connectors
+# - tennon_connector_create: Create a connector
+# - tennon_secret_create:    Create secrets
+# - tennon_tool_call:        Call tools through Tennon
+# - tennon_policy_manage:    Manage access policies
 ```
 
-This allows AI coding assistants (like Claude Code, Cursor, etc.) to connect to MCPHub
+This allows AI coding assistants (like Claude Code, Cursor, etc.) to connect to Tennon
 and perform operations through the MCP protocol without manual CLI usage.
 
 ## Output

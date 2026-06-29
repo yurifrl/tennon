@@ -1,6 +1,6 @@
 # Users & Roles
 
-MCPHub manages **human identity and permissions the way [Teleport](https://goteleport.com)
+Tennon manages **human identity and permissions the way [Teleport](https://goteleport.com)
 does**: every user and role is a resource with the familiar `kind` / `metadata` / `spec`
 envelope, stored in the backend and editable as YAML. There are two condition sets on every
 role — `allow` and `deny` — and **deny always overrides allow**.
@@ -16,10 +16,10 @@ token** and prints it on startup (see [Features §7](features.md)):
 ```
 No users found — first-run bootstrap.
   → Open:  http://localhost:3000/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphubctl open
+  → Or run: tctl open
 ```
 
-Open that URL (or run `mcphubctl open`), then create your real account. The bootstrap token dies
+Open that URL (or run `tctl open`), then create your real account. The bootstrap token dies
 the moment the first `User` exists, or after 1h.
 
 ## Users
@@ -30,19 +30,19 @@ the [`Role`](#roles)s in `spec.roles`. Users come in two flavors:
 - **Local users** — created explicitly and stored in the backend:
 
   ```bash
-  mcphubctl users add joe --roles=devtools-user
+  tctl users add joe --roles=devtools-user
   # or, declaratively:
-  mcphubctl create -f joe.yaml
+  tctl create -f joe.yaml
   ```
 
 - **SSO users** — created automatically at login from an [identity provider](authentication.md).
   Their OIDC claims populate `spec.traits` (notably `groups`), and roles are assigned by the
   identity provider's [`claimsToRoles`](crds.md#identityprovider) mapping.
 
-Either way the user is a real backend object you can `mcphubctl get users`, edit, or **lock**:
+Either way the user is a real backend object you can `tctl get users`, edit, or **lock**:
 
 ```bash
-mcphubctl users lock joe       # instantly cut off access without deleting the account
+tctl users lock joe       # instantly cut off access without deleting the account
 ```
 
 Locking terminates live sessions and blocks new ones — the emergency stop.
@@ -51,7 +51,7 @@ Locking terminates live sessions and blocks new ones — the emergency stop.
 
 A **Role** says what a subject may do, on two planes at once:
 
-- **Control plane (`rules`)** — which MCPHub resources you may *manage*
+- **Control plane (`rules`)** — which Tennon resources you may *manage*
   (`connector`, `role`, `user`, `token`, …) and with which verbs
   (`list`, `read`, `create`, `update`, `delete`, or `*`).
 - **Data plane (`tools`)** — which tools you may *call*, by `tag` or `connector`,
@@ -60,7 +60,7 @@ A **Role** says what a subject may do, on two planes at once:
   them that also carries control-plane RBAC.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Role
 metadata: { name: devtools-user }
 spec:
@@ -135,12 +135,12 @@ Identity is editable from either side; both converge on the backend store:
 
 | Path | How | Best for |
 |------|-----|----------|
-| **CLI / API / UI** | `mcphubctl users add`, `mcphubctl create -f role.yaml`, web UI | day-to-day, ad-hoc |
+| **CLI / API / UI** | `tctl users add`, `tctl create -f role.yaml`, web UI | day-to-day, ad-hoc |
 | **Kubernetes Operator** | apply `User`/`Role` CRs; the controller reconciles them into the store | GitOps / Argo / Terraform |
 
 On the cluster backend the **CRD *is* the resource**: `kubectl apply` a `Role` and it becomes
 a live backend role; delete the CR and the role is removed. A finalizer blocks deletion until
-the backend object is gone, and the `mcphub.io/keep: "true"` annotation keeps the backend
+the backend object is gone, and the `tennon.io/keep: "true"` annotation keeps the backend
 object when you remove the CR. This mirrors Teleport's `resources.teleport.dev` operator,
 where `tctl`/Terraform and the Kubernetes Operator are two front doors to one backend.
 

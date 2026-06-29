@@ -1,9 +1,9 @@
 # Token & Identity — Reference and Ideas
 
-Research notes plus design ideas for MCPHub's token generation and (ideally tokenless)
+Research notes plus design ideas for Tennon's token generation and (ideally tokenless)
 authentication. This is a reference + scratchpad, not a final design. It pulls from
 Tailscale OAuth clients, Teleport's certificate/tokenless model, and GitHub fine-grained
-tokens, then sketches how MCPHub could combine them.
+tokens, then sketches how Tennon could combine them.
 
 Driving requirements (see [requirements.md](requirements.md)):
 - **R1** — works for one person and a whole team.
@@ -39,7 +39,7 @@ What to copy: the **OAuth 2.0 client-credentials → short-lived scoped token** 
   are audit-logged with the client ID as actor. Only long-lived secret is the client
   secret (and even that can be replaced by federated OIDC workload identity).
 
-**MCPHub takeaway:** the *issuance* path can mirror this — an org-owned client/service
+**Tennon takeaway:** the *issuance* path can mirror this — an org-owned client/service
 account mints short-lived (≈1h) bearer tokens, scoped down at mint time, with **tags** as
 the sharing primitive that maps cleanly onto our existing MCP tags.
 
@@ -70,9 +70,9 @@ and access is a **short-lived certificate**, not a stored token.
   (X.509 or JWT); trust domain = the cluster's root of trust; SVIDs verified against the
   trust bundle; issued over a local Workload API after attestation.
 
-**MCPHub takeaway:** the *strong* path is tokenless. A caller (Hermes, a CI agent, a
+**Tennon takeaway:** the *strong* path is tokenless. A caller (Hermes, a CI agent, a
 teammate's tool) presents a **platform-signed document** (OIDC JWT, K8s SA token, cloud
-instance identity) that MCPHub validates against a configured **trust rule**, then issues a
+instance identity) that Tennon validates against a configured **trust rule**, then issues a
 **short-lived credential** for the proxy. No secret is stored on the client.
 
 ---
@@ -91,7 +91,7 @@ owner`.
   public data until an admin approves; org owners can block fine-grained PATs entirely.
 - A token never exceeds the issuing user's own access.
 
-**MCPHub takeaway:** when a token *is* used, its grant must be expressible at this level:
+**Tennon takeaway:** when a token *is* used, its grant must be expressible at this level:
 specific MCPs/tags **×** specific tools **×** read/call/approve **×** expiry **×**
 owner — which is exactly what the granular-token builder in the mockup and `Policy`
 already aim at. Add **org approval** for sensitive grants and an **enforceable max

@@ -1,6 +1,6 @@
 # Technologies
 
-The technology pool MCPHub is built from, why each is in, and how it shows up at runtime.
+The technology pool Tennon is built from, why each is in, and how it shows up at runtime.
 Organized like the other design pages:
 
 - **Spec** — what we need from the stack (the constraints a choice must satisfy).
@@ -18,7 +18,7 @@ Constraints every technology choice is measured against:
 2. **Same model solo → team.** Must run on SQLite for one person and Kubernetes/Postgres for
    a team without changing the object model (see [Storage backends](storage.md)).
 3. **CRDs are the source of truth.** Objects are Kubernetes custom resources under
-   `mcphub.io/v1alpha1`; the operator framework must own schema, validation, and
+   `tennon.io/v1alpha1`; the operator framework must own schema, validation, and
    reconciliation.
 4. **Wiring at one composition root.** Dependencies are injected, not constructed ad hoc, to
    keep the [call-down-only rule](project-structure.md#the-dependency-rule) enforceable.
@@ -102,10 +102,10 @@ Humans never hold a long-lived secret. Login is OIDC against Okta:
 ```mermaid
 sequenceDiagram
   participant User
-  participant Web as mcphub (web UI)
+  participant Web as tennon (web UI)
   participant Okta
-  participant API as mcphub (API)
-  User->>Web: Open MCPHub
+  participant API as tennon (API)
+  User->>Web: Open Tennon
   Web->>Okta: Authorize (response_type=code, PKCE challenge)
   User->>Okta: Authenticate + consent
   Okta->>Web: code → exchange → id_token + access_token (+ groups claim)
@@ -129,7 +129,7 @@ Machines authenticate via a [`ServiceAccount`](crds.md#serviceaccount). Tokenles
 preferred; a fine-grained token is the fallback.
 
 **Tier 0 — tokenless (preferred).** The ServiceAccount carries a *trust rule*, not a secret.
-At call time the workload presents a platform-signed document and MCPHub mints a short-lived
+At call time the workload presents a platform-signed document and Tennon mints a short-lived
 (~1h, non-renewable) credential:
 
 - **Kubernetes ServiceAccount token** — an audience-bound projected token, validated via the

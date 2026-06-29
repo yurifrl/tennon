@@ -1,7 +1,7 @@
 # Custom Resources (CRDs)
 
-Every MCPHub object is a Kubernetes custom resource under the API group
-`mcphub.io/v1alpha1`. **You never have to write this YAML** — the web UI and CLI translate
+Every Tennon object is a Kubernetes custom resource under the API group
+`tennon.io/v1alpha1`. **You never have to write this YAML** — the web UI and CLI translate
 clicks and commands into these resources. The schemas are shown here for reference,
 GitOps, and automation.
 
@@ -13,7 +13,7 @@ the same objects are persisted as rows and behave identically.
 
 ## Connectors
 
-A **connector** is a registered upstream that MCPHub credentials, runs, and turns into a set
+A **connector** is a registered upstream that Tennon credentials, runs, and turns into a set
 of callable tools. It is the credentialed, addressable unit, and whatever its type it is
 served to clients over the **MCP protocol** at `/mcp/<name>`. Three concrete kinds specialize
 the concept; they share the `connectors` category (`kubectl get connectors` lists them all)
@@ -21,7 +21,7 @@ but differ in how tools are produced and where they run:
 
 | Kind | Tools come from | Runs |
 |------|-----------------|------|
-| **McpConnector** | discovered by connecting to an MCP server | a container / stdio process / remote endpoint |
+| **TennonConnector** | discovered by connecting to an MCP server | a container / stdio process / remote endpoint |
 | **OpenApiConnector** | compiled from an OpenAPI spec | in-process in the server (no Pod) |
 | **GraphqlConnector** | compiled from a GraphQL endpoint | in-process |
 
@@ -30,7 +30,7 @@ Google are handled is covered in [Spec Connectors](spec-connectors.md); the stra
 and special connectors is in [Connector Extensibility](connector-extensibility.md).
 
 **Credentials by convention.** A connector reads a Kubernetes `Secret` named
-`mcphub-<connector-name>`, assumed to already exist; the value is rendered at call time and
+`tennon-<connector-name>`, assumed to already exist; the value is rendered at call time and
 never exposed. Multiple accounts of the same upstream (a work and a personal Google) are
 simply **two connectors** with two Secrets — there is no separate connection object.
 
@@ -39,17 +39,17 @@ connector. A connector defines only how to reach the upstream and which tools it
 authorization lives entirely in org-wide [`Policy`](#policy) and identity-side
 [`Role`](#role) grants, evaluated by [Authorization](authorization.md).
 
-### McpConnector
+### TennonConnector
 
 An upstream MCP server. `spec.runtime` selects how it runs; `spec.scaling` applies only to
 the container runtime.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
-kind: McpConnector
+apiVersion: tennon.io/v1alpha1
+kind: TennonConnector
 metadata:
   name: github
-  namespace: mcphub
+  namespace: tennon
   labels:
     tags: code
 spec:
@@ -80,7 +80,7 @@ Notes:
 - `scaling` is `replicas` (passthrough to the Deployment) or `autoscale` (the controller
   emits a native `HorizontalPodAutoscaler`). There is no scale-to-zero. Omitted ⇒
   `replicas: 1`.
-- The credential is the `mcphub-github` Secret, rendered into request headers (remote) or
+- The credential is the `tennon-github` Secret, rendered into request headers (remote) or
   `env` (container) at call time, never exposed to callers.
 
 ### OpenApiConnector
@@ -89,11 +89,11 @@ Tools compiled from an OpenAPI spec; the connector runs in-process (no Pod). The
 fetches the spec, hashes it (`status.specHash`), and compiles each operation into a tool.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: OpenApiConnector
 metadata:
   name: grafana-read
-  namespace: mcphub
+  namespace: tennon
   labels:
     tags: observability
 spec:
@@ -120,11 +120,11 @@ write access narrowly.
 Tools compiled from a GraphQL endpoint via introspection; runs in-process.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: GraphqlConnector
 metadata:
   name: linear
-  namespace: mcphub
+  namespace: tennon
 spec:
   description: "Linear issues, projects, and cycles."
   endpoint: https://api.linear.app/graphql
@@ -143,9 +143,9 @@ the same OAuth endpoint — you register Google once, then credential personal a
 connectors against it. The client secret is a [Secrets](#secrets) reference, never inline.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: OAuthApp
-metadata: { name: google-workspace, namespace: mcphub }
+metadata: { name: google-workspace, namespace: tennon }
 spec:
   authorizationUrl: https://accounts.google.com/o/oauth2/v2/auth
   tokenUrl: https://oauth2.googleapis.com/token
@@ -158,7 +158,7 @@ status:
 ```
 
 When an upstream's OAuth endpoint supports dynamic client registration (RFC 7591) or
-publishes metadata (RFC 8414 / RFC 9728), MCPHub can register the app for you; otherwise you
+publishes metadata (RFC 8414 / RFC 9728), Tennon can register the app for you; otherwise you
 paste the `clientId`/secret from the provider's console. The minted access/refresh tokens are
 written to the connector's Secret and renewed on expiry — they never appear in API responses,
 status, logs, or the UI.
@@ -175,7 +175,7 @@ primitive: `subject × resource × when? × effect`. See
 [Authorization → The rule](authorization.md#the-rule).
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Policy
 metadata: { name: org-guardrails }
 spec:
@@ -212,13 +212,13 @@ call's arguments.
 ## IdentityProvider
 
 How **humans log in**. An `IdentityProvider` registers an external OIDC provider (Google,
-Okta, …) and maps its claims to MCPHub identity: it is the Teleport-style *auth connector*.
+Okta, …) and maps its claims to Tennon identity: it is the Teleport-style *auth connector*.
 Don't confuse it with [`OAuthApp`](#oauthapp) — an `OAuthApp` is an **upstream** OAuth client
 used to credential *connectors*, while an `IdentityProvider` is how *users* authenticate **to**
-MCPHub. Configure these under **Admin → Identity Providers** in the UI.
+Tennon. Configure these under **Admin → Identity Providers** in the UI.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: IdentityProvider
 metadata: { name: okta }          # referenced by Policy `provider:`, User `identities[].provider`,
                                   # and the group-id prefix (e.g. okta:observability)
@@ -232,7 +232,7 @@ spec:
   claims:
     username: email                # OIDC claim used as the User name / subject
     groups: groups                 # OIDC claim carrying group membership
-  claimsToRoles:                   # map claim values → MCPHub roles (Teleport's claims_to_roles)
+  claimsToRoles:                   # map claim values → Tennon roles (Teleport's claims_to_roles)
     - { claim: groups, value: "observability",   roles: ["devtools-user"] }
     - { claim: groups, value: "sre-*",           roles: ["devtools-user"] }   # glob match on the claim value
     - { claim: groups, value: "platform-admins", roles: ["admin"] }
@@ -241,7 +241,7 @@ status:
   lastLogin: "2026-06-21T09:00:00Z"
 ```
 
-At login MCPHub validates the OIDC token, reads `claims.username` and `claims.groups`, and
+At login Tennon validates the OIDC token, reads `claims.username` and `claims.groups`, and
 creates (or updates) the [`User`](#user): the username becomes `metadata.name`, the claims
 populate `spec.traits`, and `claimsToRoles` assigns `spec.roles`. Each `claimsToRoles.value`
 matches a claim value exactly or by glob (`sre-*`); the first matching entry's roles apply.
@@ -254,13 +254,13 @@ subject (`{ kind: Group, provider: okta, match: observability }`). See
 ## User
 
 A human identity. Mirrors Teleport's model: users are stored in the backend **and** fully
-expressible as resources. **Local users** are created with `mcphubctl users add` or by applying
+expressible as resources. **Local users** are created with `tctl users add` or by applying
 the YAML; **SSO users** are created at login from an [identity provider](authentication.md) —
 their OIDC claims populate `spec.traits` and an entry under `spec.identities`. A user has no
 permissions of its own; everything comes from the [`Role`](#role)s in `spec.roles`.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: User
 metadata: { name: joe }
 spec:
@@ -276,7 +276,7 @@ status:
   lastLogin: "2026-06-21T09:00:00Z"
 ```
 
-Locking a user (`status.locked: true`, set via `mcphubctl users lock joe`) terminates live
+Locking a user (`status.locked: true`, set via `tctl users lock joe`) terminates live
 sessions and blocks new ones without deleting the account. Machine identities use
 [`ServiceAccount`](#serviceaccount)/[`Token`](#token) instead of `User`.
 
@@ -289,7 +289,7 @@ most-restrictive-wins order, not a separate algorithm. Roles are assigned to `Us
 `ServiceAccount`s, and SSO groups.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Role
 metadata: { name: devtools-user }
 spec:
@@ -297,7 +297,7 @@ spec:
     maxSessionTtl: 8h
     lock: false                   # strict lock wins across roles
   allow:
-    # Control-plane RBAC: which MCPHub resources this role may manage, and how.
+    # Control-plane RBAC: which Tennon resources this role may manage, and how.
     rules:
       - resources: [connector]
         verbs: [list, read]
@@ -347,9 +347,9 @@ provide the basic flow.
 
 ### Managing users & roles: two ways
 
-The CRD *is* the resource: editing via `mcphub`/API/UI and applying `User`/`Role` CRs with the
+The CRD *is* the resource: editing via `tennon`/API/UI and applying `User`/`Role` CRs with the
 Kubernetes Operator converge on one backend store. The two paths, finalizer, and
-`mcphub.io/keep` retention are covered in
+`tennon.io/keep` retention are covered in
 [Users & Roles → Two ways to manage](users.md#two-ways-to-manage-just-like-teleport).
 
 ## ServiceAccount
@@ -357,7 +357,7 @@ Kubernetes Operator converge on one backend store. The two paths, finalizer, and
 An org-owned machine identity. Prefer a trusted relationship over a stored secret.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: ServiceAccount
 metadata: { name: hermes }
 spec:
@@ -365,7 +365,7 @@ spec:
   trust:                         # tokenless — no shared secret
     type: oidc                   # oidc | kubernetes | spiffe | aws | gcp | azure
     issuer: "https://token.actions.githubusercontent.com"
-    audience: "mcphub"
+    audience: "tennon"
     subject: "repo:acme/hermes:ref:refs/heads/main"
   credential:
     ttl: 1h
@@ -380,7 +380,7 @@ A fine-grained, short-lived credential bound to a subject. Used when tokenless i
 possible.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Token
 metadata: { name: support-bot }
 spec:
@@ -408,9 +408,9 @@ UI/CLI; see the user guide [Sandbox & Access](capability-profiles.md) and the
 [design doc](capability-architecture.md).
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: CapabilityProfile
-metadata: { name: grafana-jail, namespace: mcphub }
+metadata: { name: grafana-jail, namespace: tennon }
 spec:
   baseline: model-armor        # hardened default to start from
   default: deny                # anything not listed is blocked
@@ -440,8 +440,8 @@ status:
     kubeArmorPolicy:     grafana-jail-ka
 ```
 
-Attach a profile to an `McpConnector` via `capabilityProfile: grafana-jail` (a default
-profile applies if omitted). Capability profiles apply only to container/stdio McpConnectors —
+Attach a profile to an `TennonConnector` via `capabilityProfile: grafana-jail` (a default
+profile applies if omitted). Capability profiles apply only to container/stdio TennonConnectors —
 `OpenApiConnector`/`GraphqlConnector` run in-process and have no container to jail. The
 `status.planes` map reports, per plane, whether it is `enforced | degraded | audit |
 unenforced` and which provider satisfied it — this is what the UI status line summarizes. The
@@ -451,7 +451,7 @@ by hand.
 ## Secrets
 
 On the Kubernetes backend, a connector's credential is a native `Secret` located by convention
-(`mcphub-<connector-name>`) or by an explicit `secretKeyRef`. On Postgres/SQLite, MCPHub uses
+(`tennon-<connector-name>`) or by an explicit `secretKeyRef`. On Postgres/SQLite, Tennon uses
 an encrypted store-native secret table with the same reference shape. Either way, values are
 rendered into the upstream at call time and **never** appear in API responses, status, logs,
 or the UI. See [Security](security.md).

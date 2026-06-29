@@ -4,7 +4,7 @@ Every MCP runs in a locked-down container. A **Capability Profile** is how you s
 terms, **what that container is allowed to do** — what it can reach on the network, which
 files it can touch, and what it can run. Anything you don't list is denied.
 
-You write *intent*. MCPHub enforces it with whatever the cluster has (today: Cilium for
+You write *intent*. Tennon enforces it with whatever the cluster has (today: Cilium for
 network, plus process/file and sandbox enforcement); you never name those tools yourself.
 
 ## The mental model
@@ -45,7 +45,7 @@ A dropdown, a few rows you type into, one radio. No syntax.
 ### From the CLI
 
 ```bash
-mcphub profile create grafana-jail \
+tennon profile create grafana-jail \
   --sandbox strong \
   --allow-net  grafana.example.com:443 \
   --allow-file /etc/grafana:read \
@@ -73,7 +73,7 @@ All three produce the same profile object.
 ## Attaching it to an MCP
 
 - **UI:** on the MCP, set **Capability profile: `grafana-jail`** (a dropdown).
-- **CLI:** `mcphubctl mcp set grafana --profile grafana-jail`.
+- **CLI:** `tctl mcp set grafana --profile grafana-jail`.
 
 One profile can be reused across many MCPs, or you can edit it inline on a single MCP. If you
 don't attach one, a safe default profile is applied.
@@ -96,5 +96,5 @@ The one place the cluster's reality shows up, in plain language:
   network add-on isn't present).
 - `⚠ Process rules audited only` — exec rules are logged but not blocked on this cluster.
 
-You read intent + status; MCPHub handles the rest. For how that translation works, see
+You read intent + status; Tennon handles the rest. For how that translation works, see
 [Capability Enforcement (design)](capability-architecture.md).

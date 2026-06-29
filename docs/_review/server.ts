@@ -22,7 +22,7 @@ const MIME: Record<string, string> = {
 
 if (!existsSync(COMMENTS)) {
   writeFileSync(COMMENTS,
-    "# MCPHub Review Comments\n\n" +
+    "# Tennon Review Comments\n\n" +
     "Append-only log. Each entry: timestamp, surface, page, the original text, and the comment.\n",
     "utf-8");
 }

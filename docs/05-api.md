@@ -1,12 +1,12 @@
 # API
 
-MCPHub is **API-first**. The `mcphub` server runs a single **controller** that exposes one
+Tennon is **API-first**. The `tennon` server runs a single **controller** that exposes one
 management **API**; the web UI, the [CLI](cli.md), and your automation are all clients of it.
 Anything you can do in the UI you can do over the API.
 
 ## What the API is for
 
-- CRUD over every object: `McpConnector`, `Policy`, `Token`,
+- CRUD over every object: `TennonConnector`, `Policy`, `Token`,
   `ServiceAccount`, `Repo`.
 - Tool **discovery** and schema inspection across the catalog.
 - **Execution control**: invoke/replay tools for debugging, and resume paused
@@ -47,7 +47,7 @@ See [Authentication](authentication.md) for how humans (OIDC: Google/Okta) and m
 ```mermaid
 graph LR
   UI[Web UI] --> API
-  CLI[mcphub CLI] --> API
+  CLI[tennon CLI] --> API
   CI[Automation / CI] --> API
   KUBE[kubectl / GitOps] -->|Kubernetes backend| Store[(CRD objects)]
   API --> Store

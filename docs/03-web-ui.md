@@ -1,7 +1,7 @@
 # Web UI
 
-The web UI (embedded in the `mcphub` server, built with Vite + React) is the primary way to operate
-MCPHub. It is **click-driven**: you never write YAML. Every action translates to a custom
+The web UI (embedded in the `tennon` server, built with Vite + React) is the primary way to operate
+Tennon. It is **click-driven**: you never write YAML. Every action translates to a custom
 resource behind the scenes (see [CRDs](crds.md)), and resources created out-of-band
 (`kubectl`, GitOps) appear here too.
 
@@ -34,7 +34,7 @@ A collapsible sidebar (toggle with the button in the top bar) groups pages:
 - **Service Accounts** — org-owned machine identities; tokenless trust or token.
 - **OAuth Apps** — reusable OAuth clients; register a provider once, connect many accounts.
 - **Secrets** — the Kubernetes Secrets that back connectors, one per connector by convention
-  (`mcphub-<connector-name>`), shown masked.
+  (`tennon-<connector-name>`), shown masked.
 - **Policies** — org-wide guardrails &amp; defaults; subjects, grants, approvals.
 - **Approvals** — the human-in-the-loop queue; approve or deny paused executions.
 

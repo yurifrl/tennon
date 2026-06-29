@@ -1,15 +1,15 @@
-# MCPHub Documentation
+# Tennon Documentation
 
 > The Kubernetes-native control plane and proxy for Model Context Protocol (MCP) servers.
 
-MCPHub lets one person or a whole team register MCP servers, share them safely (credentials
+Tennon lets one person or a whole team register MCP servers, share them safely (credentials
 never leave the platform), and govern every tool call with
 fine-grained authorization, short-lived tokens, and human-in-the-loop approvals — all driven
 from a click-through web UI that translates to Kubernetes custom resources behind the scenes.
 
-## Why MCPHub
+## Why Tennon
 
-- **One catalog, every agent.** Point Claude Code, Cursor, OpenCode, or Pi at MCPHub and
+- **One catalog, every agent.** Point Claude Code, Cursor, OpenCode, or Pi at Tennon and
   share the same tools, auth, and policies across all of them.
 - **Credentials stay put.** Configure an MCP that needs a credential (e.g. Grafana) once;
   share it with a teammate or an Okta group without ever handing them the secret.
@@ -21,8 +21,8 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 
 ## Start here
 
-- New to MCPHub? Read [Getting Started](getting-started.md) and the [Concepts](concepts.md).
-- Building or contributing to MCPHub? The design, architecture, and internals live under
+- New to Tennon? Read [Getting Started](getting-started.md) and the [Concepts](concepts.md).
+- Building or contributing to Tennon? The design, architecture, and internals live under
   **[Architecture](arch/README.md)** (`/arch`).
 
 ## Documentation map
@@ -33,7 +33,7 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 
 ### Use the features
 - [Web UI](web-ui.md) — the click-through console.
-- [CLI](cli.md) — `mcphub` from the terminal.
+- [CLI](cli.md) — `tennon` and `tctl` from the terminal.
 - [API](api.md) — the HTTP surface.
 - [Spec Connectors (OpenAPI & GraphQL)](spec-connectors.md) — compile tools from a spec.
 - [Capability Profiles](capability-profiles.md) — what an MCP container may do.
@@ -47,7 +47,7 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 - [Security model](security.md) — secret handling, revocation, audit.
 
 ### Reference & operating
-- [Custom Resources (CRDs)](crds.md) — `McpConnector`, `Policy`, `Token`, `ServiceAccount`.
+- [Custom Resources (CRDs)](crds.md) — `TennonConnector`, `Policy`, `Token`, `ServiceAccount`.
 - [Storage backends](storage.md) — Kubernetes/etcd, Postgres, SQLite.
 - [Deployment](deployment.md)
 - [FAQ](faq.md)
@@ -59,7 +59,7 @@ and research notes.
 
 ## Project status
 
-MCPHub is pre-1.0 and under active design. APIs and CRD schemas may change. See the
+Tennon is pre-1.0 and under active design. APIs and CRD schemas may change. See the
 [Roadmap](roadmap.md) for the phased plan.
 
 ## License

@@ -1,6 +1,6 @@
 # Storage Backends
 
-Every MCPHub object is a CRD. The CRD **schema** is fixed; where those objects are
+Every Tennon object is a CRD. The CRD **schema** is fixed; where those objects are
 **persisted** is pluggable. The controller talks to its store through one storage interface
 with three drivers. Switching backends changes *where* objects live, not *what* they are —
 `kubectl`-applied YAML and UI-created objects behave identically on any backend.
@@ -32,7 +32,7 @@ person, local development, or an embedded self-host deployment.
   product fork.
 - **Consistency.** Because the types and reconcile logic are identical, the UI, CLI, and
   GitOps all behave the same regardless of backend.
-- **UI ↔ CRD parity.** "Create Connector" in the UI is an API call that writes an `McpConnector` object into
+- **UI ↔ CRD parity.** "Create Connector" in the UI is an API call that writes an `TennonConnector` object into
   whichever backend is configured; the same object can be created with `kubectl apply` on the
   Kubernetes backend or seeded via SQL/migration on the others.
 
@@ -43,7 +43,7 @@ separate **audit-events backend**, because config is transactional while events 
 append-heavy time-series — `etcd`, for instance, can hold Teleport's state but not its audit
 log.
 
-MCPHub deliberately **does not** do this. There is **one** configured store, and it holds
+Tennon deliberately **does not** do this. There is **one** configured store, and it holds
 *everything*: the desired-state CRD objects **and** the audit/event records. Whichever backend
 you pick — Kubernetes, Postgres, or SQLite — is the single source of truth for both.
 
@@ -51,7 +51,7 @@ Why diverge from Teleport here:
 
 - **Solo-to-team simplicity (R1).** A second database to provision, back up, and migrate
   defeats the "one binary, one store" goal. One person on SQLite gets audit for free.
-- **Volume fits.** MCPHub audits tool calls and policy decisions, not high-frequency session
+- **Volume fits.** Tennon audits tool calls and policy decisions, not high-frequency session
   streams; a single relational/etcd-backed store handles that load without a time-series tier.
 - **Consistency.** Config and its audit trail share one transactional store, so an action and
   the event recording it cannot diverge across two systems.

@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mcphub.fullname" . }}
+  name: {{ include "tennon.fullname" . }}
   labels:
-    {{- include "mcphub.labels" . | nindent 4 }}
+    {{- include "tennon.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "mcphub.selectorLabels" . | nindent 6 }}
+      {{- include "tennon.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "mcphub.selectorLabels" . | nindent 8 }}
+        {{- include "tennon.selectorLabels" . | nindent 8 }}
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: {{ include "mcphub.serviceAccountName" . }}
+      serviceAccountName: {{ include "tennon.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -26,7 +26,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: mcphub
+        - name: tennon
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
@@ -44,10 +44,10 @@ spec:
             {{- end }}
           env:
             {{- if eq .Values.store.backend "postgres" }}
-            - name: MCPHUB_STORE_DSN
+            - name: TENNON_STORE_DSN
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.store.existingSecret | default (printf "%s-store" (include "mcphub.fullname" .)) }}
+                  name: {{ .Values.store.existingSecret | default (printf "%s-store" (include "tennon.fullname" .)) }}
                   key: dsn
             {{- end }}
             {{- with .Values.extraEnv }}

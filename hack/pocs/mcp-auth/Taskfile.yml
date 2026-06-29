@@ -36,7 +36,7 @@ tasks:
       - npm run dev
 
   run:claude:
-    desc: Start the claude authenticated MCP server (OAuth-protected /mcp on :8791) with Google creds from mcphub/.env
+    desc: Start the claude authenticated MCP server (OAuth-protected /mcp on :8791) with Google creds from tennon/.env
     dir: "{{.TASKFILE_DIR}}/claude"
     dotenv:
       - ../../../.env

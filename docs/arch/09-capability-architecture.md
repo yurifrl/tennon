@@ -58,7 +58,7 @@ workload; it adds derived enforcement objects:
 
 ```mermaid
 graph TD
-  CP[CapabilityProfile + McpConnector] --> REC[Controller reconcile]
+  CP[CapabilityProfile + TennonConnector] --> REC[Controller reconcile]
   REC -->|create| POD[MCP Pod: supergateway + server, runtimeClass=gvisor, securityContext]
   REC -->|derive + own| CIL[CiliumNetworkPolicy]
   REC -->|derive + own| KA[KubeArmorPolicy]
@@ -71,7 +71,7 @@ graph TD
 
 - Derived objects (`CiliumNetworkPolicy`, `KubeArmorPolicy`) are **controller-owned children**
   (ownerReferences), selected onto the pod by label, updated on profile change, GC'd with the
-  McpConnector.
+  TennonConnector.
 - On the **local/Docker backend**, the same profile compiles to Docker flags
   (`--cap-drop`, `--read-only`, seccomp, gVisor runtime) plus KubeArmor systemd-mode rules and
   egress proxy/firewall rules — same intent, different emitted artifacts.

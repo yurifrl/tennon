@@ -65,10 +65,10 @@ Notion components above as closely as a POC needs to. Prove it works end to end.
 ## 4. Requirements
 
 - **R0 — Streamable HTTP, not SSE.** The server speaks MCP over **Streamable HTTP**. SSE is
-  not used anywhere (matches MCPHub: "MCP over streamable-HTTP; no SSE").
+  not used anywhere (matches Tennon: "MCP over streamable-HTTP; no SSE").
 - **R1 — URL-only client config.** A user adds only our URL; no secret in the client config.
 - **R0 — Streamable HTTP, not SSE.** The server speaks MCP over **Streamable HTTP**. SSE is
-  not used anywhere (matches MCPHub: "MCP over streamable-HTTP; no SSE").
+  not used anywhere (matches Tennon: "MCP over streamable-HTTP; no SSE").
 - **R2 — Browser login, then reuse.** First call drives an interactive browser login; the
   resulting token is reused on later calls without re-login.
 - **R3 — Real IdP (Google).** Login authenticates against **Google** and resolves to a real

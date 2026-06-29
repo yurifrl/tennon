@@ -1,466 +1,437 @@
 {
   "communities": {
     "0": [
-      "auth_auth",
-      "auth_auth_authenticate",
-      "auth_auth_fetchavailabletools",
-      "auth_auth_new",
-      "auth_auth_test",
-      "auth_auth_test_testauth_completeflow",
-      "auth_auth_verifytoolcall",
-      "cmd_main",
-      "cmd_main_init",
-      "cmd_main_main",
-      "interface",
-      "object",
-      "principal",
-      "references_mcpshield_controller_api_v1alpha1_zz_generated_deepcopy_go_v1alpha1_mcpserver",
-      "references_mcpshield_controller_api_v1alpha1_zz_generated_deepcopy_go_v1alpha1_mcpserverlist",
-      "references_mcpshield_controller_api_v1alpha1_zz_generated_deepcopy_go_v1alpha1_mcpserverspec",
-      "references_mcpshield_controller_api_v1alpha1_zz_generated_deepcopy_go_v1alpha1_mcpserverstatus",
-      "references_mcpshield_pkg_auth_auth_go_mcprequest",
-      "references_mcpshield_pkg_auth_auth_test_go_t",
-      "utils_utils_uncommentcode",
-      "v1alpha1_mcpserver_deepcopy",
-      "v1alpha1_mcpserver_deepcopyinto",
-      "v1alpha1_mcpserver_deepcopyobject",
-      "v1alpha1_mcpserverlist_deepcopy",
-      "v1alpha1_mcpserverlist_deepcopyinto",
-      "v1alpha1_mcpserverlist_deepcopyobject",
-      "v1alpha1_mcpserverspec_deepcopy",
-      "v1alpha1_mcpserverspec_deepcopyinto",
-      "v1alpha1_mcpserverstatus_deepcopy",
-      "v1alpha1_mcpserverstatus_deepcopyinto"
+      "glm_server",
+      "glm_server_app",
+      "glm_server_authcodes",
+      "glm_server_authenticate",
+      "glm_server_b64url",
+      "glm_server_clients",
+      "glm_server_googleclient",
+      "glm_server_handlemcp",
+      "glm_server_issueauthcode",
+      "glm_server_issuer",
+      "glm_server_issuetokens",
+      "glm_server_loginstates",
+      "glm_server_now",
+      "glm_server_oautherror",
+      "glm_server_pick",
+      "glm_server_port",
+      "glm_server_refreshgrants",
+      "glm_server_revokegrant",
+      "glm_server_rnd",
+      "glm_server_rotaterefresh",
+      "glm_server_secret",
+      "glm_server_sha256",
+      "glm_server_signjwt",
+      "glm_server_unauthorized",
+      "glm_server_verifyjwt"
     ],
     "1": [
-      "call",
-      "controller",
-      "mcpserver_server_test",
-      "mcpserver_server_test_testmcpserverlifecycle",
-      "mockruntimefactorymockrecorder",
-      "mockruntimemockrecorder",
-      "mocks_mock_runtime",
-      "mocks_mock_runtime_newmockruntime",
-      "mocks_mock_runtime_newmockruntimefactory",
-      "mocks_mockruntime",
-      "mocks_mockruntime_exec",
-      "mocks_mockruntime_expect",
-      "mocks_mockruntime_isready",
-      "mocks_mockruntime_start",
-      "mocks_mockruntime_stop",
-      "mocks_mockruntimefactory",
-      "mocks_mockruntimefactory_createruntime",
-      "mocks_mockruntimefactory_expect",
-      "mocks_mockruntimefactorymockrecorder",
-      "mocks_mockruntimefactorymockrecorder_createruntime",
-      "mocks_mockruntimemockrecorder",
-      "mocks_mockruntimemockrecorder_exec",
-      "mocks_mockruntimemockrecorder_isready",
-      "mocks_mockruntimemockrecorder_start",
-      "mocks_mockruntimemockrecorder_stop",
-      "references_mcpshield_pkg_mcpserver_server_test_go_t",
-      "references_mcpshield_pkg_mocks_mock_runtime_go_context",
-      "references_mcpshield_pkg_mocks_mock_runtime_go_runtime"
+      "claude_server",
+      "claude_server_app",
+      "claude_server_authcodes",
+      "claude_server_clients",
+      "claude_server_clients_file",
+      "claude_server_completelogin",
+      "claude_server_issuer",
+      "claude_server_issuetokens",
+      "claude_server_jwt_secret",
+      "claude_server_logins",
+      "claude_server_port",
+      "claude_server_provider",
+      "claude_server_public_url",
+      "claude_server_requireauth",
+      "claude_server_required",
+      "claude_server_resource",
+      "claude_server_saveclients",
+      "claude_server_signaccess",
+      "claude_server_signrefresh"
     ],
     "2": [
-      "apiconfig",
-      "authconfig",
-      "logconfig",
-      "mcpserverconfig",
-      "pkg_apiconfig",
-      "pkg_authconfig",
-      "pkg_config",
-      "pkg_config_getkubeconfig",
-      "pkg_config_getkubernetesnamespace",
-      "pkg_config_getloglevel",
-      "pkg_config_getmcpservers",
-      "pkg_config_getserveraddress",
-      "pkg_config_haskubernetesruntime",
-      "pkg_config_readconfig",
-      "pkg_kubernetesconfig",
-      "pkg_logconfig",
-      "pkg_mcpserverconfig",
-      "pkg_runtimeconfig",
-      "pkg_serverconfig",
-      "runtimeconfig",
-      "serverconfig"
+      "arch_readme",
+      "arch_repository_server",
+      "arch_token_identity",
+      "cedar_policy",
+      "charts_tennon",
+      "claude_decoupling",
+      "cmd_tctl",
+      "cmd_tennon",
+      "domain_ports",
+      "mcp_auth_spec",
+      "policy_crd",
+      "proxy_engine",
+      "supergateway",
+      "tctl_cli",
+      "tennon_connector",
+      "tennon_policy",
+      "tennon_repo",
+      "tennon_server"
     ],
     "3": [
-      "mcpserver_proxy",
-      "mcpserver_proxy_getservercount",
-      "mcpserver_proxy_newproxy",
-      "mcpserver_proxy_processcall",
-      "mcpserver_proxy_processinitialize",
-      "mcpserver_proxy_processlist",
-      "mcpserver_proxy_servehttp",
-      "mcpserver_proxy_start",
-      "mcpserver_proxy_stop",
-      "mcpserver_proxy_writeerror",
-      "mcpservers",
-      "references_mcpshield_cmd_server_server_go_config",
-      "references_mcpshield_pkg_mcpserver_proxy_go_config",
-      "references_mcpshield_pkg_mcpserver_proxy_go_context",
-      "references_mcpshield_pkg_mcpserver_proxy_go_mcprequest",
-      "references_mcpshield_pkg_mcpserver_proxy_go_mcpresponse",
-      "references_mcpshield_pkg_mcpserver_proxy_go_request",
-      "references_mcpshield_pkg_mcpserver_proxy_go_runtimefactory",
-      "responsewriter",
-      "server_server",
-      "server_server_startserver"
+      "qwen_package",
+      "qwen_package_dependencies",
+      "qwen_package_dependencies_cors",
+      "qwen_package_dependencies_express",
+      "qwen_package_dependencies_google_auth_library",
+      "qwen_package_dependencies_openid_client",
+      "qwen_package_dependencies_uuid",
+      "qwen_package_description",
+      "qwen_package_devdependencies",
+      "qwen_package_devdependencies_nodemon",
+      "qwen_package_main",
+      "qwen_package_name",
+      "qwen_package_scripts",
+      "qwen_package_scripts_dev",
+      "qwen_package_scripts_start",
+      "qwen_package_version"
     ],
     "4": [
-      "cancelfunc",
-      "initializationregistry",
-      "mcpserver_mcpserver",
-      "mcpserver_mcpserver_call",
-      "mcpserver_mcpserver_isready",
-      "mcpserver_mcpserver_start",
-      "mcpserver_mcpserver_stop",
-      "mcpserver_mcpserver_updateinitializationregistry",
-      "mcpserver_mcpserver_updatetoolregistry",
-      "mcpserver_server",
-      "mcpserver_server_newmcpserver",
-      "references_mcpshield_pkg_mcpserver_server_go_context",
-      "references_mcpshield_pkg_mcpserver_server_go_mcprequest",
-      "references_mcpshield_pkg_mcpserver_server_go_mcpresponse",
-      "references_mcpshield_pkg_mcpserver_server_go_runtime",
-      "references_mcpshield_pkg_mcpserver_server_go_runtimefactory",
-      "references_mcpshield_test_server_test_go_t",
-      "test_server_test",
-      "test_server_test_testmcpserverwithkubernetesruntime",
-      "toolregistry"
+      "gpt_server",
+      "gpt_server_app",
+      "gpt_server_authcodes",
+      "gpt_server_clients",
+      "gpt_server_completelogin",
+      "gpt_server_issuer",
+      "gpt_server_issuetokens",
+      "gpt_server_jwt_secret",
+      "gpt_server_logins",
+      "gpt_server_port",
+      "gpt_server_provider",
+      "gpt_server_public_url",
+      "gpt_server_requireauth",
+      "gpt_server_resource",
+      "gpt_server_signtoken"
     ],
     "5": [
-      "clientconfig",
-      "clientset",
-      "references_mcpshield_pkg_runtime_kubernetes_go_runtime",
-      "references_mcpshield_pkg_runtime_kubernetes_go_runtimefactory",
-      "references_mcpshield_test_proxy_test_go_t",
-      "runtime_kubernetes",
-      "runtime_kubernetes_createkubernetesclient",
-      "runtime_kubernetes_createkubernetesclientwithkubeconfig",
-      "runtime_kubernetes_newkubernetesruntimefactory",
-      "runtime_kubernetes_newkubernetesruntimefactorywithclient",
-      "runtime_kubernetes_newkubernetesruntimefactorywithkubeconfig",
-      "runtime_kubernetesconfig",
-      "runtime_kubernetesruntimefactory",
-      "runtime_kubernetesruntimefactory_createruntime",
-      "test_proxy_test",
-      "test_proxy_test_testprocesscall",
-      "test_proxy_test_testprocesslist"
+      "claude_package",
+      "claude_package_dependencies",
+      "claude_package_dependencies_express",
+      "claude_package_dependencies_jose",
+      "claude_package_dependencies_modelcontextprotocol_sdk",
+      "claude_package_name",
+      "claude_package_private",
+      "claude_package_scripts",
+      "claude_package_scripts_dev",
+      "claude_package_scripts_start",
+      "claude_package_type",
+      "claude_package_version"
     ],
     "6": [
-      "cmd",
-      "e2e_e2e_test",
-      "e2e_e2e_test_getmetricsoutput",
-      "e2e_e2e_test_serviceaccounttoken",
-      "e2e_tokenrequest",
-      "utils_utils",
-      "utils_utils_getnonemptylines",
-      "utils_utils_getprojectdir",
-      "utils_utils_installcertmanager",
-      "utils_utils_installprometheusoperator",
-      "utils_utils_iscertmanagercrdsinstalled",
-      "utils_utils_isprometheuscrdsinstalled",
-      "utils_utils_loadimagetokindclusterwithname",
-      "utils_utils_run",
-      "utils_utils_uninstallcertmanager",
-      "utils_utils_uninstallprometheusoperator",
-      "utils_utils_warnerror"
+      "glm_package",
+      "glm_package_dependencies",
+      "glm_package_dependencies_google_auth_library",
+      "glm_package_dependencies_jose",
+      "glm_package_dependencies_modelcontextprotocol_sdk",
+      "glm_package_name",
+      "glm_package_private",
+      "glm_package_scripts",
+      "glm_package_scripts_dev",
+      "glm_package_scripts_start",
+      "glm_package_type",
+      "glm_package_version"
     ],
     "7": [
-      "kubernetesconfig",
-      "references_mcpshield_pkg_runtime_kubernetes_go_config",
-      "references_mcpshield_pkg_runtime_kubernetes_go_context",
-      "runtime_kubernetesruntime",
-      "runtime_kubernetesruntime_createdeployment",
-      "runtime_kubernetesruntime_deletedeployment",
-      "runtime_kubernetesruntime_exec",
-      "runtime_kubernetesruntime_execinpod",
-      "runtime_kubernetesruntime_getcleanname",
-      "runtime_kubernetesruntime_getpodfromdeployment",
-      "runtime_kubernetesruntime_getrestconfig",
-      "runtime_kubernetesruntime_isready",
-      "runtime_kubernetesruntime_start",
-      "runtime_kubernetesruntime_stop",
-      "runtime_kubernetesruntime_waitfordeploymentdeleted",
-      "runtime_kubernetesruntime_waitfordeploymentready",
-      "runtime_kubernetesruntime_waitforpodready"
+      "gpt_package",
+      "gpt_package_dependencies",
+      "gpt_package_dependencies_express",
+      "gpt_package_dependencies_jose",
+      "gpt_package_dependencies_modelcontextprotocol_sdk",
+      "gpt_package_name",
+      "gpt_package_private",
+      "gpt_package_scripts",
+      "gpt_package_scripts_check",
+      "gpt_package_scripts_start",
+      "gpt_package_type",
+      "gpt_package_version"
     ],
     "8": [
-      "mcpserver_mcpservers",
-      "mcpserver_mcpservers_alltools",
-      "mcpserver_mcpservers_calltool",
-      "mcpserver_mcpservers_getallinitializationresponses",
-      "mcpserver_mcpservers_printalltools",
-      "mcpserver_mcpservers_startall",
-      "mcpserver_mcpservers_stopall",
-      "mcpserver_mcpservers_updateallinitializationregistries",
-      "mcpserver_mcpservers_updatealltoolregistries",
-      "mcpserver_servers",
-      "mcpserver_servers_newservers",
-      "references_mcpshield_pkg_mcpserver_servers_go_config",
-      "references_mcpshield_pkg_mcpserver_servers_go_context",
-      "references_mcpshield_pkg_mcpserver_servers_go_mcprequest",
-      "references_mcpshield_pkg_mcpserver_servers_go_mcpresponse",
-      "references_mcpshield_pkg_mcpserver_servers_go_runtimefactory"
+      "kimi_server",
+      "kimi_server_clients",
+      "kimi_server_exchangegooglecode",
+      "kimi_server_generatetoken",
+      "kimi_server_getauthorizationservermetadata",
+      "kimi_server_getprotectedresourcemetadata",
+      "kimi_server_handlemcprequest",
+      "kimi_server_pendingcodes",
+      "kimi_server_readbody",
+      "kimi_server_registerclient",
+      "kimi_server_server",
+      "kimi_server_tokens"
     ],
     "9": [
-      "mcpserver_tool",
-      "mcpserver_tool_getoriginalname",
-      "mcpserver_tool_getservername",
-      "mcpserver_tool_key",
-      "mcpserver_tool_name",
-      "mcpserver_tool_newtoolregistry",
-      "mcpserver_toolregistry",
-      "mcpserver_toolregistry_findbyname",
-      "mcpserver_toolregistry_print",
-      "mcpserver_toolregistry_tolist",
-      "mcpserver_toolregistry_updatetool",
-      "rwmutex"
+      "qwen_server",
+      "qwen_server_app",
+      "qwen_server_authcodes",
+      "qwen_server_authenticatemcp",
+      "qwen_server_clients",
+      "qwen_server_cors",
+      "qwen_server_express",
+      "qwen_server_refreshtokens",
+      "qwen_server_tokens",
+      "qwen_server_users",
+      "qwen_server_v4_uuidv4"
     ],
     "10": [
-      "client",
-      "controller_mcpserver_controller",
-      "controller_mcpserverreconciler",
-      "controller_mcpserverreconciler_reconcile",
-      "controller_mcpserverreconciler_setupwithmanager",
-      "manager",
-      "references_mcpshield_controller_internal_controller_mcpserver_controller_go_context",
-      "references_mcpshield_controller_internal_controller_mcpserver_controller_go_request",
-      "result",
-      "scheme"
+      "kimi_package",
+      "kimi_package_dependencies",
+      "kimi_package_name",
+      "kimi_package_scripts",
+      "kimi_package_scripts_dev",
+      "kimi_package_scripts_start",
+      "kimi_package_scripts_test",
+      "kimi_package_type",
+      "kimi_package_version"
     ],
     "11": [
-      "listmeta",
-      "objectmeta",
-      "references_mcpshield_controller_api_v1alpha1_mcpserver_types_go_v1alpha1_mcpserver",
-      "references_mcpshield_controller_api_v1alpha1_mcpserver_types_go_v1alpha1_mcpserverlist",
-      "references_mcpshield_controller_api_v1alpha1_mcpserver_types_go_v1alpha1_mcpserverspec",
-      "references_mcpshield_controller_api_v1alpha1_mcpserver_types_go_v1alpha1_mcpserverstatus",
-      "typemeta",
-      "v1alpha1_mcpserver_types",
-      "v1alpha1_mcpserver_types_init"
+      "claude_test_flow",
+      "claude_test_flow_cb",
+      "claude_test_flow_challenge",
+      "claude_test_flow_code",
+      "claude_test_flow_j",
+      "claude_test_flow_loginid",
+      "claude_test_flow_verifier",
+      "claude_test_flow_whoami"
     ],
     "12": [
-      "mcpserver_initialization",
-      "mcpserver_initialization_newinitializationregistry",
-      "mcpserver_initializationregistry",
-      "mcpserver_initializationregistry_getresponses",
-      "mcpserver_initializationregistry_print",
-      "mcpserver_initializationregistry_updateinitialization",
-      "references_mcpshield_pkg_mcpserver_initialization_go_mcpresponse"
+      "glm_check",
+      "glm_check_authq",
+      "glm_check_b64url",
+      "glm_check_challenge",
+      "glm_check_check",
+      "glm_check_req",
+      "glm_check_sha256",
+      "glm_check_verifier"
     ],
     "13": [
-      "openspec_apply_change",
-      "openspec_archive_change",
-      "openspec_config",
-      "openspec_propose_skill",
-      "opsx_apply",
-      "opsx_archive",
-      "opsx_propose"
+      "review_build_docs",
+      "review_build_docs_bucket",
+      "review_build_docs_buckets",
+      "review_build_docs_docs",
+      "review_build_docs_listmd",
+      "review_build_docs_reg",
+      "review_build_docs_rewrite",
+      "review_build_docs_slug"
     ],
     "14": [
-      "pkg_mcprequest",
-      "pkg_mcpresponse",
-      "pkg_runtime",
-      "pkg_runtimefactory",
-      "pkg_types"
+      "review_server",
+      "review_server_clip",
+      "review_server_comments",
+      "review_server_here",
+      "review_server_localiso",
+      "review_server_mime",
+      "review_server_root",
+      "review_server_server"
     ],
     "15": [
-      "auth_autherror",
-      "auth_autherror_error",
-      "auth_principal",
-      "auth_types"
+      "review_annotate",
+      "review_annotate_clearhover",
+      "review_annotate_closepop",
+      "review_annotate_context",
+      "review_annotate_eligible",
+      "review_annotate_openpop",
+      "review_annotate_save"
     ],
     "16": [
-      "cli_main",
-      "cli_main_init",
-      "cli_main_initconfig",
-      "cli_main_main"
+      "mcp_auth_mcp",
+      "mcp_auth_mcp_mcp_server_claude",
+      "mcp_auth_mcp_mcp_server_glm",
+      "mcp_auth_mcp_mcp_server_gpt",
+      "mcp_auth_mcp_mcp_server_kimi",
+      "mcp_auth_mcp_mcp_server_qwen"
     ],
     "17": [
-      "controller_suite_test",
-      "controller_suite_test_getfirstfoundenvtestbinarydir",
-      "controller_suite_test_testcontrollers",
-      "references_mcpshield_controller_internal_controller_suite_test_go_t"
+      "gpt_check",
+      "gpt_check_challenge",
+      "gpt_check_req",
+      "gpt_check_server",
+      "gpt_check_waitforserver"
     ],
     "18": [
-      "e2e_e2e_suite_test",
-      "e2e_e2e_suite_test_teste2e",
-      "references_mcpshield_controller_test_e2e_e2e_suite_test_go_t"
+      "qwen_client_demo",
+      "qwen_client_demo_base64url",
+      "qwen_client_demo_crypto",
+      "qwen_client_demo_rundemo"
     ],
     "19": [
-      "server_main",
-      "server_main_init",
-      "server_main_main"
+      "arch_prior_art",
+      "executor_feature_spec",
+      "executor_ui_notes"
     ],
     "20": [
-      "devcontainer_post_install",
-      "users_yuri_workdir_yuri_mcphub_references_mcpshield_controller_devcontainer_post_install_sh__entry"
+      "hack_pocs_mcp_auth_qwen_test_flow_mjs_qwen_test_flow",
+      "qwen_test_flow_fetchjson",
+      "qwen_test_flow_main"
     ],
     "21": [
-      "mcpshield_controller",
-      "mcpshield_proxy"
+      "kimi_manual_test",
+      "kimi_manual_test_codechallenge",
+      "kimi_manual_test_codeverifier"
     ],
     "22": [
-      "mcpshield_mcp",
-      "mcpshield_mcp_mcp_server_mcp_shield"
+      "kimi_test_auth",
+      "kimi_test_auth_runtests",
+      "kimi_test_auth_test"
     ],
     "23": [
-      "openspec_explore_skill",
-      "opsx_explore"
+      "hack_pocs_mcp_auth_qwen_test_flow_sh_qwen_test_flow",
+      "users_yuri_workdir_yuri_tennon_hack_pocs_mcp_auth_qwen_test_flow_sh__entry"
     ],
     "24": [
-      "controller_mcpserver_controller_test"
+      "qwen_demo_script",
+      "users_yuri_workdir_yuri_tennon_hack_pocs_mcp_auth_qwen_demo_script_sh__entry"
     ],
     "25": [
-      "v1alpha1_groupversion_info"
+      "claude_auth_off"
     ],
     "26": [
-      "v1alpha1_zz_generated_deepcopy"
+      "graphql_connector"
+    ],
+    "27": [
+      "openapi_connector"
     ]
   },
   "cohesion": {
-    "0": 0.09885057471264368,
-    "1": 0.12698412698412698,
-    "2": 0.10952380952380952,
-    "3": 0.1523809523809524,
-    "4": 0.14210526315789473,
-    "5": 0.22058823529411764,
-    "6": 0.20588235294117646,
-    "7": 0.27941176470588236,
-    "8": 0.175,
-    "9": 0.3181818181818182,
-    "10": 0.2,
-    "11": 0.3333333333333333,
-    "12": 0.42857142857142855,
-    "13": 0.2857142857142857,
-    "14": 0.4,
-    "15": 0.5,
-    "16": 0.5,
-    "17": 0.5,
+    "0": 0.11666666666666667,
+    "1": 0.11695906432748537,
+    "2": 0.12418300653594772,
+    "3": 0.125,
+    "4": 0.14285714285714285,
+    "5": 0.16666666666666666,
+    "6": 0.16666666666666666,
+    "7": 0.16666666666666666,
+    "8": 0.16666666666666666,
+    "9": 0.18181818181818182,
+    "10": 0.2222222222222222,
+    "11": 0.25,
+    "12": 0.25,
+    "13": 0.25,
+    "14": 0.25,
+    "15": 0.42857142857142855,
+    "16": 0.3333333333333333,
+    "17": 0.4,
     "18": 0.6666666666666666,
     "19": 0.6666666666666666,
     "20": 1.0,
-    "21": 1.0,
+    "21": 0.6666666666666666,
     "22": 1.0,
     "23": 1.0,
     "24": 1.0,
     "25": 1.0,
-    "26": 1.0
+    "26": 1.0,
+    "27": 1.0
   },
   "gods": [
     {
-      "id": "runtime_kubernetesruntime",
-      "label": "KubernetesRuntime",
-      "degree": 16
+      "id": "tennon_connector",
+      "label": "TennonConnector CRD",
+      "degree": 6
     },
     {
-      "id": "mcpserver_mcpserver",
-      "label": "MCPServer",
-      "degree": 13
+      "id": "glm_server_rotaterefresh",
+      "label": "rotateRefresh()",
+      "degree": 5
     },
     {
-      "id": "utils_utils_run",
-      "label": "Run()",
-      "degree": 11
+      "id": "arch_readme",
+      "label": "Tennon Core Requirements & Architecture",
+      "degree": 5
     },
     {
-      "id": "mcpserver_mcpservers",
-      "label": "MCPServers",
-      "degree": 10
+      "id": "glm_server_issuetokens",
+      "label": "issueTokens()",
+      "degree": 4
     },
     {
-      "id": "mocks_mockruntime",
-      "label": "MockRuntime",
-      "degree": 10
+      "id": "kimi_package_scripts",
+      "label": "scripts",
+      "degree": 4
     },
     {
-      "id": "call",
-      "label": "Call",
-      "degree": 10
+      "id": "proxy_engine",
+      "label": "MCP Proxy",
+      "degree": 4
     },
     {
-      "id": "auth_auth_new",
-      "label": "New()",
-      "degree": 9
+      "id": "review_annotate_closepop",
+      "label": "closePop()",
+      "degree": 3
     },
     {
-      "id": "references_mcpshield_pkg_runtime_kubernetes_go_context",
-      "label": "Context",
-      "degree": 9
+      "id": "claude_package_scripts",
+      "label": "scripts",
+      "degree": 3
     },
     {
-      "id": "mcpserver_server_newmcpserver",
-      "label": "NewMCPServer()",
-      "degree": 8
+      "id": "claude_server_issuetokens",
+      "label": "issueTokens()",
+      "degree": 3
     },
     {
-      "id": "mcpserver_proxy_newproxy",
-      "label": "NewProxy()",
-      "degree": 7
+      "id": "glm_package_scripts",
+      "label": "scripts",
+      "degree": 3
     }
   ],
   "surprises": [
     {
-      "source": "OpenSpec Config",
-      "target": "OPSX: Propose",
+      "source": "Tennon Server",
+      "target": "MCP Proxy",
       "source_files": [
-        "openspec/config.yaml",
-        ".claude/commands/opsx/propose.md"
+        "cmd/tennon/main.go",
+        "docs/arch/07-proxy.md"
       ],
       "confidence": "INFERRED",
       "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (code \u2194 doc); connects across different repos/directories"
+    },
+    {
+      "source": "Decoupling Directive",
+      "target": "Domain Ports",
+      "source_files": [
+        "CLAUDE.md",
+        "domain/ports.go"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "crosses file types (doc \u2194 code); connects across different repos/directories"
+    },
+    {
+      "source": "MCP Proxy",
+      "target": "Domain Ports",
+      "source_files": [
+        "docs/arch/07-proxy.md",
+        "domain/ports.go"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories"
+    },
+    {
+      "source": "tctl CLI",
+      "target": "MCP Proxy",
+      "source_files": [
+        "cmd/tctl/main.go",
+        "docs/arch/07-proxy.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories"
+    },
+    {
+      "source": "Tennon Server",
+      "target": "Domain Ports",
+      "source_files": [
+        "cmd/tennon/main.go",
+        "domain/ports.go"
+      ],
+      "confidence": "INFERRED",
+      "relation": "implements",
       "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
-    },
-    {
-      "source": "StartServer()",
-      "target": "NewKubernetesRuntimeFactoryWithKubeconfig()",
-      "source_files": [
-        ".references/mcpshield/cmd/server/server.go",
-        ".references/mcpshield/pkg/runtime/kubernetes.go"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
-    },
-    {
-      "source": "main()",
-      "target": "New()",
-      "source_files": [
-        ".references/mcpshield/controller/cmd/main.go",
-        ".references/mcpshield/pkg/auth/auth.go"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; peripheral node `main()` unexpectedly reaches hub `New()`"
-    },
-    {
-      "source": "getMetricsOutput()",
-      "target": "Run()",
-      "source_files": [
-        ".references/mcpshield/controller/test/e2e/e2e_test.go",
-        ".references/mcpshield/controller/test/utils/utils.go"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; peripheral node `getMetricsOutput()` unexpectedly reaches hub `Run()`"
-    },
-    {
-      "source": "UncommentCode()",
-      "target": "New()",
-      "source_files": [
-        ".references/mcpshield/controller/test/utils/utils.go",
-        ".references/mcpshield/pkg/auth/auth.go"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; peripheral node `UncommentCode()` unexpectedly reaches hub `New()`"
     }
   ],
   "tokens": {
-    "input": 30281,
-    "output": 1383
+    "input": 94133,
+    "output": 2968
   }
 }

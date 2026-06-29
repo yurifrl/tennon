@@ -1,6 +1,6 @@
 # Catalog Features (Executor-inspired)
 
-Beyond the MCP Shield foundation (proxy, controller, RBAC), MCPHub adopts several features
+Beyond the MCP Shield foundation (proxy, controller, RBAC), Tennon adopts several features
 from [RhysSullivan/executor](https://github.com/RhysSullivan/executor), adapted to a
 Kubernetes-native, state-backed system.
 
@@ -8,14 +8,14 @@ Kubernetes-native, state-backed system.
 
 Every tool from every registered `Connector` is indexed into a single searchable catalog held in
 the controller's runtime state. The catalog is the backing data for discovery
-and the web UI. Unlike executor's local-first store, MCPHub's catalog is derived from
+and the web UI. Unlike executor's local-first store, Tennon's catalog is derived from
 cluster state (the set of `Connector` resources) and rebuilt by reconciliation.
 
 ## 2. Source auto-detection
 
-When adding an MCP via the API or web UI, MCPHub probes the target to detect its transport
+When adding an MCP via the API or web UI, Tennon probes the target to detect its transport
 (`stdio`, `streamable-http`, `sse`) and performs an initial tool discovery to populate the
-catalog and the `McpConnector` status. The result is written into an `McpConnector` resource — so the UI
+catalog and the `TennonConnector` status. The result is written into an `TennonConnector` resource — so the UI
 "add a source" action is just a guided way to create a CR.
 
 ## 3. Intent-based tool discovery
@@ -40,7 +40,7 @@ to approve or deny.
 ```mermaid
 sequenceDiagram
     participant Agent
-    participant Proxy as mcphub proxy
+    participant Proxy as tennon proxy
     participant Store as Execution store
     participant Approver
 
@@ -72,10 +72,10 @@ control layered on connectors. Together they cover "may you call this at all" (p
 
 ## 6. Web UI
 
-The Vite/React UI (embedded in the `mcphub` server) provides:
+The Vite/React UI (embedded in the `tennon` server) provides:
 
 - A catalog browser (search, inspect tool schemas).
-- Source management (add/edit `McpConnector`s, view discovery + health).
+- Source management (add/edit `TennonConnector`s, view discovery + health).
 - Policy and service-token management.
 - An approvals inbox for pending executions.
 - Audit/usage views.
@@ -87,13 +87,13 @@ configured yet), it mints a single-use **bootstrap admin token** and prints it t
 process logs — there is no chicken-and-egg "configure OIDC before you can log in" problem.
 
 ```
-mcphub --store=sqlite --store-path=./mcphub.db ...
+tennon --store=sqlite --store-path=./tennon.db ...
 
-  MCPHub control plane listening on :8080 (api) :8081 (proxy)
+  Tennon control plane listening on :8080 (api) :8081 (proxy)
   No users found — first-run bootstrap.
 
   → Open:  http://localhost:8080/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphubctl open
+  → Or run: tctl open
 
   This token grants temporary admin. It is shown once and expires in 1h
   or as soon as the first User is created. Create a real account, then it dies.
@@ -102,30 +102,30 @@ mcphub --store=sqlite --store-path=./mcphub.db ...
 - The token is a short-lived (default 1h) bearer stored as a hash in the backend; the
   plaintext is only ever in that log line. It is invalidated the moment the first
   [`User`](crds.md#user) is created, or on expiry, whichever comes first.
-- `mcphubctl open` reads the running server's bootstrap/auth token from local state and opens
+- `tctl open` reads the running server's bootstrap/auth token from local state and opens
   the web UI already signed in (mirrors executor's `executor open`).
 - Same flow on the cluster backend: the bootstrap token is logged by the controller pod
-  (`kubectl logs deploy/mcphub`).
+  (`kubectl logs deploy/tennon`).
 - After bootstrap you wire up an [identity provider](authentication.md) and/or create
   [`User`](crds.md#user)/[`Role`](crds.md#role) resources; the bootstrap path is then
   permanently closed for that store.
 
 ## Mapping to executor
 
-| Executor concept | MCPHub equivalent |
+| Executor concept | Tennon equivalent |
 |------------------|-------------------|
 | Unified tool catalog | Catalog derived from `Connector` resources |
-| Source auto-detection / indexing | Transport probe + discovery on `McpConnector` create |
+| Source auto-detection / indexing | Transport probe + discovery on `TennonConnector` create |
 | `tools.discover` intent search | `/api/tools/search` + proxy `discover` meta-tool |
 | Pause/resume, `resume --execution-id` | Execution objects + `/executions/{id}/resume` |
 | Auth & policy management | OAuth2 + service tokens + `Policy` |
 | MCP server mode (`executor mcp`) | The proxy itself (per-MCP URLs) |
-| Web dashboard | embedded Vite/React UI in `mcphub` |
-| Sandboxed kernel execution | Container-runtime McpConnectors managed by the controller |
+| Web dashboard | embedded Vite/React UI in `tennon` |
+| Sandboxed kernel execution | Container-runtime TennonConnectors managed by the controller |
 
 ## Out of scope (vs. executor)
 
-- A typed TypeScript SDK runtime (executor's `tools.*`) — MCPHub exposes tools over MCP,
+- A typed TypeScript SDK runtime (executor's `tools.*`) — Tennon exposes tools over MCP,
   not as an embedded TS runtime.
 - Service emulators (`@executor-js/emulate`).
 - A desktop app.

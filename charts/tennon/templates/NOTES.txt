@@ -1,10 +1,10 @@
-MCPHub {{ .Chart.AppVersion }} is installed as "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+Tennon {{ .Chart.AppVersion }} is installed as "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
 
 Store backend: {{ .Values.store.backend }}
 
 1. Get the one-time bootstrap admin token from the controller logs:
 
-   kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "mcphub.fullname" . }} | grep -i bootstrap
+   kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "tennon.fullname" . }} | grep -i bootstrap
 
 2. Reach the API + embedded UI:
 {{- if .Values.ingress.enabled }}
@@ -12,7 +12,7 @@ Store backend: {{ .Values.store.backend }}
    https://{{ .Values.ingress.host }}/
 {{- else }}
 
-   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "mcphub.fullname" . }} {{ .Values.service.apiPort }}:{{ .Values.service.apiPort }}
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "tennon.fullname" . }} {{ .Values.service.apiPort }}:{{ .Values.service.apiPort }}
    open http://localhost:{{ .Values.service.apiPort }}/
 {{- end }}
 

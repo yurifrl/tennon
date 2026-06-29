@@ -1,6 +1,6 @@
 # Tokens & Identity
 
-MCPHub's machine authentication is tiered. **Tokenless** (a trusted relationship) is
+Tennon's machine authentication is tiered. **Tokenless** (a trusted relationship) is
 preferred; **fine-grained tokens** are the fallback. Both end up as a short-lived credential
 the proxy validates, and both resolve to a subject that [Authorization](authorization.md)
 acts on.
@@ -19,7 +19,7 @@ fine-grained tokens (the granularity bar).
 
 A [`ServiceAccount`](crds.md#serviceaccount) is an org-owned identity (survives its creator).
 Instead of a secret, it carries a **trust rule**. At call time the caller presents its
-platform-signed document; MCPHub validates it and mints a short-lived (~1h, non-renewable)
+platform-signed document; Tennon validates it and mints a short-lived (~1h, non-renewable)
 credential scoped to the account's policy. There is nothing to leak.
 
 Trust types:
@@ -31,12 +31,12 @@ Trust types:
 - **Cloud instance identity:** AWS IAM / GCP / Azure attestation.
 
 This is the recommended path for CI and for agent workloads such as Hermes: the workload
-runs with a platform identity, MCPHub trusts it, and no token is copied around.
+runs with a platform identity, Tennon trusts it, and no token is copied around.
 
 ```mermaid
 sequenceDiagram
   participant W as Workload (e.g. Hermes)
-  participant H as MCPHub
+  participant H as Tennon
   W->>H: call + platform-signed doc (OIDC/K8s/SPIFFE)
   H->>H: validate against trust rule
   H->>W: short-lived credential (~1h), then proxy the call

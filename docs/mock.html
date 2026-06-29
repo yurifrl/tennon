@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MCPHub — UI Mockup</title>
+<title>Tennon — UI Mockup</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config = { darkMode: 'class' };</script>
 <style>
@@ -29,7 +29,7 @@
      style="background:radial-gradient(900px 460px at 80% -10%,rgba(0,194,159,.10),transparent),radial-gradient(700px 460px at 10% 110%,rgba(76,141,255,.10),transparent),#0d0f14">
   <div class="w-full max-w-sm bg-[#141821] border border-[#28303f] rounded-2xl p-8 text-center shadow-2xl">
     <div class="mx-auto mb-4 rounded-2xl grid place-items-center font-extrabold text-2xl text-[#04121a]" style="background:linear-gradient(135deg,#00c29f,#4c8dff);width:52px;height:52px">M</div>
-    <h1 class="text-2xl font-bold m-0">MCPHub</h1>
+    <h1 class="text-2xl font-bold m-0">Tennon</h1>
     <p class="text-[#6b7587] mt-1 mb-7">The Kubernetes-native MCP control plane</p>
     <button onclick="signIn()" class="w-full bg-white text-[#1f1f1f] rounded-xl py-3 font-semibold flex items-center justify-center gap-3 hover:bg-gray-100">
       <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -51,7 +51,7 @@
   <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-[#141821] border-r border-[#28303f] z-40 flex flex-col p-3 transform -translate-x-full md:translate-x-0 transition-transform duration-200">
     <div class="flex items-center gap-2.5 px-2 py-2 font-bold text-base">
       <span class="w-7 h-7 rounded-lg grid place-items-center text-[#04121a] font-extrabold" style="background:linear-gradient(135deg,#00c29f,#4c8dff)">M</span>
-      MCPHub
+      Tennon
     </div>
     <nav class="flex flex-col gap-0.5 mt-2 overflow-y-auto flex-1" id="nav"></nav>
     <div class="mt-auto border-t border-[#28303f] pt-3">
@@ -247,7 +247,7 @@ PAGES.mcpdetail = () => `
     ${TOOLS.filter(t=>t.connector==='github').map(t=>`<tr>${td(`<span class="mono">${t.t}</span>`)}${td(`<span class="tag tag-${t.c}">${t.l}</span>`)}</tr>`).join('')}
   </tbody></table>`),'mt-4')}
   ${card(cardHd('Sandbox &amp; capabilities', '<span class="tag tag-green">✓ Fully enforced</span>')+`<div class="p-4">
-    <p class="text-[#6b7587] text-xs mt-0">What this container is allowed to do. Everything not listed is blocked. You list intent; MCPHub compiles it to the strongest enforcement the cluster offers.</p>
+    <p class="text-[#6b7587] text-xs mt-0">What this container is allowed to do. Everything not listed is blocked. You list intent; Tennon compiles it to the strongest enforcement the cluster offers.</p>
     ${sumBox(
       sumRow('Sandbox','<span class="tag tag-blue">Strong</span> <span class="text-[#6b7587] text-xs">isolated runtime</span>')+
       sumRow('Can reach','<div class="flex flex-wrap gap-1"><span class="tag">api.github.com:443</span> <span class="tag">dns</span></div>')+
@@ -272,12 +272,12 @@ PAGES.serviceaccounts = () => pagehead('Service Accounts','Org-owned identities 
   card(wrapTable(`<table class="w-full border-collapse">
     <thead><tr>${th('Name')}${th('Auth method')}${th('Trust / credential')}${th('Grants')}${th('Status')}</tr></thead><tbody>
     ${[['hermes','platform-team','tokenless','green','OIDC iss: token.actions…<br>sub: repo:acme/hermes:…','<span class="tag tag-blue">tag:code</span> <span class="tag tag-blue">tag:observability</span>','active','green'],
-       ['ci-runner','platform-team','tokenless','green','K8s SA: ci/runner<br>aud: mcphub','<span class="tag tag-blue">tag:code</span>','active','green'],
+       ['ci-runner','platform-team','tokenless','green','K8s SA: ci/runner<br>aud: tennon','<span class="tag tag-blue">tag:code</span>','active','green'],
        ['support-bot','support','fine-grained token','amber','mh_svc_2a71… · 1h TTL','<span class="tag tag-blue">tag:chat</span>','expiring','amber']]
       .map(([n,o,m,mc,tr,gr,st,sc])=>`<tr>${td(`<b>${n}</b><div class="text-[#6b7587] text-xs">owner: ${o}</div>`)}${td(`<span class="tag tag-${mc}">${m}</span>`)}${td(`<span class="mono text-[#6b7587] text-xs">${tr}</span>`)}${td(gr)}${td(`<span class="tag tag-${sc}">${st}</span>`)}</tr>`).join('')}
   </tbody></table>`)) +
   card(cardHd('How machines authenticate')+`<div class="p-4 grid gap-4 grid-cols-1 sm:grid-cols-3">
-    <div><b>Tier 0 · Tokenless <span class="tag tag-green">preferred</span></b><p class="text-[#6b7587] text-xs">Service account + trusted relationship (OIDC, K8s SA, SPIFFE, cloud). Caller proves identity; MCPHub mints a ~1h credential. Nothing to leak.</p></div>
+    <div><b>Tier 0 · Tokenless <span class="tag tag-green">preferred</span></b><p class="text-[#6b7587] text-xs">Service account + trusted relationship (OIDC, K8s SA, SPIFFE, cloud). Caller proves identity; Tennon mints a ~1h credential. Nothing to leak.</p></div>
     <div><b>Tier 1 · Fine-grained token</b><p class="text-[#6b7587] text-xs">Token = resources × tools × level × expiry × owner. Short-lived bearer, re-minted on expiry. When tokenless isn't possible.</p></div>
     <div><b>Revocation</b><p class="text-[#6b7587] text-xs">Expiry is the default cutoff. Revoking kills all derived credentials; emergency lock terminates live sessions.</p></div>
   </div>`,'mt-4');
@@ -300,7 +300,7 @@ PAGES.config = (tab='users') => {
 function setConfigTab(tab){ document.getElementById('content').innerHTML = PAGES.config(tab); window.scrollTo(0,0); }
 
 PAGES.users = () => pagehead('Users','Human identities, Teleport-style: stored in the backend and editable as <span class="mono">User</span> resources. Permissions come entirely from assigned roles.', btnPri('+ Add User','toast(\'Add user\')')) +
-  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>On a fresh store, first run logs a one-time <b>bootstrap admin token</b> on the CLI — open <span class="mono">mcphub open</span> to sign in, create your account, and it dies the moment the first user exists.</span></div>`,'mb-4') +
+  card(`<div class="p-3.5 text-xs text-[#9aa4b5] flex gap-2"><span>ℹ</span><span>On a fresh store, first run logs a one-time <b>bootstrap admin token</b> on the CLI — open <span class="mono">tennon open</span> to sign in, create your account, and it dies the moment the first user exists.</span></div>`,'mb-4') +
   card(wrapTable(`<table class="w-full border-collapse">
     <thead><tr>${th('User')}${th('Type')}${th('Roles')}${th('Groups (traits)')}${th('Status')}${th('')}</tr></thead><tbody>
     ${[['joe','joe@example.com','local','green',['devtools-user'],['sre@example.com'],'active','green'],
@@ -366,11 +366,11 @@ PAGES.identity = () => pagehead('Identity Providers','Pluggable OIDC for humans;
     ${card(cardHd('Okta','<span class="tag tag-green">enabled</span>')+`<div class="p-4">${sumBox(sumRow('Type','<span class="tag tag-blue">OIDC</span>')+sumRow('Issuer','<span class="mono text-[#6b7587]">acme.okta.com</span>')+sumRow('Groups','<span class="mono text-[#6b7587]">observability, sre, support</span>')+sumRow('Use','<span class="text-[#6b7587] text-xs">share MCPs with Okta groups</span>'))}</div>`)}
   </div>
   ${card(cardHd('Machine trust relationships','<span class="tag tag-green">tokenless</span>')+wrapTable(`<table class="w-full border-collapse">
-    ${[['GitHub Actions OIDC','iss token.actions.githubusercontent.com','trusted','green'],['Kubernetes ServiceAccounts','cluster OIDC · aud=mcphub','trusted','green'],['SPIFFE trust domain','spiffe://acme.internal','configure',''],['AWS IAM','arn:aws:iam::…:role/hermes','configure','']]
+    ${[['GitHub Actions OIDC','iss token.actions.githubusercontent.com','trusted','green'],['Kubernetes ServiceAccounts','cluster OIDC · aud=tennon','trusted','green'],['SPIFFE trust domain','spiffe://acme.internal','configure',''],['AWS IAM','arn:aws:iam::…:role/hermes','configure','']]
       .map(([n,d,s,c])=>`<tr>${td(`<b>${n}</b>`)}${td(`<span class="mono text-[#6b7587] text-xs">${d}</span>`)}${td(`<span class="tag ${c==='green'?'tag-green':''}">${s}</span>`)}</tr>`).join('')}
   </table>`),'mt-4')}`;
 
-PAGES.secrets = () => pagehead('Secrets','A connector’s credential is a Kubernetes Secret named by convention (<span class="mono">mcphub-&lt;connector&gt;</span>), assumed to exist and rendered at call time — never shown.', btnPri('+ Add Resolver','toast(\'Add secret resolver\')')) + `
+PAGES.secrets = () => pagehead('Secrets','A connector’s credential is a Kubernetes Secret named by convention (<span class="mono">tennon-&lt;connector&gt;</span>), assumed to exist and rendered at call time — never shown.', btnPri('+ Add Resolver','toast(\'Add secret resolver\')')) + `
   ${card(cardHd('Default store','<span class="tag tag-green">active</span>')+`<div class="p-4 flex flex-wrap items-center gap-3"><span class="flex-1 min-w-0 text-[#9aa4b5]">Pasted values are sealed and rendered in-cluster at call time. Never shown in API responses, status, logs, or this UI.</span><span class="tag tag-blue">in-cluster</span></div>`,'mb-4')}
   ${card(cardHd('External backends')+wrapTable(`<table class="w-full border-collapse">
     ${[['Keychain','keychain','OS keychain on the node','green','enabled'],['Local file','file','Encrypted file on disk','green','enabled'],['1Password','onepassword','Resolve from a 1Password vault','','configure'],['HashiCorp Vault','vault','Resolve from a Vault path','','configure']]
@@ -428,13 +428,13 @@ PAGES.newtoken = () => `
       </div>
 
       <div id="issue-tokenless">
-        <p class="text-[#6b7587] text-xs mt-0">No secret is stored. The caller proves identity with a platform-signed document; MCPHub validates it against a trust rule and mints a short-lived credential at call time. Best for Hermes and CI agents.</p>
+        <p class="text-[#6b7587] text-xs mt-0">No secret is stored. The caller proves identity with a platform-signed document; Tennon validates it against a trust rule and mints a short-lived credential at call time. Best for Hermes and CI agents.</p>
         <label class="block mb-4"><span class="block font-semibold mb-1.5 text-[13px]">Trust type</span>
           <select id="trustType" onchange="renderSummary()" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"><option>OIDC JWT (GitHub Actions / generic)</option><option>Kubernetes ServiceAccount token</option><option>SPIFFE / SVID</option><option>Cloud instance identity (AWS / GCP / Azure)</option></select></label>
         <label class="block mb-4"><span class="block font-semibold mb-1.5 text-[13px]">Issuer <span class="text-[#6b7587] font-normal text-xs">(iss)</span></span>
           <input value="https://token.actions.githubusercontent.com" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
         <div class="grid gap-3 grid-cols-1 sm:grid-cols-2">
-          <label class="block mb-2"><span class="block font-semibold mb-1.5 text-[13px]">Audience <span class="text-[#6b7587] font-normal text-xs">(aud)</span></span><input value="mcphub" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
+          <label class="block mb-2"><span class="block font-semibold mb-1.5 text-[13px]">Audience <span class="text-[#6b7587] font-normal text-xs">(aud)</span></span><input value="tennon" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
           <label class="block mb-2"><span class="block font-semibold mb-1.5 text-[13px]">Subject match <span class="text-[#6b7587] font-normal text-xs">(sub)</span></span><input value="repo:acme/hermes:ref:refs/heads/main" class="w-full bg-[#0d0f14] border border-[#28303f] rounded-lg px-3 py-2 outline-none focus:border-[#00c29f]"></label>
         </div>
         <div class="flex items-center gap-2 border border-[#28303f] rounded-lg px-3 py-2 bg-[#0d0f14]"><span class="flex-1"><b class="text-[13px]">Minted credential</b><span class="block text-[#6b7587] text-xs">short-lived · ~1h · non-renewable · re-attest each call</span></span><span class="tag tag-green">no secret</span></div>
@@ -608,7 +608,7 @@ function generateToken(){
   const out=document.getElementById('tokenOut');
   if(issuance==='tokenless'){
     document.getElementById('tokenStr').textContent='trust saved · no secret to copy';
-    document.getElementById('tokenNote').textContent='Callers authenticate with their platform identity. MCPHub mints a ~1h credential per call.';
+    document.getElementById('tokenNote').textContent='Callers authenticate with their platform identity. Tennon mints a ~1h credential per call.';
   } else {
     document.getElementById('tokenStr').textContent='mh_svc_'+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,8);
     document.getElementById('tokenNote').textContent='⚠ Shown once. Short-lived · re-mint on expiry. Store it securely.';

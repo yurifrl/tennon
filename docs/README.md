@@ -1,15 +1,15 @@
-# MCPHub Documentation
+# Tennon Documentation
 
 > The Kubernetes-native control plane and proxy for Model Context Protocol (MCP) servers.
 
-MCPHub lets one person or a whole team register MCP servers, share them safely (credentials
+Tennon lets one person or a whole team register MCP servers, share them safely (credentials
 never leave the platform), and govern every tool call with
 fine-grained authorization, short-lived tokens, and human-in-the-loop approvals — all driven
 from a click-through web UI that translates to Kubernetes custom resources behind the scenes.
 
-## Why MCPHub
+## Why Tennon
 
-- **One catalog, every agent.** Point Claude Code, Cursor, OpenCode, or Pi at MCPHub and
+- **One catalog, every agent.** Point Claude Code, Cursor, OpenCode, or Pi at Tennon and
   share the same tools, auth, and policies across all of them.
 - **Credentials stay put.** Configure an MCP that needs a credential (e.g. Grafana) once;
   share it with a teammate or an Okta group without ever handing them the secret.
@@ -21,8 +21,8 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 
 ## Start here
 
-- New to MCPHub? Read [Getting Started](#getting-started) and the [Concepts](#concepts).
-- Building or contributing to MCPHub? The design, architecture, and internals live under
+- New to Tennon? Read [Getting Started](#getting-started) and the [Concepts](#concepts).
+- Building or contributing to Tennon? The design, architecture, and internals live under
   **[Architecture](arch/README.md)** (`/arch`).
 
 ## Documentation map
@@ -33,7 +33,7 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 
 ### Use the features
 - [Web UI](#web-ui) — the click-through console.
-- [CLI](#cli) — `mcphub` from the terminal.
+- [CLI](#cli) — `tennon` and `tctl` from the terminal.
 - [API](#api) — the HTTP surface.
 - [Spec Connectors (OpenAPI & GraphQL)](#spec-connectors-openapi--graphql) — compile tools from a spec.
 - [Capability Profiles](#sandbox--access-capability-profiles) — what an MCP container may do.
@@ -47,7 +47,7 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 - [Security model](#security-model) — secret handling, revocation, audit.
 
 ### Reference & operating
-- [Custom Resources (CRDs)](#custom-resources-crds) — `McpConnector`, `Policy`, `Token`, `ServiceAccount`.
+- [Custom Resources (CRDs)](#custom-resources-crds) — `TennonConnector`, `Policy`, `Token`, `ServiceAccount`.
 - [Storage backends](#storage-backends) — Kubernetes/etcd, Postgres, SQLite.
 - [Deployment](#deployment)
 - [FAQ](#faq)
@@ -59,7 +59,7 @@ and research notes.
 
 ## Project status
 
-MCPHub is pre-1.0 and under active design. APIs and CRD schemas may change. See the
+Tennon is pre-1.0 and under active design. APIs and CRD schemas may change. See the
 [Roadmap](arch/README.md#roadmap) for the phased plan.
 
 ## License
@@ -69,7 +69,7 @@ Apache License 2.0.
 
 # Getting Started
 
-This guide gets MCPHub running and walks the flagship flow: register a credentialed MCP and
+This guide gets Tennon running and walks the flagship flow: register a credentialed connector and
 share it with a teammate — without exposing the credential.
 
 ## Prerequisites
@@ -84,11 +84,11 @@ share it with a teammate — without exposing the credential.
 Solo / local (SQLite backend) — one binary, UI embedded:
 
 ```bash
-mcphub \
-  --store=sqlite --store-path=./mcphub.db \
+tennon \
+  --store=sqlite --store-path=./tennon.db \
   --api-addr=:8080 --proxy-addr=:8081 \
   --oidc-issuer=https://accounts.google.com \
-  --oidc-client-id=mcphub
+  --oidc-client-id=tennon
 ```
 
 The API, MCP proxy, and web UI are all served by this one process (the UI on the API port).
@@ -96,15 +96,15 @@ The API, MCP proxy, and web UI are all served by this one process (the UI on the
 Team / cluster (Kubernetes backend) — install with Helm:
 
 ```bash
-helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace \
-  --set oidc.issuer=https://accounts.google.com --set oidc.clientId=mcphub
+helm install tennon oci://ghcr.io/yurifrl/charts/tennon -n tennon --create-namespace \
+  --set oidc.issuer=https://accounts.google.com --set oidc.clientId=tennon
 ```
 
 The controller installs its own CRDs on first start, so there is no separate CRD step. If you
 prefer a single declarative manifest, apply the released bundle instead:
 
 ```bash
-kubectl apply -f https://github.com/acme/mcphub/releases/latest/download/mcphub.yaml
+kubectl apply -f https://github.com/yurifrl/tennon/releases/latest/download/tennon.yaml
 ```
 
 On an empty store the controller logs a one-time **bootstrap admin token** so you can get in
@@ -112,24 +112,24 @@ before any identity provider is wired up:
 
 ```
 No users found — first-run bootstrap.
-  → Open:  http://localhost:8080/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphubctl open
+  → Open:  http://localhost:8080/?token=tn_boot_8f3c1d9a7be240xZ
+  → Or run: tctl open
 ```
 
-Open that URL (or run `mcphubctl open`), then create your first [User](#users--roles). The token
+Open that URL (or run `tctl open`), then create your first [User](#users--roles). The token
 expires in 1h or the moment the first user exists. After that, sign in with Google or Okta.
 
 ## 2. Add a credentialed connector (Grafana)
 
-From the web UI: **Connectors → Add connector**. Paste the Grafana MCP server URL; MCPHub
+From the web UI: **Connectors → Add connector**. Paste the Grafana MCP server URL; Tennon
 detects the transport and discovers tools. Add the credential as a secret reference (the
 value is stored in the configured secret backend and never shown again).
 
 From the CLI:
 
 ```bash
-mcphubctl secret create grafana-creds --from-literal=token=$GRAFANA_TOKEN
-mcphubctl connector add grafana \
+tctl secret create grafana-creds --from-literal=token=$GRAFANA_TOKEN
+tctl connector add grafana \
   --remote https://grafana.example.com/mcp --transport streamable-http \
   --header "Authorization=Bearer {{secret:grafana-creds.token}}" \
   --expose-prefix grafana_ --tag observability
@@ -147,7 +147,7 @@ Okta → `observability`**, choose which tools, save.
 From the CLI (sugar that authors a `Policy` rule):
 
 ```bash
-mcphubctl connector share grafana \
+tctl connector share grafana \
   --to "group:okta:observability" \
   --tools "grafana_get_*,grafana_search_*,grafana_list_*"
 ```
@@ -159,11 +159,11 @@ tighten this grant.
 
 ## 4. Connect an agent
 
-You add **one MCPHub URL** to your client — **no token in the config**. The first call opens a
+You add **one Tennon URL** to your client — **no token in the config**. The first call opens a
 **browser login** (the same experience Notion ships at `https://mcp.notion.com/mcp`): your
-client discovers MCPHub's authorization server, registers itself (RFC 7591), runs the
+client discovers Tennon's authorization server, registers itself (RFC 7591), runs the
 authorization-code + PKCE flow against your IdP, and caches the token — reused silently on
-every later call and across **every** MCP behind that URL. MCPHub injects each upstream's own
+every later call and across **every** MCP behind that URL. Tennon injects each upstream's own
 credential server-side, so you never hold it. This is the flow proven in
 `hack/pocs/mcp-auth/` and documented in [Authentication](#authentication).
 
@@ -172,10 +172,10 @@ Stdio clients bridge to the URL with `mcp-remote` — same shape as the Notion e
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "mcp-remote", "https://mcphub.example.com/mcp"]
+      "args": ["-y", "mcp-remote", "https://tennon.example.com/mcp"]
     }
   }
 }
@@ -189,9 +189,9 @@ Clients that speak MCP over Streamable HTTP natively need just the URL — no he
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "http",
-      "url": "https://mcphub.example.com/mcp"
+      "url": "https://tennon.example.com/mcp"
     }
   }
 }
@@ -205,7 +205,7 @@ token as an `Authorization` header.
 
 Call a read tool — it runs immediately. Call a tool flagged sensitive and the execution
 **pauses**; approve it from **Approvals** in the
-UI (or `mcphubctl resume`).
+UI (or `tctl resume`).
 
 ## Next steps
 
@@ -215,7 +215,7 @@ UI (or `mcphubctl resume`).
 
 # Concepts
 
-MCPHub has a small set of concepts. Everything in the web UI maps to one of these, and each
+Tennon has a small set of concepts. Everything in the web UI maps to one of these, and each
 is stored as a Kubernetes custom resource (see [CRDs](#custom-resources-crds)) — but you never have to
 write YAML; the UI and CLI translate clicks into resources.
 
@@ -225,7 +225,7 @@ A **connector** is a registered tool provider: how to reach it, where its tool c
 from, and the credential it uses. It is the addressable, credentialed unit served to MCP
 clients over the MCP protocol at `/mcp/<name>`. Three CRD kinds specialize it:
 
-- **`McpConnector`** — a Model Context Protocol server. It need not ship a container image: a
+- **`TennonConnector`** — a Model Context Protocol server. It need not ship a container image: a
   `runtime` picks how it starts — a **container** image (e.g. `ghcr.io/github/github-mcp-server`),
   an **npx** package (`npx @scope/mcp-server`), a **uvx** package (`uvx some-mcp`), or a
   **remote** endpoint reached directly over MCP **Streamable HTTP**. Package (`npx`/`uvx`)
@@ -241,7 +241,7 @@ on demand; credentials and policies survive a rebuild. The UI seeds new connecto
 **preset catalog** (Google, Stripe, GitHub REST, Vercel, …) or from a pasted URL it
 auto-detects. The connector is itself the live, credentialed unit — once it carries a
 credential its tools are callable at its proxied URL. Backed by the
-[`McpConnector`](#mcpconnector) resource.
+[`TennonConnector`](#tennonconnector) resource.
 
 ## Credentials & accounts
 
@@ -250,14 +250,14 @@ in a separate resource. To use the same provider with different credentials or a
 create **multiple connectors**, each scoped to its own tools and reachable at its own proxied
 URL.
 
-The motivating case: for Grafana you create two `McpConnector`s —
+The motivating case: for Grafana you create two `TennonConnector`s —
 
 - **`grafana-read`** → a read-only token, exposes `get_* / search_* / list_*`,
 - **`grafana-write`** → an admin token, exposes everything, with write tools approval-gated.
 
 Agents point at `/mcp/grafana-read` or `/mcp/grafana-write`; each is independently shared and
 governed. A connector reads its credential from a Kubernetes **Secret** by convention (named
-`mcphub-<connector-name>`, assumed to already exist) — **either** an api-key/header value
+`tennon-<connector-name>`, assumed to already exist) — **either** an api-key/header value
 **or** an OAuth grant minted via a reusable **OAuth app** (below).
 
 ## OAuth app
@@ -271,7 +271,7 @@ never inline. Backed by the [`OAuthApp`](#oauthapp) resource.
 
 A **tool** is a single callable exposed by a connector (e.g.
 `github_create_pull_request`). Tools have input/output JSON schemas and can be flagged
-sensitive (requiring approval). MCPHub indexes every tool from every connector into one
+sensitive (requiring approval). Tennon indexes every tool from every connector into one
 searchable **catalog**.
 
 ## Tag
@@ -312,7 +312,7 @@ A **service account** is an org-owned machine identity that survives its creator
 authenticates one of two ways:
 
 - **Tokenless (preferred):** a trusted relationship (OIDC, Kubernetes ServiceAccount,
-  SPIFFE, cloud instance identity). No secret is stored; MCPHub mints a short-lived
+  SPIFFE, cloud instance identity). No secret is stored; Tennon mints a short-lived
   credential per call.
 - **Fine-grained token:** a GitHub-style token scoped to resources × tools × effect × expiry,
   short-lived and re-minted on expiry.
@@ -329,7 +329,7 @@ resumes. See [Authorization](#approvals) and [Web UI](#web-ui).
 
 ```mermaid
 graph LR
-  U[User / Agent / Machine] -->|OIDC or trust or token| P[MCPHub Proxy]
+  U[User / Agent / Machine] -->|OIDC or trust or token| P[Tennon Proxy]
   P -->|policy check| POL[Policy]
   P -->|route| MCP[Connector]
   MCP -->|rendered secret| EXT[External service]
@@ -339,8 +339,8 @@ graph LR
 
 # Web UI
 
-The web UI (embedded in the `mcphub` server, built with Vite + React) is the primary way to operate
-MCPHub. It is **click-driven**: you never write YAML. Every action translates to a custom
+The web UI (embedded in the `tennon` server, built with Vite + React) is the primary way to operate
+Tennon. It is **click-driven**: you never write YAML. Every action translates to a custom
 resource behind the scenes (see [CRDs](#custom-resources-crds)), and resources created out-of-band
 (`kubectl`, GitOps) appear here too.
 
@@ -373,7 +373,7 @@ A collapsible sidebar (toggle with the button in the top bar) groups pages:
 - **Service Accounts** — org-owned machine identities; tokenless trust or token.
 - **OAuth Apps** — reusable OAuth clients; register a provider once, connect many accounts.
 - **Secrets** — the Kubernetes Secrets that back connectors, one per connector by convention
-  (`mcphub-<connector-name>`), shown masked.
+  (`tennon-<connector-name>`), shown masked.
 - **Policies** — org-wide guardrails &amp; defaults; subjects, grants, approvals.
 - **Approvals** — the human-in-the-loop queue; approve or deny paused executions.
 
@@ -404,43 +404,43 @@ can still use `kubectl`/GitOps on the Kubernetes backend; the two stay in sync.
 
 # CLI
 
-`mcphubctl` is a standalone Go binary (separate from the `mcphub` server): a thin client over
+`tctl` is a standalone Go binary (separate from the `tennon` server): a thin client over
 the server API. It authenticates with an OIDC token or a service token and never touches the
 store directly, so the same validation, policy, and audit apply as the UI.
 
 The CLI also **embeds an MCP server** that exposes CLI operations as tools, allowing AI
-agents to interact with MCPHub programmatically through the Model Context Protocol.
+agents to interact with Tennon programmatically through the Model Context Protocol.
 
-Command names below are indicative of the planned surface; run `mcphubctl --help` for the
+Command names below are indicative of the planned surface; run `tctl --help` for the
 authoritative list in your build.
 
 ## Auth
 
 ```bash
-mcphubctl login                       # OIDC device/browser flow → cached token
-mcphubctl login --token mh_svc_…      # use a service token (CI)
-mcphub whoami                      # show resolved subject + groups
+tctl login                       # OIDC device/browser flow → cached token
+tctl login --token mh_svc_…      # use a service token (CI)
+tennon whoami                      # show resolved subject + groups
 ```
 
 ## Connectors
 
 ```bash
-mcphubctl connector list
-# an MCP server (McpConnector)
-mcphubctl connector add github --container ghcr.io/github/github-mcp-server:latest \
+tctl connector list
+# an MCP server (TennonConnector)
+tctl connector add github --container ghcr.io/github/github-mcp-server:latest \
   --transport stdio --expose-prefix github_ \
   --allow "search_*,get_*,list_*" --deny "delete_*" --tag code,prod
 # an OpenAPI service (OpenApiConnector)
-mcphubctl connector add billing --openapi https://billing.acme.internal/openapi.json
-mcphubctl connector describe github
-mcphubctl connector refresh github          # re-discover/recompile tools
-mcphubctl connector delete github
+tctl connector add billing --openapi https://billing.acme.internal/openapi.json
+tctl connector describe github
+tctl connector refresh github          # re-discover/recompile tools
+tctl connector delete github
 ```
 
 ## Secrets
 
 ```bash
-mcphubctl secret create github-credentials --from-literal=token=$GITHUB_TOKEN
+tctl secret create github-credentials --from-literal=token=$GITHUB_TOKEN
 # referenced by a connector as {{secret:github-credentials.token}}; value never printed back
 ```
 
@@ -448,13 +448,13 @@ mcphubctl secret create github-credentials --from-literal=token=$GITHUB_TOKEN
 
 ```bash
 # share a connector (sugar that authors a Policy rule)
-mcphubctl connector share grafana \
+tctl connector share grafana \
   --to "group:okta:observability" \
   --tools "grafana_get_*,grafana_search_*"
 
 # org-wide guardrail (Policy)
-mcphubctl policy list
-mcphubctl policy create sensitive-needs-approval \
+tctl policy list
+tctl policy create sensitive-needs-approval \
   --where "tag:sensitive" --effect ask
 ```
 
@@ -462,46 +462,46 @@ mcphubctl policy create sensitive-needs-approval \
 
 ```bash
 # tokenless (preferred)
-mcphub sa create hermes --owner platform-team \
+tennon sa create hermes --owner platform-team \
   --trust oidc --issuer https://token.actions.githubusercontent.com \
-  --audience mcphub --subject "repo:acme/hermes:ref:refs/heads/main"
+  --audience tennon --subject "repo:acme/hermes:ref:refs/heads/main"
 
 # fine-grained token (fallback)
-mcphubctl token create support-bot --grant "tag:chat" --ttl 1h
-mcphubctl token revoke support-bot
+tctl token create support-bot --grant "tag:chat" --ttl 1h
+tctl token revoke support-bot
 ```
 
 ## Tools: discover, inspect, call, resume
 
 ```bash
-mcphub tools search "open a pull request"
-mcphub tools describe github_create_pull_request
-mcphub call github_get_issue '{"owner":"acme","repo":"app","number":12}'
-mcphubctl resume --execution-id exec_123    # approve/continue a paused call
+tennon tools search "open a pull request"
+tennon tools describe github_create_pull_request
+tennon call github_get_issue '{"owner":"acme","repo":"app","number":12}'
+tctl resume --execution-id exec_123    # approve/continue a paused call
 ```
 
 ## Embedded MCP Server
 
 The CLI embeds an MCP server that exposes CLI operations as tools, enabling AI agents to
-interact with MCPHub programmatically:
+interact with Tennon programmatically:
 
 ```bash
 # Start the embedded MCP server (stdio — for clients that launch a command)
-mcphubctl mcp serve
-mcphubctl mcp serve --transport stdio
+tctl mcp serve
+tctl mcp serve --transport stdio
 
-# Or expose it over Streamable HTTP (SSE is not used anywhere in MCPHub)
-mcphubctl mcp serve --transport streamable-http --port 8080
+# Or expose it over Streamable HTTP (SSE is not used anywhere in Tennon)
+tctl mcp serve --transport streamable-http --port 8080
 
 # Available tools include:
-# - mcphub_connector_list:   List connectors
-# - mcphub_connector_create: Create a connector
-# - mcphub_secret_create:    Create secrets
-# - mcphub_tool_call:        Call tools through MCPHub
-# - mcphub_policy_manage:    Manage access policies
+# - tennon_connector_list:   List connectors
+# - tennon_connector_create: Create a connector
+# - tennon_secret_create:    Create secrets
+# - tennon_tool_call:        Call tools through Tennon
+# - tennon_policy_manage:    Manage access policies
 ```
 
-This allows AI coding assistants (like Claude Code, Cursor, etc.) to connect to MCPHub
+This allows AI coding assistants (like Claude Code, Cursor, etc.) to connect to Tennon
 and perform operations through the MCP protocol without manual CLI usage.
 
 ## Output
@@ -511,13 +511,13 @@ Most commands accept `--json` for machine-readable output, suitable for scriptin
 
 # API
 
-MCPHub is **API-first**. The `mcphub` server runs a single **controller** that exposes one
+Tennon is **API-first**. The `tennon` server runs a single **controller** that exposes one
 management **API**; the web UI, the [CLI](#cli), and your automation are all clients of it.
 Anything you can do in the UI you can do over the API.
 
 ## What the API is for
 
-- CRUD over every object: `McpConnector`, `Policy`, `Token`,
+- CRUD over every object: `TennonConnector`, `Policy`, `Token`,
   `ServiceAccount`, `Repo`.
 - Tool **discovery** and schema inspection across the catalog.
 - **Execution control**: invoke/replay tools for debugging, and resume paused
@@ -558,7 +558,7 @@ See [Authentication](#authentication) for how humans (OIDC: Google/Okta) and mac
 ```mermaid
 graph LR
   UI[Web UI] --> API
-  CLI[mcphub CLI] --> API
+  CLI[tennon CLI] --> API
   CI[Automation / CI] --> API
   KUBE[kubectl / GitOps] -->|Kubernetes backend| Store[(CRD objects)]
   API --> Store
@@ -570,10 +570,10 @@ graph LR
 # Spec Connectors (OpenAPI & GraphQL)
 
 `OpenApiConnector` and `GraphqlConnector` turn an API **specification** into MCP tools. Unlike
-an [`McpConnector`](#mcpconnector) — which connects to an MCP server and *discovers*
+an [`TennonConnector`](#tennonconnector) — which connects to an MCP server and *discovers*
 its tools — a spec connector **compiles** tools from a document and runs **in-process** in the
 controller/proxy. There is no Pod, no container, and nothing to sandbox: a tool call is just
-an outbound HTTP or GraphQL request that MCPHub makes on the caller's behalf.
+an outbound HTTP or GraphQL request that Tennon makes on the caller's behalf.
 
 This page covers how spec connectors are built, authenticated, versioned, and how
 provider-specific cases like **Google** are handled without bespoke code. For the extension
@@ -607,7 +607,7 @@ on identically.
 ## Authentication
 
 A spec connector reads its credential from a Kubernetes `Secret` by convention
-(`mcphub-<connector-name>`) and declares *how* it is applied:
+(`tennon-<connector-name>`) and declares *how* it is applied:
 
 ```yaml
 spec:
@@ -617,7 +617,7 @@ spec:
     format: "Bearer {{ .value }}"
 ```
 
-For OpenAPI, MCPHub can **derive** candidate auth methods from the spec's `securitySchemes`
+For OpenAPI, Tennon can **derive** candidate auth methods from the spec's `securitySchemes`
 and pre-fill them in the UI; if none are found it surfaces "No authentication detected — add a
 method, or connect without auth." OAuth2 upstreams reference a reusable
 [`OAuthApp`](#oauthapp); the minted token lands in the connector's Secret and is
@@ -626,7 +626,7 @@ refreshed on expiry.
 ## Versioning & refresh
 
 - The fetched spec is **content-hashed** into `status.specHash`; this is the tools cache key.
-- Re-fetching is explicit (`mcphubctl connector refresh <name>`) or, where configured, on the
+- Re-fetching is explicit (`tctl connector refresh <name>`) or, where configured, on the
   next apply. When the hash changes, tools are rebuilt; sharing, credentials, and policy are
   preserved across the rebuild.
 - There is no dependency or package version to pin — the "library" is a remote document, so a
@@ -639,7 +639,7 @@ runtime. Google is an `OpenApiConnector` fed by Google's **API Discovery** docum
 the controller converts to OpenAPI 3.x in-process and then compiles like any other spec:
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: OpenApiConnector
 metadata:
   name: google-gmail
@@ -648,7 +648,7 @@ spec:
   auth:
     in: header
     name: Authorization
-    format: "Bearer {{ .value }}"   # OAuth2 token from an OAuthApp; mcphub-google-gmail Secret
+    format: "Bearer {{ .value }}"   # OAuth2 token from an OAuthApp; tennon-google-gmail Secret
 ```
 
 The only Google-specific *code* is the Discovery→OpenAPI converter. Everything else is data:
@@ -663,7 +663,7 @@ is no connection sub-resource. See [Connectors](#connectors).
 
 ## Runtime contrast
 
-| | spec connector | `McpConnector` (container) |
+| | spec connector | `TennonConnector` (container) |
 |--|----------------|----------------------------|
 | Tools | compiled from a spec | discovered by connecting |
 | Runs | in-process, no Pod | a jailed container/Pod |
@@ -683,7 +683,7 @@ Every MCP runs in a locked-down container. A **Capability Profile** is how you s
 terms, **what that container is allowed to do** — what it can reach on the network, which
 files it can touch, and what it can run. Anything you don't list is denied.
 
-You write *intent*. MCPHub enforces it with whatever the cluster has (today: Cilium for
+You write *intent*. Tennon enforces it with whatever the cluster has (today: Cilium for
 network, plus process/file and sandbox enforcement); you never name those tools yourself.
 
 ## The mental model
@@ -724,7 +724,7 @@ A dropdown, a few rows you type into, one radio. No syntax.
 ### From the CLI
 
 ```bash
-mcphub profile create grafana-jail \
+tennon profile create grafana-jail \
   --sandbox strong \
   --allow-net  grafana.example.com:443 \
   --allow-file /etc/grafana:read \
@@ -752,7 +752,7 @@ All three produce the same profile object.
 ## Attaching it to an MCP
 
 - **UI:** on the MCP, set **Capability profile: `grafana-jail`** (a dropdown).
-- **CLI:** `mcphubctl mcp set grafana --profile grafana-jail`.
+- **CLI:** `tctl mcp set grafana --profile grafana-jail`.
 
 One profile can be reused across many MCPs, or you can edit it inline on a single MCP. If you
 don't attach one, a safe default profile is applied.
@@ -775,13 +775,13 @@ The one place the cluster's reality shows up, in plain language:
   network add-on isn't present).
 - `⚠ Process rules audited only` — exec rules are logged but not blocked on this cluster.
 
-You read intent + status; MCPHub handles the rest. For how that translation works, see
+You read intent + status; Tennon handles the rest. For how that translation works, see
 [Capability Enforcement (design)](arch/README.md#capability-enforcement-design).
 
 
 # Authentication
 
-MCPHub separates **humans** (interactive OIDC) from **machines** (tokenless trust, or
+Tennon separates **humans** (interactive OIDC) from **machines** (tokenless trust, or
 short-lived tokens). Identity is always resolved to a **subject** that authorization acts on.
 
 ## Humans — OIDC (Google & Okta)
@@ -792,10 +792,10 @@ pluggable; **Google** and **Okta** are first-class.
 ```mermaid
 sequenceDiagram
   participant User
-  participant Web as mcphub (web UI)
+  participant Web as tennon (web UI)
   participant IdP as Google / Okta
-  participant API as mcphub (API)
-  User->>Web: Open MCPHub
+  participant API as tennon (API)
+  User->>Web: Open Tennon
   Web->>IdP: Authorize (code + PKCE)
   User->>IdP: Authenticate & consent
   IdP->>Web: Code → tokens (identity + groups)
@@ -813,12 +813,12 @@ sequenceDiagram
 
 Configure providers under **Admin → Identity Providers** in the UI; the schema is the
 [`IdentityProvider`](#identityprovider) CRD, whose `claimsToRoles` mapping turns IdP
-group claims into MCPHub roles.
+group claims into Tennon roles.
 
 ## Machines — tokenless trust (preferred)
 
 Machines (CI, agents, Hermes) should authenticate via a **trusted relationship** instead of
-a stored secret. The workload presents a platform-signed document; MCPHub validates it
+a stored secret. The workload presents a platform-signed document; Tennon validates it
 against a configured trust rule and mints a short-lived credential. Nothing to leak.
 
 The supported trust types (OIDC JWT, Kubernetes ServiceAccount token, SPIFFE/SVID, and cloud
@@ -833,30 +833,30 @@ bound to a subject and scoped to resources × tools × effect × expiry. See
 
 ## Connecting a client — one login for every MCP
 
-You don't add upstream MCP servers to your client. You add **one MCPHub URL** — the global
-endpoint (`/mcp`) or a single connector (`/mcp/<name>`) — and MCPHub
+You don't add upstream MCP servers to your client. You add **one Tennon URL** — the global
+endpoint (`/mcp`) or a single connector (`/mcp/<name>`) — and Tennon
 proxies the MCPs you're allowed to use behind it.
 
-Authentication is **domain-based** against MCPHub itself: you log in **once** to the MCPHub
+Authentication is **domain-based** against Tennon itself: you log in **once** to the Tennon
 domain and that session covers **every** connector you reach through it. There is no
-per-MCP login, and no upstream secret in your client config — MCPHub holds the upstream
+per-MCP login, and no upstream secret in your client config — Tennon holds the upstream
 credentials and renders them in-cluster (see [Where credentials live](#where-credentials-live)).
 
 ### Add the URL — browser login, no token (recommended)
 
-Clients that speak MCP over Streamable HTTP point **straight at an MCPHub URL with no token in
-the config**. On the first call MCPHub returns `401` with a `WWW-Authenticate` header; the
-client discovers MCPHub's authorization server, registers itself, and opens the **browser**
-for login + consent. It receives access + refresh tokens scoped to the MCPHub domain —
+Clients that speak MCP over Streamable HTTP point **straight at an Tennon URL with no token in
+the config**. On the first call Tennon returns `401` with a `WWW-Authenticate` header; the
+client discovers Tennon's authorization server, registers itself, and opens the **browser**
+for login + consent. It receives access + refresh tokens scoped to the Tennon domain —
 refreshed automatically — so you authenticate **once**, not once per MCP. This is the
 Notion-style experience proven in `hack/pocs/mcp-auth/`.
 
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "http",
-      "url": "https://mcphub.example.com/mcp"
+      "url": "https://tennon.example.com/mcp"
     }
   }
 }
@@ -869,38 +869,38 @@ same URL through `mcp-remote` — the same shape as Notion's hosted MCP:
 ```json
 {
   "mcpServers": {
-    "mcphub": {
+    "tennon": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "mcp-remote", "https://mcphub.example.com/mcp"]
+      "args": ["-y", "mcp-remote", "https://tennon.example.com/mcp"]
     }
   }
 }
 ```
 
-`mcp-remote` caches the MCPHub tokens locally (`~/.mcp-auth`, override with
+`mcp-remote` caches the Tennon tokens locally (`~/.mcp-auth`, override with
 `MCP_REMOTE_CONFIG_DIR`; clear with `rm -rf ~/.mcp-auth`).
 
 This is standard MCP OAuth 2.1 ([Authorization spec, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization)):
 authorization-code + **PKCE**, discovery via **RFC 9728** (protected-resource metadata) and
 **RFC 8414** (authorization-server metadata), **RFC 7591** dynamic client registration (no
-pre-shared secret), and **RFC 8707** resource indicators to bind the token to MCPHub.
+pre-shared secret), and **RFC 8707** resource indicators to bind the token to Tennon.
 
-### Or use the `mcphub` CLI bridge
+### Or use the `tennon` CLI bridge
 
-Also token-free: [`mcphubctl login`](#cli) runs the browser/device OIDC flow **once** and
+Also token-free: [`tctl login`](#cli) runs the browser/device OIDC flow **once** and
 caches the token, then the CLI embeds a local MCP server that forwards to the proxy — handy
 for clients that only launch a stdio command and don't implement MCP OAuth.
 
 ```bash
-mcphubctl login            # browser/device flow → cached token (once, for all MCPs)
+tctl login            # browser/device flow → cached token (once, for all MCPs)
 ```
 
 ```json
 {
   "mcpServers": {
-    "mcphub": {
-      "command": "mcphub",
+    "tennon": {
+      "command": "tennon",
       "args": ["mcp", "serve", "--transport", "stdio"]
     }
   }
@@ -915,11 +915,11 @@ When there's no browser, authenticate the workload with [tokenless trust](#token
 
 ```bash
 # Interactive: add by name, resolve the URL, log in via browser
-npx add-mcp '<mcp name>' --name mcphub
+npx add-mcp '<mcp name>' --name tennon
 
 # Non-interactive: add the URL directly with a bearer token
-npx add-mcp https://mcphub.example.com/mcp/<name> \
-  --transport http --name mcphub \
+npx add-mcp https://tennon.example.com/mcp/<name> \
+  --transport http --name tennon \
   --header 'Authorization: Bearer mh_svc_...'
 ```
 
@@ -949,7 +949,7 @@ The proxy authenticates, resolves the subject, then hands off to
 # Authorization
 
 Authorization decides, for every call, whether the subject may proceed — and whether a human
-must approve first. MCPHub has two planes:
+must approve first. Tennon has two planes:
 
 - **Control plane:** who may edit connectors, policies, roles, tokens. On the Kubernetes backend
   this is native RBAC; on Postgres/SQLite it is an equivalent role check.
@@ -1088,7 +1088,7 @@ when {
 
 ### Ask as an obligation
 
-Cedar decides permit/forbid, not a third state. MCPHub models ask as a Cedar
+Cedar decides permit/forbid, not a third state. Tennon models ask as a Cedar
 **obligation** (advice annotation): the policy permits the call but tags it for approval, and
 the proxy routes it into the approvals queue instead of forwarding.
 
@@ -1109,13 +1109,13 @@ when { context.args.env == "prod" };
 When a call resolves to ask (or needs auth), the execution **pauses** and
 becomes a first-class object with an id, subject, target tool, and arguments. A human
 approves or denies it from **Approvals** in the [Web UI](#web-ui), or via the API/CLI
-(`mcphubctl resume --execution-id …`). The same mechanism handles pausing for an upstream auth
+(`tctl resume --execution-id …`). The same mechanism handles pausing for an upstream auth
 step. Pending approvals have a timeout.
 
 ## Why not a relationship engine (OpenFGA/SpiceDB)?
 
 Those excel when permissions are a deep relationship graph (org → team → connector → tool with
-overrides). MCPHub's needs are tool globs + group/tag membership + argument conditions, which
+overrides). Tennon's needs are tool globs + group/tag membership + argument conditions, which
 Cedar handles in-process with no extra stateful service — preserving the embeddable SQLite
 story. If relationship inheritance becomes dominant, a relationship backend can be revisited.
 
@@ -1123,12 +1123,12 @@ story. If relationship inheritance becomes dominant, a relationship backend can 
 
 For a solo user there are typically no groups: rules bind directly to the user or a single
 service account. Adding a team is additive — grant a connector to a group — with no
-change to the model. See [Requirements](arch/README.md#mcphub--core-requirements) (design note).
+change to the model. See [Requirements](arch/README.md#tennon--core-requirements) (design note).
 
 
 # Users & Roles
 
-MCPHub manages **human identity and permissions the way [Teleport](https://goteleport.com)
+Tennon manages **human identity and permissions the way [Teleport](https://goteleport.com)
 does**: every user and role is a resource with the familiar `kind` / `metadata` / `spec`
 envelope, stored in the backend and editable as YAML. There are two condition sets on every
 role — `allow` and `deny` — and **deny always overrides allow**.
@@ -1144,10 +1144,10 @@ token** and prints it on startup (see [Features §7](#catalog-features-executor-
 ```
 No users found — first-run bootstrap.
   → Open:  http://localhost:3000/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphubctl open
+  → Or run: tctl open
 ```
 
-Open that URL (or run `mcphubctl open`), then create your real account. The bootstrap token dies
+Open that URL (or run `tctl open`), then create your real account. The bootstrap token dies
 the moment the first `User` exists, or after 1h.
 
 ## Users
@@ -1158,19 +1158,19 @@ the [`Role`](#roles)s in `spec.roles`. Users come in two flavors:
 - **Local users** — created explicitly and stored in the backend:
 
   ```bash
-  mcphubctl users add joe --roles=devtools-user
+  tctl users add joe --roles=devtools-user
   # or, declaratively:
-  mcphubctl create -f joe.yaml
+  tctl create -f joe.yaml
   ```
 
 - **SSO users** — created automatically at login from an [identity provider](#authentication).
   Their OIDC claims populate `spec.traits` (notably `groups`), and roles are assigned by the
   identity provider's [`claimsToRoles`](#identityprovider) mapping.
 
-Either way the user is a real backend object you can `mcphubctl get users`, edit, or **lock**:
+Either way the user is a real backend object you can `tctl get users`, edit, or **lock**:
 
 ```bash
-mcphubctl users lock joe       # instantly cut off access without deleting the account
+tctl users lock joe       # instantly cut off access without deleting the account
 ```
 
 Locking terminates live sessions and blocks new ones — the emergency stop.
@@ -1179,7 +1179,7 @@ Locking terminates live sessions and blocks new ones — the emergency stop.
 
 A **Role** says what a subject may do, on two planes at once:
 
-- **Control plane (`rules`)** — which MCPHub resources you may *manage*
+- **Control plane (`rules`)** — which Tennon resources you may *manage*
   (`connector`, `role`, `user`, `token`, …) and with which verbs
   (`list`, `read`, `create`, `update`, `delete`, or `*`).
 - **Data plane (`tools`)** — which tools you may *call*, by `tag` or `connector`,
@@ -1188,7 +1188,7 @@ A **Role** says what a subject may do, on two planes at once:
   them that also carries control-plane RBAC.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Role
 metadata: { name: devtools-user }
 spec:
@@ -1263,12 +1263,12 @@ Identity is editable from either side; both converge on the backend store:
 
 | Path | How | Best for |
 |------|-----|----------|
-| **CLI / API / UI** | `mcphubctl users add`, `mcphubctl create -f role.yaml`, web UI | day-to-day, ad-hoc |
+| **CLI / API / UI** | `tctl users add`, `tctl create -f role.yaml`, web UI | day-to-day, ad-hoc |
 | **Kubernetes Operator** | apply `User`/`Role` CRs; the controller reconciles them into the store | GitOps / Argo / Terraform |
 
 On the cluster backend the **CRD *is* the resource**: `kubectl apply` a `Role` and it becomes
 a live backend role; delete the CR and the role is removed. A finalizer blocks deletion until
-the backend object is gone, and the `mcphub.io/keep: "true"` annotation keeps the backend
+the backend object is gone, and the `tennon.io/keep: "true"` annotation keeps the backend
 object when you remove the CR. This mirrors Teleport's `resources.teleport.dev` operator,
 where `tctl`/Terraform and the Kubernetes Operator are two front doors to one backend.
 
@@ -1278,7 +1278,7 @@ See also: [Authentication](#authentication) · [Authorization](#authorization) �
 
 # Tokens & Identity
 
-MCPHub's machine authentication is tiered. **Tokenless** (a trusted relationship) is
+Tennon's machine authentication is tiered. **Tokenless** (a trusted relationship) is
 preferred; **fine-grained tokens** are the fallback. Both end up as a short-lived credential
 the proxy validates, and both resolve to a subject that [Authorization](#authorization)
 acts on.
@@ -1297,7 +1297,7 @@ fine-grained tokens (the granularity bar).
 
 A [`ServiceAccount`](#serviceaccount) is an org-owned identity (survives its creator).
 Instead of a secret, it carries a **trust rule**. At call time the caller presents its
-platform-signed document; MCPHub validates it and mints a short-lived (~1h, non-renewable)
+platform-signed document; Tennon validates it and mints a short-lived (~1h, non-renewable)
 credential scoped to the account's policy. There is nothing to leak.
 
 Trust types:
@@ -1309,12 +1309,12 @@ Trust types:
 - **Cloud instance identity:** AWS IAM / GCP / Azure attestation.
 
 This is the recommended path for CI and for agent workloads such as Hermes: the workload
-runs with a platform identity, MCPHub trusts it, and no token is copied around.
+runs with a platform identity, Tennon trusts it, and no token is copied around.
 
 ```mermaid
 sequenceDiagram
   participant W as Workload (e.g. Hermes)
-  participant H as MCPHub
+  participant H as Tennon
   W->>H: call + platform-signed doc (OIDC/K8s/SPIFFE)
   H->>H: validate against trust rule
   H->>W: short-lived credential (~1h), then proxy the call
@@ -1372,7 +1372,7 @@ which trust types ship first, default TTLs).
 
 # Security Model
 
-MCPHub's job is to let people share access to powerful tools without sharing the credentials
+Tennon's job is to let people share access to powerful tools without sharing the credentials
 behind them. This page summarizes the security properties and where to verify them.
 
 ## Credential isolation
@@ -1380,12 +1380,12 @@ behind them. This page summarizes the security properties and where to verify th
 - A connector's upstream credential is **referenced**, never inlined: `secretKeyRef` to a
   Kubernetes `Secret` (Kubernetes backend) or an encrypted store-native secret
   (Postgres/SQLite). Multiple credentialed variants (e.g. a read connector and a write
-  connector) are separate `McpConnector` objects, each with its own credential.
+  connector) are separate `TennonConnector` objects, each with its own credential.
 - The controller **renders** the secret into the upstream MCP at call time (env vars for
   container MCPs, headers for remote MCPs), inside the cluster boundary.
 - Rendered values **never** appear in API responses, resource status, logs, or the web UI.
 - Callers (teammates, agents, CI) **never receive** the upstream credential. They present
-  their own MCPHub identity; the proxy injects the connector's secret. This is what makes
+  their own Tennon identity; the proxy injects the connector's secret. This is what makes
   "share Grafana with an Okta team" safe — and lets you hand out a read connector widely
   while keeping the write connector's admin credential narrow.
 
@@ -1418,9 +1418,9 @@ recorded with the acting subject. (Audit sink configuration is deployment-specif
 ## Trust boundaries
 
 - The embedded web UI holds no secrets and no business logic — it calls the API like any
-  other client. The proxy and API surfaces of `mcphub` can be exposed or kept internal
+  other client. The proxy and API surfaces of `tennon` can be exposed or kept internal
   independently.
-- The CLI's MCP server (`mcphubctl mcp serve`) is a thin local stdio bridge; it carries the
+- The CLI's MCP server (`tctl mcp serve`) is a thin local stdio bridge; it carries the
   caller's credential but performs no authorization or secret rendering — those stay in the
   controller.
 
@@ -1432,8 +1432,8 @@ issues for vulnerabilities.
 
 # Custom Resources (CRDs)
 
-Every MCPHub object is a Kubernetes custom resource under the API group
-`mcphub.io/v1alpha1`. **You never have to write this YAML** — the web UI and CLI translate
+Every Tennon object is a Kubernetes custom resource under the API group
+`tennon.io/v1alpha1`. **You never have to write this YAML** — the web UI and CLI translate
 clicks and commands into these resources. The schemas are shown here for reference,
 GitOps, and automation.
 
@@ -1445,7 +1445,7 @@ the same objects are persisted as rows and behave identically.
 
 ## Connectors
 
-A **connector** is a registered upstream that MCPHub credentials, runs, and turns into a set
+A **connector** is a registered upstream that Tennon credentials, runs, and turns into a set
 of callable tools. It is the credentialed, addressable unit, and whatever its type it is
 served to clients over the **MCP protocol** at `/mcp/<name>`. Three concrete kinds specialize
 the concept; they share the `connectors` category (`kubectl get connectors` lists them all)
@@ -1453,7 +1453,7 @@ but differ in how tools are produced and where they run:
 
 | Kind | Tools come from | Runs |
 |------|-----------------|------|
-| **McpConnector** | discovered by connecting to an MCP server | a container / stdio process / remote endpoint |
+| **TennonConnector** | discovered by connecting to an MCP server | a container / stdio process / remote endpoint |
 | **OpenApiConnector** | compiled from an OpenAPI spec | in-process in the server (no Pod) |
 | **GraphqlConnector** | compiled from a GraphQL endpoint | in-process |
 
@@ -1462,7 +1462,7 @@ Google are handled is covered in [Spec Connectors](#spec-connectors-openapi--gra
 and special connectors is in [Connector Extensibility](arch/README.md#connector-extensibility-design-note).
 
 **Credentials by convention.** A connector reads a Kubernetes `Secret` named
-`mcphub-<connector-name>`, assumed to already exist; the value is rendered at call time and
+`tennon-<connector-name>`, assumed to already exist; the value is rendered at call time and
 never exposed. Multiple accounts of the same upstream (a work and a personal Google) are
 simply **two connectors** with two Secrets — there is no separate connection object.
 
@@ -1471,17 +1471,17 @@ connector. A connector defines only how to reach the upstream and which tools it
 authorization lives entirely in org-wide [`Policy`](#policy) and identity-side
 [`Role`](#role) grants, evaluated by [Authorization](#authorization).
 
-### McpConnector
+### TennonConnector
 
 An upstream MCP server. `spec.runtime` selects how it runs; `spec.scaling` applies only to
 the container runtime.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
-kind: McpConnector
+apiVersion: tennon.io/v1alpha1
+kind: TennonConnector
 metadata:
   name: github
-  namespace: mcphub
+  namespace: tennon
   labels:
     tags: code
 spec:
@@ -1512,7 +1512,7 @@ Notes:
 - `scaling` is `replicas` (passthrough to the Deployment) or `autoscale` (the controller
   emits a native `HorizontalPodAutoscaler`). There is no scale-to-zero. Omitted ⇒
   `replicas: 1`.
-- The credential is the `mcphub-github` Secret, rendered into request headers (remote) or
+- The credential is the `tennon-github` Secret, rendered into request headers (remote) or
   `env` (container) at call time, never exposed to callers.
 
 ### OpenApiConnector
@@ -1521,11 +1521,11 @@ Tools compiled from an OpenAPI spec; the connector runs in-process (no Pod). The
 fetches the spec, hashes it (`status.specHash`), and compiles each operation into a tool.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: OpenApiConnector
 metadata:
   name: grafana-read
-  namespace: mcphub
+  namespace: tennon
   labels:
     tags: observability
 spec:
@@ -1552,11 +1552,11 @@ write access narrowly.
 Tools compiled from a GraphQL endpoint via introspection; runs in-process.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: GraphqlConnector
 metadata:
   name: linear
-  namespace: mcphub
+  namespace: tennon
 spec:
   description: "Linear issues, projects, and cycles."
   endpoint: https://api.linear.app/graphql
@@ -1575,9 +1575,9 @@ the same OAuth endpoint — you register Google once, then credential personal a
 connectors against it. The client secret is a [Secrets](#secrets) reference, never inline.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: OAuthApp
-metadata: { name: google-workspace, namespace: mcphub }
+metadata: { name: google-workspace, namespace: tennon }
 spec:
   authorizationUrl: https://accounts.google.com/o/oauth2/v2/auth
   tokenUrl: https://oauth2.googleapis.com/token
@@ -1590,7 +1590,7 @@ status:
 ```
 
 When an upstream's OAuth endpoint supports dynamic client registration (RFC 7591) or
-publishes metadata (RFC 8414 / RFC 9728), MCPHub can register the app for you; otherwise you
+publishes metadata (RFC 8414 / RFC 9728), Tennon can register the app for you; otherwise you
 paste the `clientId`/secret from the provider's console. The minted access/refresh tokens are
 written to the connector's Secret and renewed on expiry — they never appear in API responses,
 status, logs, or the UI.
@@ -1607,7 +1607,7 @@ primitive: `subject × resource × when? × effect`. See
 [Authorization → The rule](#the-rule).
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Policy
 metadata: { name: org-guardrails }
 spec:
@@ -1644,13 +1644,13 @@ call's arguments.
 ## IdentityProvider
 
 How **humans log in**. An `IdentityProvider` registers an external OIDC provider (Google,
-Okta, …) and maps its claims to MCPHub identity: it is the Teleport-style *auth connector*.
+Okta, …) and maps its claims to Tennon identity: it is the Teleport-style *auth connector*.
 Don't confuse it with [`OAuthApp`](#oauthapp) — an `OAuthApp` is an **upstream** OAuth client
 used to credential *connectors*, while an `IdentityProvider` is how *users* authenticate **to**
-MCPHub. Configure these under **Admin → Identity Providers** in the UI.
+Tennon. Configure these under **Admin → Identity Providers** in the UI.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: IdentityProvider
 metadata: { name: okta }          # referenced by Policy `provider:`, User `identities[].provider`,
                                   # and the group-id prefix (e.g. okta:observability)
@@ -1664,7 +1664,7 @@ spec:
   claims:
     username: email                # OIDC claim used as the User name / subject
     groups: groups                 # OIDC claim carrying group membership
-  claimsToRoles:                   # map claim values → MCPHub roles (Teleport's claims_to_roles)
+  claimsToRoles:                   # map claim values → Tennon roles (Teleport's claims_to_roles)
     - { claim: groups, value: "observability",   roles: ["devtools-user"] }
     - { claim: groups, value: "sre-*",           roles: ["devtools-user"] }   # glob match on the claim value
     - { claim: groups, value: "platform-admins", roles: ["admin"] }
@@ -1673,7 +1673,7 @@ status:
   lastLogin: "2026-06-21T09:00:00Z"
 ```
 
-At login MCPHub validates the OIDC token, reads `claims.username` and `claims.groups`, and
+At login Tennon validates the OIDC token, reads `claims.username` and `claims.groups`, and
 creates (or updates) the [`User`](#user): the username becomes `metadata.name`, the claims
 populate `spec.traits`, and `claimsToRoles` assigns `spec.roles`. Each `claimsToRoles.value`
 matches a claim value exactly or by glob (`sre-*`); the first matching entry's roles apply.
@@ -1686,13 +1686,13 @@ subject (`{ kind: Group, provider: okta, match: observability }`). See
 ## User
 
 A human identity. Mirrors Teleport's model: users are stored in the backend **and** fully
-expressible as resources. **Local users** are created with `mcphubctl users add` or by applying
+expressible as resources. **Local users** are created with `tctl users add` or by applying
 the YAML; **SSO users** are created at login from an [identity provider](#authentication) —
 their OIDC claims populate `spec.traits` and an entry under `spec.identities`. A user has no
 permissions of its own; everything comes from the [`Role`](#role)s in `spec.roles`.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: User
 metadata: { name: joe }
 spec:
@@ -1708,7 +1708,7 @@ status:
   lastLogin: "2026-06-21T09:00:00Z"
 ```
 
-Locking a user (`status.locked: true`, set via `mcphubctl users lock joe`) terminates live
+Locking a user (`status.locked: true`, set via `tctl users lock joe`) terminates live
 sessions and blocks new ones without deleting the account. Machine identities use
 [`ServiceAccount`](#serviceaccount)/[`Token`](#token) instead of `User`.
 
@@ -1721,7 +1721,7 @@ most-restrictive-wins order, not a separate algorithm. Roles are assigned to `Us
 `ServiceAccount`s, and SSO groups.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Role
 metadata: { name: devtools-user }
 spec:
@@ -1729,7 +1729,7 @@ spec:
     maxSessionTtl: 8h
     lock: false                   # strict lock wins across roles
   allow:
-    # Control-plane RBAC: which MCPHub resources this role may manage, and how.
+    # Control-plane RBAC: which Tennon resources this role may manage, and how.
     rules:
       - resources: [connector]
         verbs: [list, read]
@@ -1779,9 +1779,9 @@ provide the basic flow.
 
 ### Managing users & roles: two ways
 
-The CRD *is* the resource: editing via `mcphub`/API/UI and applying `User`/`Role` CRs with the
+The CRD *is* the resource: editing via `tennon`/API/UI and applying `User`/`Role` CRs with the
 Kubernetes Operator converge on one backend store. The two paths, finalizer, and
-`mcphub.io/keep` retention are covered in
+`tennon.io/keep` retention are covered in
 [Users & Roles → Two ways to manage](#two-ways-to-manage-just-like-teleport).
 
 ## ServiceAccount
@@ -1789,7 +1789,7 @@ Kubernetes Operator converge on one backend store. The two paths, finalizer, and
 An org-owned machine identity. Prefer a trusted relationship over a stored secret.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: ServiceAccount
 metadata: { name: hermes }
 spec:
@@ -1797,7 +1797,7 @@ spec:
   trust:                         # tokenless — no shared secret
     type: oidc                   # oidc | kubernetes | spiffe | aws | gcp | azure
     issuer: "https://token.actions.githubusercontent.com"
-    audience: "mcphub"
+    audience: "tennon"
     subject: "repo:acme/hermes:ref:refs/heads/main"
   credential:
     ttl: 1h
@@ -1812,7 +1812,7 @@ A fine-grained, short-lived credential bound to a subject. Used when tokenless i
 possible.
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: Token
 metadata: { name: support-bot }
 spec:
@@ -1840,9 +1840,9 @@ UI/CLI; see the user guide [Sandbox & Access](#sandbox--access-capability-profil
 [design doc](arch/README.md#capability-enforcement-design).
 
 ```yaml
-apiVersion: mcphub.io/v1alpha1
+apiVersion: tennon.io/v1alpha1
 kind: CapabilityProfile
-metadata: { name: grafana-jail, namespace: mcphub }
+metadata: { name: grafana-jail, namespace: tennon }
 spec:
   baseline: model-armor        # hardened default to start from
   default: deny                # anything not listed is blocked
@@ -1872,8 +1872,8 @@ status:
     kubeArmorPolicy:     grafana-jail-ka
 ```
 
-Attach a profile to an `McpConnector` via `capabilityProfile: grafana-jail` (a default
-profile applies if omitted). Capability profiles apply only to container/stdio McpConnectors —
+Attach a profile to an `TennonConnector` via `capabilityProfile: grafana-jail` (a default
+profile applies if omitted). Capability profiles apply only to container/stdio TennonConnectors —
 `OpenApiConnector`/`GraphqlConnector` run in-process and have no container to jail. The
 `status.planes` map reports, per plane, whether it is `enforced | degraded | audit |
 unenforced` and which provider satisfied it — this is what the UI status line summarizes. The
@@ -1883,7 +1883,7 @@ by hand.
 ## Secrets
 
 On the Kubernetes backend, a connector's credential is a native `Secret` located by convention
-(`mcphub-<connector-name>`) or by an explicit `secretKeyRef`. On Postgres/SQLite, MCPHub uses
+(`tennon-<connector-name>`) or by an explicit `secretKeyRef`. On Postgres/SQLite, Tennon uses
 an encrypted store-native secret table with the same reference shape. Either way, values are
 rendered into the upstream at call time and **never** appear in API responses, status, logs,
 or the UI. See [Security](#security-model).
@@ -1891,7 +1891,7 @@ or the UI. See [Security](#security-model).
 
 # Storage Backends
 
-Every MCPHub object is a CRD. The CRD **schema** is fixed; where those objects are
+Every Tennon object is a CRD. The CRD **schema** is fixed; where those objects are
 **persisted** is pluggable. The controller talks to its store through one storage interface
 with three drivers. Switching backends changes *where* objects live, not *what* they are —
 `kubectl`-applied YAML and UI-created objects behave identically on any backend.
@@ -1923,7 +1923,7 @@ person, local development, or an embedded self-host deployment.
   product fork.
 - **Consistency.** Because the types and reconcile logic are identical, the UI, CLI, and
   GitOps all behave the same regardless of backend.
-- **UI ↔ CRD parity.** "Create Connector" in the UI is an API call that writes an `McpConnector` object into
+- **UI ↔ CRD parity.** "Create Connector" in the UI is an API call that writes an `TennonConnector` object into
   whichever backend is configured; the same object can be created with `kubectl apply` on the
   Kubernetes backend or seeded via SQL/migration on the others.
 
@@ -1934,7 +1934,7 @@ separate **audit-events backend**, because config is transactional while events 
 append-heavy time-series — `etcd`, for instance, can hold Teleport's state but not its audit
 log.
 
-MCPHub deliberately **does not** do this. There is **one** configured store, and it holds
+Tennon deliberately **does not** do this. There is **one** configured store, and it holds
 *everything*: the desired-state CRD objects **and** the audit/event records. Whichever backend
 you pick — Kubernetes, Postgres, or SQLite — is the single source of truth for both.
 
@@ -1942,7 +1942,7 @@ Why diverge from Teleport here:
 
 - **Solo-to-team simplicity (R1).** A second database to provision, back up, and migrate
   defeats the "one binary, one store" goal. One person on SQLite gets audit for free.
-- **Volume fits.** MCPHub audits tool calls and policy decisions, not high-frequency session
+- **Volume fits.** Tennon audits tool calls and policy decisions, not high-frequency session
   streams; a single relational/etcd-backed store handles that load without a time-series tier.
 - **Consistency.** Config and its audit trail share one transactional store, so an action and
   the event recording it cannot diverge across two systems.
@@ -1969,9 +1969,9 @@ reconciliation and does not need migrating.
 
 # Deployment
 
-MCPHub ships as one server binary — `mcphub` (controller + API + MCP proxy + embedded web UI)
+Tennon ships as one server binary — `tennon` (controller + API + MCP proxy + embedded web UI)
 — distributed as a container image, a Helm chart, and a released install bundle. The
-`mcphubctl` CLI is a separate client binary. Pick a [storage backend](#storage-backends) to match
+`tctl` CLI is a separate client binary. Pick a [storage backend](#storage-backends) to match
 your scale.
 
 ## Solo / local (SQLite)
@@ -1979,10 +1979,10 @@ your scale.
 Run the single binary directly; the UI is served on the API port.
 
 ```bash
-mcphub \
-  --store=sqlite --store-path=./mcphub.db \
+tennon \
+  --store=sqlite --store-path=./tennon.db \
   --api-addr=:8080 --proxy-addr=:8081 \
-  --oidc-issuer=https://accounts.google.com --oidc-client-id=mcphub
+  --oidc-issuer=https://accounts.google.com --oidc-client-id=tennon
 ```
 
 No cluster required. Good for one person or evaluation.
@@ -1992,7 +1992,7 @@ No cluster required. Good for one person or evaluation.
 Point the same binary at Postgres for shared, HA-capable state, still without Kubernetes:
 
 ```bash
-mcphub --store=postgres --store-dsn="postgres://…/mcphub" \
+tennon --store=postgres --store-dsn="postgres://…/tennon" \
   --api-addr=:8080 --proxy-addr=:8081 …
 ```
 
@@ -2003,17 +2003,17 @@ Front it with your reverse proxy / ingress as needed.
 Install with Helm — the primary path:
 
 ```bash
-helm install mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub --create-namespace \
-  --set oidc.issuer=https://accounts.google.com --set oidc.clientId=mcphub
+helm install tennon oci://ghcr.io/acme/charts/tennon -n tennon --create-namespace \
+  --set oidc.issuer=https://accounts.google.com --set oidc.clientId=tennon
 ```
 
 For Postgres, point the chart at a Secret holding the DSN (keeps the password out of process
 arguments):
 
 ```bash
-kubectl -n mcphub create secret generic mcphub-store --from-literal=dsn="postgres://…/mcphub"
-helm upgrade mcphub oci://ghcr.io/acme/charts/mcphub -n mcphub \
-  --set store.backend=postgres --set store.existingSecret=mcphub-store
+kubectl -n tennon create secret generic tennon-store --from-literal=dsn="postgres://…/tennon"
+helm upgrade tennon oci://ghcr.io/acme/charts/tennon -n tennon \
+  --set store.backend=postgres --set store.existingSecret=tennon-store
 ```
 
 The controller installs its own CRDs on first start, so there is no separate CRD step. If you
@@ -2021,10 +2021,10 @@ manage cluster state declaratively (GitOps), apply the released bundle (CRDs + R
 controller in one manifest) instead of Helm:
 
 ```bash
-kubectl apply -f https://github.com/acme/mcphub/releases/latest/download/mcphub.yaml
+kubectl apply -f https://github.com/acme/tennon/releases/latest/download/tennon.yaml
 ```
 
-On Kubernetes you get native `kubectl`/GitOps management of `McpConnector`/`Policy`,
+On Kubernetes you get native `kubectl`/GitOps management of `TennonConnector`/`Policy`,
 Kubernetes RBAC for the control plane, and watch-based reconciliation. Container-runtime
 connectors are scheduled as workloads. See [CRD Lifecycle](arch/README.md#crd-lifecycle) for how CRDs are
 delivered and versioned.
@@ -2042,19 +2042,19 @@ delivered and versioned.
 ## Agents
 
 Agents connect **directly** to `/mcp/<connector>` over Streamable HTTP, or — for clients that
-launch a stdio command — via the CLI's MCP server (`mcphubctl mcp serve --transport stdio`).
+launch a stdio command — via the CLI's MCP server (`tctl mcp serve --transport stdio`).
 See [Getting Started](#4-connect-an-agent).
 
 ## Upgrades
 
 Roll the controller image (Helm `--set image.tag=…` or re-apply the bundle); runtime state is
 rebuilt by reconciliation and desired state persists in the configured backend. CRD schema
-changes are versioned under `mcphub.io/v1alpha1` — see [CRD Lifecycle](arch/README.md#crd-lifecycle).
+changes are versioned under `tennon.io/v1alpha1` — see [CRD Lifecycle](arch/README.md#crd-lifecycle).
 
 
 # Catalog Features (Executor-inspired)
 
-Beyond the MCP Shield foundation (proxy, controller, RBAC), MCPHub adopts several features
+Beyond the MCP Shield foundation (proxy, controller, RBAC), Tennon adopts several features
 from [RhysSullivan/executor](https://github.com/RhysSullivan/executor), adapted to a
 Kubernetes-native, state-backed system.
 
@@ -2062,14 +2062,14 @@ Kubernetes-native, state-backed system.
 
 Every tool from every registered `Connector` is indexed into a single searchable catalog held in
 the controller's runtime state. The catalog is the backing data for discovery
-and the web UI. Unlike executor's local-first store, MCPHub's catalog is derived from
+and the web UI. Unlike executor's local-first store, Tennon's catalog is derived from
 cluster state (the set of `Connector` resources) and rebuilt by reconciliation.
 
 ## 2. Source auto-detection
 
-When adding an MCP via the API or web UI, MCPHub probes the target to detect its transport
+When adding an MCP via the API or web UI, Tennon probes the target to detect its transport
 (`stdio`, `streamable-http`, `sse`) and performs an initial tool discovery to populate the
-catalog and the `McpConnector` status. The result is written into an `McpConnector` resource — so the UI
+catalog and the `TennonConnector` status. The result is written into an `TennonConnector` resource — so the UI
 "add a source" action is just a guided way to create a CR.
 
 ## 3. Intent-based tool discovery
@@ -2094,7 +2094,7 @@ to approve or deny.
 ```mermaid
 sequenceDiagram
     participant Agent
-    participant Proxy as mcphub proxy
+    participant Proxy as tennon proxy
     participant Store as Execution store
     participant Approver
 
@@ -2126,10 +2126,10 @@ control layered on connectors. Together they cover "may you call this at all" (p
 
 ## 6. Web UI
 
-The Vite/React UI (embedded in the `mcphub` server) provides:
+The Vite/React UI (embedded in the `tennon` server) provides:
 
 - A catalog browser (search, inspect tool schemas).
-- Source management (add/edit `McpConnector`s, view discovery + health).
+- Source management (add/edit `TennonConnector`s, view discovery + health).
 - Policy and service-token management.
 - An approvals inbox for pending executions.
 - Audit/usage views.
@@ -2141,13 +2141,13 @@ configured yet), it mints a single-use **bootstrap admin token** and prints it t
 process logs — there is no chicken-and-egg "configure OIDC before you can log in" problem.
 
 ```
-mcphub --store=sqlite --store-path=./mcphub.db ...
+tennon --store=sqlite --store-path=./tennon.db ...
 
-  MCPHub control plane listening on :8080 (api) :8081 (proxy)
+  Tennon control plane listening on :8080 (api) :8081 (proxy)
   No users found — first-run bootstrap.
 
   → Open:  http://localhost:8080/?token=mh_boot_8f3c1d9a7be240xZ
-  → Or run: mcphubctl open
+  → Or run: tctl open
 
   This token grants temporary admin. It is shown once and expires in 1h
   or as soon as the first User is created. Create a real account, then it dies.
@@ -2156,30 +2156,30 @@ mcphub --store=sqlite --store-path=./mcphub.db ...
 - The token is a short-lived (default 1h) bearer stored as a hash in the backend; the
   plaintext is only ever in that log line. It is invalidated the moment the first
   [`User`](#user) is created, or on expiry, whichever comes first.
-- `mcphubctl open` reads the running server's bootstrap/auth token from local state and opens
+- `tctl open` reads the running server's bootstrap/auth token from local state and opens
   the web UI already signed in (mirrors executor's `executor open`).
 - Same flow on the cluster backend: the bootstrap token is logged by the controller pod
-  (`kubectl logs deploy/mcphub`).
+  (`kubectl logs deploy/tennon`).
 - After bootstrap you wire up an [identity provider](#authentication) and/or create
   [`User`](#user)/[`Role`](#role) resources; the bootstrap path is then
   permanently closed for that store.
 
 ## Mapping to executor
 
-| Executor concept | MCPHub equivalent |
+| Executor concept | Tennon equivalent |
 |------------------|-------------------|
 | Unified tool catalog | Catalog derived from `Connector` resources |
-| Source auto-detection / indexing | Transport probe + discovery on `McpConnector` create |
+| Source auto-detection / indexing | Transport probe + discovery on `TennonConnector` create |
 | `tools.discover` intent search | `/api/tools/search` + proxy `discover` meta-tool |
 | Pause/resume, `resume --execution-id` | Execution objects + `/executions/{id}/resume` |
 | Auth & policy management | OAuth2 + service tokens + `Policy` |
 | MCP server mode (`executor mcp`) | The proxy itself (per-MCP URLs) |
-| Web dashboard | embedded Vite/React UI in `mcphub` |
-| Sandboxed kernel execution | Container-runtime McpConnectors managed by the controller |
+| Web dashboard | embedded Vite/React UI in `tennon` |
+| Sandboxed kernel execution | Container-runtime TennonConnectors managed by the controller |
 
 ## Out of scope (vs. executor)
 
-- A typed TypeScript SDK runtime (executor's `tools.*`) — MCPHub exposes tools over MCP,
+- A typed TypeScript SDK runtime (executor's `tools.*`) — Tennon exposes tools over MCP,
   not as an embedded TS runtime.
 - Service emulators (`@executor-js/emulate`).
 - A desktop app.
@@ -2187,17 +2187,17 @@ mcphub --store=sqlite --store-path=./mcphub.db ...
 
 # Contributing
 
-Thanks for your interest in MCPHub. This document covers how to get set up, the conventions
+Thanks for your interest in Tennon. This document covers how to get set up, the conventions
 we follow, and how to propose changes.
 
 ## Repository layout
 
-- `cmd/mcphub` — Go: the **server** binary (controller (Kubebuilder), API, MCP proxy, and the
+- `cmd/tennon` — Go: the **server** binary (controller (Kubebuilder), API, MCP proxy, and the
   embedded Vite/React web UI). One self-contained binary / container image.
-- `cmd/mcphubctl` — Go: the **client** CLI; also ships an embedded **MCP server**
-  (`mcphubctl mcp serve`) as the local stdio bridge for clients that launch a command.
+- `cmd/tctl` — Go: the **client** CLI; also ships an embedded **MCP server**
+  (`tctl mcp serve`) as the local stdio bridge for clients that launch a command.
 - `web/` — Vite/React UI sources, embedded into the server binary at build time.
-- `charts/mcphub` — the Helm chart.
+- `charts/tennon` — the Helm chart.
 - `docs/` — the user guide; `docs/arch/` — the design/research notes.
 
 ## Development setup
@@ -2212,7 +2212,7 @@ Build, run, and test commands live in the `Makefile` / package scripts; run `mak
 ## Conventions
 
 - **Keep the planes separate.** Authorization, secret rendering, and routing live in the
-  `mcphub` server. The embedded UI and the CLI's MCP bridge are thin and hold no secrets.
+  `tennon` server. The embedded UI and the CLI's MCP bridge are thin and hold no secrets.
 - **CRDs are the source of truth.** UI and CLI actions must go through the API and result in
   CRD objects; do not add side channels that bypass reconciliation.
 - **No YAML in the UI.** The interface is click-driven; it translates to resources.
@@ -2245,10 +2245,10 @@ By contributing you agree your contributions are licensed under the Apache Licen
 
 # FAQ
 
-### How is MCPHub different from connecting an MCP server directly?
+### How is Tennon different from connecting an MCP server directly?
 
 A direct connection means per-server config in every client, credentials often sitting
-client-side, and no central authorization. MCPHub gives you one per-connector endpoint, central [authentication](#authentication) and
+client-side, and no central authorization. Tennon gives you one per-connector endpoint, central [authentication](#authentication) and
 [authorization](#authorization), credentials that stay server-side, and human approvals on
 sensitive tools. See [The MCP Proxy](arch/README.md#the-mcp-proxy).
 
@@ -2266,7 +2266,7 @@ the UI and CRDs stay in sync.
 
 ### Can I share an MCP that needs a credential without giving the credential away?
 
-Yes — this is the core use case. The credential is owned by the [`McpConnector`](#mcpconnector) and
+Yes — this is the core use case. The credential is owned by the [`TennonConnector`](#tennonconnector) and
 rendered into the upstream server at call time. People you share with call the MCP through
 the proxy and never receive the secret. See [Getting Started](#getting-started) and
 [Security](#security-model).
@@ -2286,7 +2286,7 @@ identity) or fine-grained tokens.
 ### What does "tokenless" mean?
 
 The machine proves its identity with a platform-signed document (e.g. a GitHub Actions OIDC
-token or a Kubernetes ServiceAccount token) instead of a stored secret. MCPHub validates it
+token or a Kubernetes ServiceAccount token) instead of a stored secret. Tennon validates it
 against a trust rule and mints a short-lived credential per call. Nothing to leak. See
 [Tokens & Identity](#tokens--identity).
 
@@ -2299,12 +2299,12 @@ additive — you share existing connectors to a group — with no reconfiguratio
 
 Any MCP-capable client (Claude Code, Cursor, OpenCode). Agents connect **directly** to a
 `/mcp/...` URL over Streamable HTTP, or — for clients that launch a stdio
-command — via the CLI's MCP server (`mcphubctl mcp serve`).
+command — via the CLI's MCP server (`tctl mcp serve`).
 
 ### What happens when a tool needs approval?
 
 The execution pauses and appears in the **Approvals** queue. A human approves or denies it in
-the UI (or via `mcphubctl resume`), then it continues or is rejected. See
+the UI (or via `tctl resume`), then it continues or is rejected. See
 [Authorization → Approvals](#approvals).
 
 ### Why Cedar for policies?
@@ -2317,5 +2317,5 @@ SQLite story. You author [`Policy`](#policy); Cedar is the compilation target. S
 
 ### Is it production ready?
 
-Not yet — MCPHub is pre-1.0 and under active design. See the [Roadmap](arch/README.md#roadmap).
+Not yet — Tennon is pre-1.0 and under active design. See the [Roadmap](arch/README.md#roadmap).
 
