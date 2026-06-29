@@ -2,6 +2,6 @@
   "database": "dolt",
   "backend": "dolt",
   "dolt_mode": "embedded",
-  "dolt_database": "mcphub",
-  "project_id": "82de3912-2fe6-48e5-8a4b-1698fd60141d"
+  "dolt_database": "tennon",
+  "project_id": "4fc11278-f186-4298-a23a-b2e247aab587"
 }
