@@ -27,6 +27,7 @@ func NewRootCmd() *cobra.Command {
 
 	root.AddCommand(newConnectorCmd(client))
 	root.AddCommand(newSecretCmd(client))
+	root.AddCommand(newMCPCmd(client))
 	return root
 }
 
