@@ -27,12 +27,17 @@ import (
 
 // config holds the server's startup flags.
 type config struct {
-	storeBackend string
-	storePath    string
-	runtime      string
-	apiAddr      string
-	proxyAddr    string
-	namespace    string
+	storeBackend  string
+	storePath     string
+	runtime       string
+	apiAddr       string
+	proxyAddr     string
+	namespace     string
+	oidcIssuer    string
+	oidcClientID  string
+	oidcUserClaim string
+	oidcGroupClaim string
+	oidcProvider  string
 }
 
 func parseFlags() config {
@@ -43,6 +48,11 @@ func parseFlags() config {
 	flag.StringVar(&c.apiAddr, "api-addr", ":8080", "API + web UI listen address")
 	flag.StringVar(&c.proxyAddr, "proxy-addr", ":8081", "MCP proxy listen address")
 	flag.StringVar(&c.namespace, "namespace", "tennon", "default object namespace")
+	flag.StringVar(&c.oidcIssuer, "oidc-issuer", "", "OIDC issuer URL (empty = anonymous verifier)")
+	flag.StringVar(&c.oidcClientID, "oidc-client-id", "", "OIDC client ID")
+	flag.StringVar(&c.oidcUserClaim, "oidc-username-claim", "email", "OIDC claim for username")
+	flag.StringVar(&c.oidcGroupClaim, "oidc-groups-claim", "groups", "OIDC claim for groups")
+	flag.StringVar(&c.oidcProvider, "oidc-provider", "", "OIDC provider name (e.g., google, okta)")
 	flag.Parse()
 	return c
 }
@@ -65,7 +75,18 @@ func main() {
 			fx.As(new(domain.SecretRenderer)),
 		)),
 		fx.Provide(fx.Annotate(auth.NewAllowAllAuthorizer, fx.As(new(domain.Authorizer)))),
-		fx.Provide(fx.Annotate(auth.NewAnonymousVerifier, fx.As(new(domain.IdentityVerifier)))),
+		fx.Provide(fx.Annotate(
+			func(c config, s domain.Store) (domain.IdentityVerifier, error) {
+				return auth.NewVerifierFromConfig(context.Background(), auth.OIDCConfig{
+					IssuerURL:     c.oidcIssuer,
+					ClientID:      c.oidcClientID,
+					UsernameClaim: c.oidcUserClaim,
+					GroupsClaim:   c.oidcGroupClaim,
+					ProviderName:  c.oidcProvider,
+				}, s)
+			},
+			fx.As(new(domain.IdentityVerifier)),
+		)),
 		// Delivery — the proxy also satisfies domain.Router for the controller.
 		fx.Provide(proxy.New),
 		fx.Provide(func(p *proxy.Proxy) domain.Router { return p }),
