@@ -11,17 +11,18 @@ import (
 )
 
 // connProxy is the proxy state for a single connector: a live session to the
-// upstream MCP server and an MCP server that re-exposes the upstream's tools
-// (prefixed and filtered) at /mcp/<name>.
+// upstream MCP server OR in-process tool handlers, and an MCP server that
+// re-exposes the tools (prefixed and filtered) at /mcp/<name>.
 type connProxy struct {
-	name     string
-	spec     domain.ConnectorSpec
-	upstream *mcp.ClientSession
-	server   *mcp.Server
-	handler  http.Handler
-	tools    []domain.Tool
-	authz    domain.Authorizer
-	cancel   context.CancelFunc
+	name      string
+	spec      domain.ConnectorSpec
+	upstream  *mcp.ClientSession // nil for in-process servers
+	server    *mcp.Server
+	handler   http.Handler
+	tools     []domain.Tool
+	authz     domain.Authorizer
+	cancel    context.CancelFunc // nil for in-process servers
+	inProcess map[string]mcp.ToolHandler // nil for upstreamed connectors
 }
 
 // headerRoundTripper injects the rendered credential headers into every request
