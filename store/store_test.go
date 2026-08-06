@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -68,6 +69,19 @@ func TestMemoryStoreContract(t *testing.T) {
 
 func TestSQLiteStoreContract(t *testing.T) {
 	s, err := NewSQLite(t.TempDir() + "/test.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	runStoreContract(t, s)
+}
+
+func TestPostgresStoreContract(t *testing.T) {
+	dsn := os.Getenv("TENNON_TEST_PG_DSN")
+	if dsn == "" {
+		t.Skip("TENNON_TEST_PG_DSN not set; skipping Postgres contract test")
+	}
+	s, err := NewPostgres(context.Background(), dsn)
 	if err != nil {
 		t.Fatal(err)
 	}

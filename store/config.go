@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/yurifrl/tennon/domain"
@@ -25,7 +26,10 @@ func NewFromConfig(cfg Config) (domain.Store, error) {
 		}
 		return NewSQLite(cfg.Path)
 	case "postgres":
-		return nil, fmt.Errorf("store: postgres backend not yet implemented (roadmap phase 2)")
+		if cfg.DSN == "" {
+			return nil, fmt.Errorf("store: postgres backend requires DSN")
+		}
+		return NewPostgres(context.Background(), cfg.DSN)
 	case "kubernetes":
 		return nil, fmt.Errorf("store: kubernetes backend not yet implemented (roadmap phase 2)")
 	default:
