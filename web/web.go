@@ -1,36 +1,39 @@
-// Package web serves Tennon's embedded web UI. Phase 5 replaces this placeholder
-// with the built Vite/React assets embedded via go:embed; for now it serves a
-// minimal landing page so the single-binary surface is complete.
+// Package web serves Tennon's embedded web UI. The Vite/React app built under
+// ui/dist is embedded via go:embed and served at / with client-side routing
+// fallback to index.html. API routes (/api/*, /healthz) are handled by the
+// parent mux.
 package web
 
-import "net/http"
+import (
+	"embed"
+	"io/fs"
+	"net/http"
+)
 
-const indexHTML = `<!doctype html>
-<html><head><meta charset="utf-8"><title>Tennon</title>
-<style>body{font-family:system-ui,sans-serif;margin:3rem auto;max-width:40rem;color:#222}
-code{background:#f4f4f4;padding:.1rem .3rem;border-radius:.2rem}</style></head>
-<body>
-<h1>Tennon</h1>
-<p>The Kubernetes-native control plane and proxy for Model Context Protocol servers.</p>
-<p>The click-through web UI ships in roadmap phase 5. Until then, use the API and CLI:</p>
-<ul>
-<li><code>GET /api/v1/connectors</code> — list connectors</li>
-<li><code>GET /healthz</code> — health</li>
-<li><code>tctl connector add … / list / describe</code></li>
-</ul>
-<p>Connectors are proxied on the proxy port at <code>/mcp/&lt;name&gt;</code>.</p>
-</body></html>`
+//go:embed ui/dist
+var distFS embed.FS
 
-// Handler returns the embedded web UI handler.
+// Handler returns the embedded web UI handler. It serves the built SPA from
+// ui/dist/ with fallback to index.html for client-side routing.
 func Handler() http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// Strip the "ui/dist" prefix to serve from the root
+	stripped, err := fs.Sub(distFS, "ui/dist")
+	if err != nil {
+		panic(err)
+	}
+
+	fileServer := http.FileServer(http.FS(stripped))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// For any non-root path that doesn't exist as a file, serve index.html
+		// (client-side routing)
 		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
+			// Try to open the file
+			if _, err := stripped.Open(r.URL.Path[1:]); err != nil {
+				// File doesn't exist, serve index.html for SPA routing
+				r.URL.Path = "/"
+			}
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(indexHTML))
+		fileServer.ServeHTTP(w, r)
 	})
-	return mux
 }
