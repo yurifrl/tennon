@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -38,6 +39,7 @@ type config struct {
 	oidcUserClaim string
 	oidcGroupClaim string
 	oidcProvider  string
+	authz         string
 }
 
 func parseFlags() config {
@@ -53,6 +55,7 @@ func parseFlags() config {
 	flag.StringVar(&c.oidcUserClaim, "oidc-username-claim", "email", "OIDC claim for username")
 	flag.StringVar(&c.oidcGroupClaim, "oidc-groups-claim", "groups", "OIDC claim for groups")
 	flag.StringVar(&c.oidcProvider, "oidc-provider", "", "OIDC provider name (e.g., google, okta)")
+	flag.StringVar(&c.authz, "authz", "allow-all", "authorization mode: allow-all|policy")
 	flag.Parse()
 	return c
 }
@@ -74,7 +77,19 @@ func main() {
 			func(s domain.Store, c config) *secret.Renderer { return secret.NewRenderer(s, c.namespace) },
 			fx.As(new(domain.SecretRenderer)),
 		)),
-		fx.Provide(fx.Annotate(auth.NewAllowAllAuthorizer, fx.As(new(domain.Authorizer)))),
+		fx.Provide(fx.Annotate(
+			func(c config, s domain.Store, logger *slog.Logger) (domain.Authorizer, error) {
+				switch c.authz {
+				case "policy":
+					return auth.NewPolicyAuthorizer(context.Background(), s, logger)
+				case "allow-all":
+					return auth.NewAllowAllAuthorizer(), nil
+				default:
+					return nil, fmt.Errorf("unknown authz mode: %s", c.authz)
+				}
+			},
+			fx.As(new(domain.Authorizer)),
+		)),
 		fx.Provide(fx.Annotate(
 			func(c config, s domain.Store) (domain.IdentityVerifier, error) {
 				return auth.NewVerifierFromConfig(context.Background(), auth.OIDCConfig{
