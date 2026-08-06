@@ -1,6 +1,31 @@
 version: '3'
 
 tasks:
+  build:
+    desc: Build the tennon server and tctl CLI into ./bin
+    cmds:
+      - go build -o bin/tennon ./cmd/tennon
+      - go build -o bin/tctl ./cmd/tctl
+
+  test:
+    desc: Run the Go test suite
+    cmd: go test -timeout 120s ./...
+
+  vet:
+    desc: Run go vet
+    cmd: go vet ./...
+
+  check:
+    desc: Enforce the package layering rules (docs/arch/03)
+    cmd: bash hack/check-layers.sh
+
+  ci:
+    desc: Full local gate — layering, vet, tests
+    cmds:
+      - task: check
+      - task: vet
+      - task: test
+
   envs:op:
     desc: Process .env.op with 1Password CLI
     generates:

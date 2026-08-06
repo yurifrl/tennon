@@ -8,3 +8,4 @@
 .beads/proxieddb/
 docs/_all.md
 node_modules/
+/bin/
