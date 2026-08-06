@@ -7,12 +7,14 @@ package proxy
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/yurifrl/tennon/domain"
 )
 
@@ -37,8 +39,15 @@ type Proxy struct {
 	verifier domain.IdentityVerifier
 	log      *slog.Logger
 
-	mu    sync.RWMutex
-	conns map[string]*connProxy
+	mu        sync.RWMutex
+	conns     map[string]*connProxy
+	aggregate *aggregateServer // cached aggregate endpoint
+}
+
+// aggregateServer wraps the aggregate MCP server and its handler.
+type aggregateServer struct {
+	server  *mcp.Server
+	handler http.Handler
 }
 
 // New builds a Proxy. The concrete ports are supplied by the composition root.
@@ -78,10 +87,50 @@ func (p *Proxy) Register(ctx context.Context, c *domain.Connector) ([]domain.Too
 		old.close()
 	}
 	p.conns[c.Meta.Name] = cp
+	p.rebuildAggregate()
 	p.mu.Unlock()
 
 	p.log.Info("connector registered", "connector", c.Meta.Name, "url", "/mcp/"+c.Meta.Name, "tools", len(cp.tools))
 	return cp.tools, nil
+}
+
+// RegisterServer registers an in-process connector with pre-built tool handlers.
+// Unlike Register, it does not dial an upstream; the caller provides tool
+// handlers that run in-process. This path is used by spec connectors (compiled
+// tools) that run in-process without an upstream dial.
+func (p *Proxy) RegisterServer(ctx context.Context, name string, handlers map[string]mcp.ToolHandler, tools []domain.Tool) error {
+	srv := mcp.NewServer(&mcp.Implementation{Name: "tennon/" + name, Version: "0.1.0"}, nil)
+	for _, t := range tools {
+		h := handlers[t.Name]
+		if h == nil {
+			return fmt.Errorf("proxy: no handler for tool %q", t.Name)
+		}
+		srv.AddTool(&mcp.Tool{
+			Name:        t.Name,
+			Description: t.Description,
+			InputSchema: json.RawMessage(t.InputSchema),
+		}, h)
+	}
+
+	cp := &connProxy{
+		name:       name,
+		server:     srv,
+		tools:      tools,
+		handler:    mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, nil),
+		authz:      p.authz,
+		inProcess:  handlers,
+	}
+
+	p.mu.Lock()
+	if old := p.conns[name]; old != nil {
+		old.close()
+	}
+	p.conns[name] = cp
+	p.rebuildAggregate()
+	p.mu.Unlock()
+
+	p.log.Info("in-process connector registered", "connector", name, "url", "/mcp/"+name, "tools", len(tools))
+	return nil
 }
 
 // Deregister removes a connector's route and tears down its upstream.
@@ -89,6 +138,7 @@ func (p *Proxy) Deregister(ctx context.Context, c *domain.Connector) {
 	p.mu.Lock()
 	cp := p.conns[c.Meta.Name]
 	delete(p.conns, c.Meta.Name)
+	p.rebuildAggregate()
 	p.mu.Unlock()
 	if cp != nil {
 		cp.close()
@@ -108,18 +158,46 @@ func (p *Proxy) Tools() []domain.Tool {
 	return out
 }
 
+// rebuildAggregate rebuilds the cached aggregate server. Must be called with
+// p.mu held.
+func (p *Proxy) rebuildAggregate() {
+	srv := mcp.NewServer(&mcp.Implementation{Name: "tennon/aggregate", Version: "0.1.0"}, nil)
+	for _, cp := range p.conns {
+		for _, t := range cp.tools {
+			var handler mcp.ToolHandler
+			if cp.inProcess != nil {
+				// In-process connector: reuse the handler.
+				handler = cp.inProcess[t.Name]
+			} else {
+				// Upstreamed connector: use the forward wrapper.
+				handler = cp.forward(t.Upstream, t.Name)
+			}
+			srv.AddTool(&mcp.Tool{
+				Name:        t.Name,
+				Description: t.Description,
+				InputSchema: json.RawMessage(t.InputSchema),
+			}, handler)
+		}
+	}
+	p.aggregate = &aggregateServer{
+		server:  srv,
+		handler: mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, nil),
+	}
+}
+
 // Handler returns the proxy's HTTP handler, wrapped with auth middleware. Mount
 // it at the proxy address.
 func (p *Proxy) Handler() http.Handler {
 	return p.authMiddleware(http.HandlerFunc(p.serve))
 }
 
-// serve dispatches /mcp/<name> to the matching connector proxy.
+// serve dispatches requests: /mcp (global aggregate) or /mcp/<name> (per-connector).
 func (p *Proxy) serve(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(r.URL.Path, "/mcp/")
 	name = strings.SplitN(name, "/", 2)[0]
 	if name == "" {
-		http.Error(w, "tennon proxy: specify a connector at /mcp/<name>", http.StatusNotFound)
+		// Global aggregate endpoint.
+		p.serveAggregate(w, r)
 		return
 	}
 	p.mu.RLock()
@@ -130,6 +208,19 @@ func (p *Proxy) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cp.handler.ServeHTTP(w, r)
+}
+
+// serveAggregate serves /mcp with a merged MCP server exposing all connectors' tools.
+func (p *Proxy) serveAggregate(w http.ResponseWriter, r *http.Request) {
+	p.mu.RLock()
+	agg := p.aggregate
+	p.mu.RUnlock()
+
+	if agg == nil {
+		http.Error(w, "tennon proxy: no connectors registered", http.StatusNotFound)
+		return
+	}
+	agg.handler.ServeHTTP(w, r)
 }
 
 // authMiddleware resolves the bearer credential to a subject and stores it in
