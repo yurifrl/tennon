@@ -26,8 +26,12 @@ func NewManager(store domain.Store, router domain.Router, log *slog.Logger) *Man
 	return &Manager{store: store, router: router, log: log}
 }
 
-// connectorKinds are the connector types reconciled in Phase 1.
-var connectorKinds = []string{domain.KindTennonConnector}
+// connectorKinds are the connector types reconciled.
+var connectorKinds = []string{
+	domain.KindTennonConnector,
+	domain.KindOpenApiConnector,
+	domain.KindGraphqlConnector,
+}
 
 // Run performs an initial reconcile of existing connectors, then watches for
 // changes until ctx is cancelled.

@@ -16,6 +16,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/yurifrl/tennon/domain"
+	"github.com/yurifrl/tennon/specconn"
 )
 
 type ctxKey int
@@ -68,7 +69,16 @@ func New(renderer domain.SecretRenderer, rt domain.Runtime, authz domain.Authori
 // Register makes a connector reachable: it renders the credential, ensures the
 // upstream runtime, dials it, discovers tools, and installs the route. It
 // returns the discovered tools so the controller can update status.
+//
+// For spec connectors (OpenApiConnector/GraphqlConnector), it compiles tools
+// in-process using specconn and registers them via RegisterServer instead of
+// dialing an upstream.
 func (p *Proxy) Register(ctx context.Context, c *domain.Connector) ([]domain.Tool, error) {
+	// Handle spec connectors: compile tools in-process.
+	if c.Kind == domain.KindOpenApiConnector || c.Kind == domain.KindGraphqlConnector {
+		return p.registerSpecConnector(ctx, c)
+	}
+
 	headers, err := p.renderer.Render(ctx, c.Meta.Namespace, c.Spec.Headers)
 	if err != nil {
 		return nil, fmt.Errorf("proxy: render credential for %q: %w", c.Meta.Name, err)
@@ -92,6 +102,45 @@ func (p *Proxy) Register(ctx context.Context, c *domain.Connector) ([]domain.Too
 
 	p.log.Info("connector registered", "connector", c.Meta.Name, "url", "/mcp/"+c.Meta.Name, "tools", len(cp.tools))
 	return cp.tools, nil
+}
+
+// registerSpecConnector compiles an OpenApiConnector or GraphqlConnector and
+// registers it in-process via RegisterServer.
+func (p *Proxy) registerSpecConnector(ctx context.Context, c *domain.Connector) ([]domain.Tool, error) {
+	var tools []domain.Tool
+	var handlers map[string]mcp.ToolHandler
+	
+	switch c.Kind {
+	case domain.KindOpenApiConnector:
+		conn, err := specconn.NewOpenAPIConnector(ctx, c.Meta.Name, c.Spec.SpecURL, c.Spec.BaseURL, c.Spec.Headers, p.renderer)
+		if err != nil {
+			return nil, fmt.Errorf("proxy: create OpenAPI connector %q: %w", c.Meta.Name, err)
+		}
+		tools, handlers, err = conn.CompileTools(c.Spec.Tools)
+		if err != nil {
+			return nil, fmt.Errorf("proxy: compile OpenAPI tools for %q: %w", c.Meta.Name, err)
+		}
+		
+	case domain.KindGraphqlConnector:
+		conn, err := specconn.NewGraphQLConnector(ctx, c.Meta.Name, c.Spec.Endpoint, c.Spec.Headers, p.renderer)
+		if err != nil {
+			return nil, fmt.Errorf("proxy: create GraphQL connector %q: %w", c.Meta.Name, err)
+		}
+		tools, handlers, err = conn.CompileTools(c.Spec.Tools)
+		if err != nil {
+			return nil, fmt.Errorf("proxy: compile GraphQL tools for %q: %w", c.Meta.Name, err)
+		}
+		
+	default:
+		return nil, fmt.Errorf("proxy: unknown spec connector kind %q", c.Kind)
+	}
+	
+	// Register the compiled tools in-process.
+	if err := p.RegisterServer(ctx, c.Meta.Name, handlers, tools); err != nil {
+		return nil, fmt.Errorf("proxy: register spec connector %q: %w", c.Meta.Name, err)
+	}
+	
+	return tools, nil
 }
 
 // RegisterServer registers an in-process connector with pre-built tool handlers.
