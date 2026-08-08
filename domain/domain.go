@@ -32,6 +32,7 @@ const (
 	KindTennonConnector  = "TennonConnector"
 	KindOpenApiConnector = "OpenApiConnector"
 	KindGraphqlConnector = "GraphqlConnector"
+	KindOAuthApp         = "OAuthApp"
 	KindPolicy           = "Policy"
 	KindToken            = "Token"
 	KindServiceAccount   = "ServiceAccount"
