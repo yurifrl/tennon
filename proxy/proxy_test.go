@@ -72,6 +72,7 @@ func TestProxyEndToEnd(t *testing.T) {
 		runtime.NewMulti(runtime.NewRemote()),
 		auth.NewAllowAllAuthorizer(),
 		auth.NewAnonymousVerifier(),
+		st,
 		nil,
 	)
 
@@ -175,6 +176,7 @@ func TestProxyAggregateEndpoint(t *testing.T) {
 		runtime.NewMulti(runtime.NewRemote()),
 		auth.NewAllowAllAuthorizer(),
 		auth.NewAnonymousVerifier(),
+		st,
 		nil,
 	)
 
@@ -280,6 +282,7 @@ func TestProxyInProcessServer(t *testing.T) {
 		runtime.NewMulti(runtime.NewRemote()),
 		auth.NewAllowAllAuthorizer(),
 		auth.NewAnonymousVerifier(),
+		st,
 		nil,
 	)
 

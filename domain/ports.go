@@ -88,3 +88,16 @@ type IdentityVerifier interface {
 	// Verify resolves the bearer credential (may be empty) to a Subject.
 	Verify(ctx context.Context, bearer string) (Subject, error)
 }
+
+// ExecutionCompleter manages pending executions and completes them when approved.
+// The proxy implements this to complete paused tool calls.
+type ExecutionCompleter interface {
+	// ApproveExecution marks an execution as approved and completes the upstream call.
+	ApproveExecution(ctx context.Context, execID string) error
+	// DenyExecution marks an execution as denied.
+	DenyExecution(ctx context.Context, execID string) error
+	// ListExecutions returns all executions, optionally filtered by state.
+	ListExecutions(ctx context.Context, state string) ([]*Execution, error)
+	// GetExecution returns a single execution by id.
+	GetExecution(ctx context.Context, execID string) (*Execution, error)
+}

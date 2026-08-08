@@ -28,6 +28,7 @@ func NewRootCmd() *cobra.Command {
 	root.AddCommand(newConnectorCmd(client))
 	root.AddCommand(newSecretCmd(client))
 	root.AddCommand(newMCPCmd(client))
+	root.AddCommand(newExecutionCmd(client))
 	return root
 }
 
@@ -231,4 +232,78 @@ func print(jsonOut bool, v any, human string) error {
 		fmt.Println(human)
 	}
 	return nil
+}
+
+func newExecutionCmd(client func() *Client) *cobra.Command {
+	cmd := &cobra.Command{Use: "execution", Short: "Manage executions", Aliases: []string{"exec"}}
+
+	var listJSON bool
+	var listState string
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "List executions",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			var resp struct {
+				Items []domain.Execution `json:"items"`
+			}
+			url := "/api/v1/executions"
+			if listState != "" {
+				url += "?state=" + listState
+			}
+			if err := client().do(cmd.Context(), "GET", url, nil, &resp); err != nil {
+				return err
+			}
+			if listJSON {
+				return print(true, resp.Items, "")
+			}
+			for _, e := range resp.Items {
+				fmt.Printf("%-24s %-12s %-20s %-20s %s\n", e.Meta.Name, e.Status.State, e.Spec.Connector, e.Spec.Tool, e.Spec.Subject)
+			}
+			return nil
+		},
+	}
+	list.Flags().BoolVar(&listJSON, "json", false, "JSON output")
+	list.Flags().StringVar(&listState, "state", "", "filter by state (pending, approved, completed, denied, failed)")
+
+	resume := &cobra.Command{
+		Use:   "resume <execution-id>",
+		Short: "Approve and resume a pending execution",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := client().do(cmd.Context(), "POST", "/api/v1/executions/"+args[0]+"/approve", nil, nil); err != nil {
+				return err
+			}
+			fmt.Printf("execution %q approved and resumed\n", args[0])
+			return nil
+		},
+	}
+
+	deny := &cobra.Command{
+		Use:   "deny <execution-id>",
+		Short: "Deny a pending execution",
+			Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := client().do(cmd.Context(), "POST", "/api/v1/executions/"+args[0]+"/deny", nil, nil); err != nil {
+				return err
+			}
+			fmt.Printf("execution %q denied\n", args[0])
+			return nil
+		},
+	}
+
+	describe := &cobra.Command{
+		Use:   "describe <execution-id>",
+		Short: "Show an execution",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var e domain.Execution
+			if err := client().do(cmd.Context(), "GET", "/api/v1/executions/"+args[0], nil, &e); err != nil {
+				return err
+			}
+			return print(true, e, "")
+		},
+	}
+
+	cmd.AddCommand(list, resume, deny, describe)
+	return cmd
 }

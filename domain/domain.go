@@ -37,4 +37,5 @@ const (
 	KindToken            = "Token"
 	KindServiceAccount   = "ServiceAccount"
 	KindSecret           = "Secret"
+	KindExecution        = "Execution"
 )

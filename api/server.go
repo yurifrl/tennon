@@ -17,16 +17,17 @@ const defaultNamespace = "tennon"
 
 // Server is the HTTP management API.
 type Server struct {
-	store domain.Store
-	log   *slog.Logger
+	store     domain.Store
+	executer  domain.ExecutionCompleter
+	log       *slog.Logger
 }
 
 // New builds the API server.
-func New(store domain.Store, log *slog.Logger) *Server {
+func New(store domain.Store, exec domain.ExecutionCompleter, log *slog.Logger) *Server {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Server{store: store, log: log}
+	return &Server{store: store, executer: exec, log: log}
 }
 
 // Handler returns the API's HTTP handler with all routes mounted.
@@ -41,6 +42,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/v1/connectors/{name}", s.deleteConnector)
 	mux.HandleFunc("GET /api/v1/secrets", s.listSecrets)
 	mux.HandleFunc("POST /api/v1/secrets", s.createSecret)
+	mux.HandleFunc("GET /api/v1/executions", s.listExecutions)
+	mux.HandleFunc("GET /api/v1/executions/{id}", s.getExecution)
+	mux.HandleFunc("POST /api/v1/executions/{id}/approve", s.approveExecution)
+	mux.HandleFunc("POST /api/v1/executions/{id}/deny", s.denyExecution)
 	return mux
 }
 
@@ -191,4 +196,39 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 
 func writeErr(w http.ResponseWriter, code int, err error) {
 	writeJSON(w, code, map[string]string{"error": err.Error()})
+}
+
+func (s *Server) listExecutions(w http.ResponseWriter, r *http.Request) {
+	state := r.URL.Query().Get("state")
+	execs, err := s.executer.ListExecutions(r.Context(), state)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": execs})
+}
+
+func (s *Server) getExecution(w http.ResponseWriter, r *http.Request) {
+	exec, err := s.executer.GetExecution(r.Context(), r.PathValue("id"))
+	if err != nil {
+		s.storeErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, exec)
+}
+
+func (s *Server) approveExecution(w http.ResponseWriter, r *http.Request) {
+	if err := s.executer.ApproveExecution(r.Context(), r.PathValue("id")); err != nil {
+		s.storeErr(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) denyExecution(w http.ResponseWriter, r *http.Request) {
+	if err := s.executer.DenyExecution(r.Context(), r.PathValue("id")); err != nil {
+		s.storeErr(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
