@@ -20,8 +20,9 @@ export default function AddConnector() {
       metadata: { name },
       spec: {
         runtime: {
-          remote: { url, transport },
+          remote: { url },
         },
+        transport,
         tools: {
           exposePrefix: exposePrefix || undefined,
           allow: allow
