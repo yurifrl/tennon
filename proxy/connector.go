@@ -23,6 +23,7 @@ type connProxy struct {
 	authz     domain.Authorizer
 	cancel    context.CancelFunc // nil for in-process servers
 	inProcess map[string]mcp.ToolHandler // nil for upstreamed connectors
+	proxy     *Proxy // back-reference for accessing store and pending map
 }
 
 // headerRoundTripper injects the rendered credential headers into every request
@@ -46,7 +47,7 @@ func (h headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 // dial opens a session to the upstream and builds the re-exposing server. The
 // upstream session gets its own long-lived context so it outlives the caller's
 // Register request; it is cancelled by close.
-func dial(ctx context.Context, c *domain.Connector, ep *domain.Endpoint, headers map[string]string, authz domain.Authorizer) (*connProxy, error) {
+func dial(ctx context.Context, c *domain.Connector, ep *domain.Endpoint, headers map[string]string, authz domain.Authorizer, px *Proxy) (*connProxy, error) {
 	client := mcp.NewClient(&mcp.Implementation{Name: "tennon-proxy", Version: "0.1.0"}, nil)
 	transport := &mcp.StreamableClientTransport{
 		Endpoint:             ep.URL,
@@ -60,7 +61,7 @@ func dial(ctx context.Context, c *domain.Connector, ep *domain.Endpoint, headers
 		return nil, fmt.Errorf("proxy: connect upstream %q at %s: %w", c.Meta.Name, ep.URL, err)
 	}
 
-	cp := &connProxy{name: c.Meta.Name, spec: c.Spec, upstream: session, authz: authz, cancel: cancel}
+	cp := &connProxy{name: c.Meta.Name, spec: c.Spec, upstream: session, authz: authz, cancel: cancel, proxy: px}
 
 	listed, err := session.ListTools(ctx, &mcp.ListToolsParams{})
 	if err != nil {
@@ -98,6 +99,8 @@ func dial(ctx context.Context, c *domain.Connector, ep *domain.Endpoint, headers
 
 // forward returns a handler that authorizes then relays the call to the
 // upstream MCP server, translating the exposed name back to the upstream name.
+// On EffectAsk, it pauses the execution and returns an execution id that can
+// be used to resume the call via the approval API.
 func (cp *connProxy) forward(upstreamName, exposedName string) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		sub := SubjectFromContext(ctx)
@@ -115,9 +118,12 @@ func (cp *connProxy) forward(upstreamName, exposedName string) mcp.ToolHandler {
 				Content: []mcp.Content{&mcp.TextContent{Text: "blocked by policy: " + decision.Reason}},
 			}, nil
 		case domain.EffectAsk:
+			// Pause: create a pending execution and return the id.
+			execID := cp.proxy.createPendingExecution(ctx, sub, cp.name, exposedName, upstreamName, args, req.Params.Arguments)
 			return &mcp.CallToolResult{
-				IsError: true,
-				Content: []mcp.Content{&mcp.TextContent{Text: "approval required (human-in-the-loop not yet available): " + decision.Reason}},
+				Content: []mcp.Content{&mcp.TextContent{
+					Text: fmt.Sprintf("approval required (execution-id: %s): %s", execID, decision.Reason),
+				}},
 			}, nil
 		}
 		result, err := cp.upstream.CallTool(ctx, &mcp.CallToolParams{

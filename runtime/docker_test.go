@@ -55,6 +55,7 @@ func TestDockerRuntimeE2E(t *testing.T) {
 		runtime.NewMulti(dockerRT),
 		auth.NewAllowAllAuthorizer(),
 		auth.NewAnonymousVerifier(),
+		st,
 		nil,
 	)
 

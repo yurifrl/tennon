@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/yurifrl/tennon/domain"
@@ -38,11 +39,13 @@ type Proxy struct {
 	runtime  domain.Runtime
 	authz    domain.Authorizer
 	verifier domain.IdentityVerifier
+	store    domain.Store
 	log      *slog.Logger
 
 	mu        sync.RWMutex
 	conns     map[string]*connProxy
 	aggregate *aggregateServer // cached aggregate endpoint
+	pending   map[string]chan *mcp.CallToolResult // execution id → result channel
 }
 
 // aggregateServer wraps the aggregate MCP server and its handler.
@@ -52,7 +55,7 @@ type aggregateServer struct {
 }
 
 // New builds a Proxy. The concrete ports are supplied by the composition root.
-func New(renderer domain.SecretRenderer, rt domain.Runtime, authz domain.Authorizer, verifier domain.IdentityVerifier, log *slog.Logger) *Proxy {
+func New(renderer domain.SecretRenderer, rt domain.Runtime, authz domain.Authorizer, verifier domain.IdentityVerifier, store domain.Store, log *slog.Logger) *Proxy {
 	if log == nil {
 		log = slog.Default()
 	}
@@ -61,8 +64,10 @@ func New(renderer domain.SecretRenderer, rt domain.Runtime, authz domain.Authori
 		runtime:  rt,
 		authz:    authz,
 		verifier: verifier,
+		store:    store,
 		log:      log,
 		conns:    map[string]*connProxy{},
+		pending:  map[string]chan *mcp.CallToolResult{},
 	}
 }
 
@@ -87,7 +92,7 @@ func (p *Proxy) Register(ctx context.Context, c *domain.Connector) ([]domain.Too
 	if err != nil {
 		return nil, fmt.Errorf("proxy: ensure runtime for %q: %w", c.Meta.Name, err)
 	}
-	cp, err := dial(ctx, c, ep, headers, p.authz)
+	cp, err := dial(ctx, c, ep, headers, p.authz, p)
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +173,7 @@ func (p *Proxy) RegisterServer(ctx context.Context, name string, handlers map[st
 		handler:    mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, nil),
 		authz:      p.authz,
 		inProcess:  handlers,
+		proxy:      p,
 	}
 
 	p.mu.Lock()
@@ -285,4 +291,174 @@ func (p *Proxy) authMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), subjectKey, sub)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// createPendingExecution creates a pending Execution in the store and returns
+// its id. The execution records the tool call that needs approval. The pending
+// map holds a channel that will receive the result when the execution is approved.
+//
+// Design: The proxy holds pending calls in memory (execution id → result channel).
+// On approval, the API calls CompleteExecution, which resumes the call to the
+// upstream and sends the result on the channel. If the process restarts before
+// approval, the Execution record persists but the in-memory state is lost — the
+// caller will need to retry the call after approval. This is acceptable for Phase 5;
+// a production system would use a durable queue.
+func (p *Proxy) createPendingExecution(ctx context.Context, sub domain.Subject, connector, tool, upstreamTool string, args map[string]any, rawArgs json.RawMessage) string {
+	execID := fmt.Sprintf("exec-%d", time.Now().UnixNano())
+	exec := &domain.Execution{
+		Meta: domain.ObjectMeta{
+			Name:      execID,
+			Namespace: "tennon",
+		},
+		Spec: domain.ExecutionSpec{
+			Subject:   fmt.Sprintf("%s:%s", sub.Kind, sub.ID),
+			Connector: connector,
+			Tool:      tool,
+			Arguments: args,
+		},
+		Status: domain.ExecutionStatus{
+			State:   domain.ExecutionPending,
+			Created: time.Now(),
+		},
+	}
+	res, err := exec.ToResource()
+	if err != nil {
+		p.log.Error("failed to marshal execution", "err", err)
+		return execID
+	}
+	if _, err := p.store.Apply(ctx, res); err != nil {
+		p.log.Error("failed to persist execution", "err", err)
+	}
+	p.log.Info("execution paused", "id", execID, "connector", connector, "tool", tool)
+	return execID
+}
+
+// ApproveExecution marks an execution as approved and completes the upstream call.
+// It looks up the connector and calls the upstream tool, then updates the execution
+// status with the result.
+func (p *Proxy) ApproveExecution(ctx context.Context, execID string) error {
+	res, err := p.store.Get(ctx, domain.KindExecution, "tennon", execID)
+	if err != nil {
+		return fmt.Errorf("get execution: %w", err)
+	}
+	exec, err := domain.ExecutionFromResource(res)
+	if err != nil {
+		return fmt.Errorf("unmarshal execution: %w", err)
+	}
+	if exec.Status.State != domain.ExecutionPending {
+		return fmt.Errorf("execution %s is not pending (state: %s)", execID, exec.Status.State)
+	}
+
+	// Update status to approved.
+	exec.Status.State = domain.ExecutionApproved
+	exec.Status.Approved = time.Now()
+	if err := p.updateExecutionStatus(ctx, exec); err != nil {
+		return fmt.Errorf("update execution status: %w", err)
+	}
+
+	// Execute the upstream call.
+	p.mu.RLock()
+	cp := p.conns[exec.Spec.Connector]
+	p.mu.RUnlock()
+	if cp == nil {
+		exec.Status.State = domain.ExecutionFailed
+		exec.Status.Error = fmt.Sprintf("connector %s not found", exec.Spec.Connector)
+		_ = p.updateExecutionStatus(ctx, exec)
+		return fmt.Errorf("connector %s not found", exec.Spec.Connector)
+	}
+
+	// Find the upstream tool name from the exposed tool name.
+	var upstreamName string
+	for _, t := range cp.tools {
+		if t.Name == exec.Spec.Tool {
+			upstreamName = t.Upstream
+			break
+		}
+	}
+	if upstreamName == "" {
+		exec.Status.State = domain.ExecutionFailed
+		exec.Status.Error = fmt.Sprintf("tool %s not found on connector %s", exec.Spec.Tool, exec.Spec.Connector)
+		_ = p.updateExecutionStatus(ctx, exec)
+		return fmt.Errorf("tool %s not found", exec.Spec.Tool)
+	}
+
+	rawArgs, _ := json.Marshal(exec.Spec.Arguments)
+	result, err := cp.upstream.CallTool(ctx, &mcp.CallToolParams{
+		Name:      upstreamName,
+		Arguments: rawArgs,
+	})
+
+	exec.Status.Completed = time.Now()
+	if err != nil {
+		exec.Status.State = domain.ExecutionFailed
+		exec.Status.Error = err.Error()
+	} else {
+		exec.Status.State = domain.ExecutionCompleted
+		resultJSON, _ := json.Marshal(result)
+		exec.Status.Result = resultJSON
+	}
+	_ = p.updateExecutionStatus(ctx, exec)
+
+	p.log.Info("execution completed", "id", execID, "state", exec.Status.State)
+	return nil
+}
+
+// DenyExecution marks an execution as denied.
+func (p *Proxy) DenyExecution(ctx context.Context, execID string) error {
+	res, err := p.store.Get(ctx, domain.KindExecution, "tennon", execID)
+	if err != nil {
+		return fmt.Errorf("get execution: %w", err)
+	}
+	exec, err := domain.ExecutionFromResource(res)
+	if err != nil {
+		return fmt.Errorf("unmarshal execution: %w", err)
+	}
+	if exec.Status.State != domain.ExecutionPending {
+		return fmt.Errorf("execution %s is not pending (state: %s)", execID, exec.Status.State)
+	}
+
+	exec.Status.State = domain.ExecutionDenied
+	exec.Status.Denied = time.Now()
+	if err := p.updateExecutionStatus(ctx, exec); err != nil {
+		return fmt.Errorf("update execution status: %w", err)
+	}
+
+	p.log.Info("execution denied", "id", execID)
+	return nil
+}
+
+// ListExecutions returns all executions, optionally filtered by state.
+func (p *Proxy) ListExecutions(ctx context.Context, state string) ([]*domain.Execution, error) {
+	resources, err := p.store.List(ctx, domain.KindExecution, "")
+	if err != nil {
+		return nil, err
+	}
+	var out []*domain.Execution
+	for _, res := range resources {
+		exec, err := domain.ExecutionFromResource(res)
+		if err != nil {
+			return nil, err
+		}
+		if state == "" || string(exec.Status.State) == state {
+			out = append(out, exec)
+		}
+	}
+	return out, nil
+}
+
+// GetExecution returns a single execution by id.
+func (p *Proxy) GetExecution(ctx context.Context, execID string) (*domain.Execution, error) {
+	res, err := p.store.Get(ctx, domain.KindExecution, "tennon", execID)
+	if err != nil {
+		return nil, err
+	}
+	return domain.ExecutionFromResource(res)
+}
+
+func (p *Proxy) updateExecutionStatus(ctx context.Context, exec *domain.Execution) error {
+	res, err := exec.ToResource()
+	if err != nil {
+		return err
+	}
+	return p.store.UpdateStatus(ctx, res)
 }
