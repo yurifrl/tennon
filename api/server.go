@@ -77,8 +77,13 @@ func (s *Server) createConnector(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, errors.New("metadata.name is required"))
 		return
 	}
-	if c.Kind == "" {
+	// Normalize kind: accept empty, TennonConnector, or legacy alias "Connector".
+	switch c.Kind {
+	case "", domain.KindTennonConnector, "Connector":
 		c.Kind = domain.KindTennonConnector
+	default:
+		writeErr(w, http.StatusBadRequest, errors.New("kind must be empty or TennonConnector"))
+		return
 	}
 	if c.Meta.Namespace == "" {
 		c.Meta.Namespace = defaultNamespace
