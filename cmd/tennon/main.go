@@ -107,6 +107,10 @@ func main() {
 		fx.Provide(proxy.New),
 		fx.Provide(func(p *proxy.Proxy) domain.Router { return p }),
 		fx.Provide(func(p *proxy.Proxy) domain.ExecutionCompleter { return p }),
+		fx.Provide(func(p *proxy.Proxy) domain.ToolProvider { return p }),
+		// Domain services consumed by the API (approval resume, token mint/revoke, catalog).
+		fx.Provide(func(s domain.Store) *domain.TokenService { return domain.NewTokenService(s) }),
+		fx.Provide(func(tp domain.ToolProvider) *domain.ToolCatalog { return domain.NewToolCatalog(tp) }),
 		fx.Provide(api.New),
 		fx.Provide(controller.NewManager),
 		// Start everything.
