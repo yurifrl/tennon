@@ -102,9 +102,11 @@ func main() {
 			},
 			fx.As(new(domain.IdentityVerifier)),
 		)),
-		// Delivery — the proxy also satisfies domain.Router for the controller.
+		// Delivery — the proxy also satisfies domain.Router for the controller and
+		// domain.ExecutionCompleter for the API (approval resume).
 		fx.Provide(proxy.New),
 		fx.Provide(func(p *proxy.Proxy) domain.Router { return p }),
+		fx.Provide(func(p *proxy.Proxy) domain.ExecutionCompleter { return p }),
 		fx.Provide(api.New),
 		fx.Provide(controller.NewManager),
 		// Start everything.
@@ -112,6 +114,10 @@ func main() {
 
 		fx.NopLogger,
 	)
+	if err := app.Err(); err != nil {
+		logger.Error("failed to build application", "err", err)
+		os.Exit(1)
+	}
 	app.Run()
 }
 
