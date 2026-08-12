@@ -212,7 +212,7 @@ func (c *ChainedVerifier) Verify(ctx context.Context, bearer string) (domain.Sub
 
 // NewVerifierFromConfig creates the appropriate verifier based on configuration.
 // Returns AnonymousVerifier when no OIDC issuer is configured, otherwise returns
-// a chained verifier that tries service tokens first, then OIDC.
+// a chained verifier that tries service tokens, tokenless trust, then OIDC.
 func NewVerifierFromConfig(ctx context.Context, cfg OIDCConfig, store domain.Store) (domain.IdentityVerifier, error) {
 	// If no OIDC issuer is configured, return anonymous verifier
 	if cfg.IssuerURL == "" {
@@ -228,6 +228,9 @@ func NewVerifierFromConfig(ctx context.Context, cfg OIDCConfig, store domain.Sto
 	// Create service token verifier
 	serviceTokenVerifier := NewServiceTokenVerifier(store)
 
-	// Chain them: try service tokens first, then OIDC
-	return NewChainedVerifier(serviceTokenVerifier, oidcVerifier), nil
+	// Create tokenless verifier
+	tokenlessVerifier := NewTokenlessVerifier(store)
+
+	// Chain them: try service tokens first, then tokenless, then OIDC
+	return NewChainedVerifier(serviceTokenVerifier, tokenlessVerifier, oidcVerifier), nil
 }

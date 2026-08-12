@@ -20,6 +20,20 @@ type TokenSpec struct {
 	SecretHash string `json:"secretHash"`
 	// ExpiresAt is when this token expires.
 	ExpiresAt time.Time `json:"expiresAt"`
+	// Grants specify what this token can access.
+	Grants []TokenGrant `json:"grants,omitempty"`
+	// MaxLifetime is the maximum TTL this token can have (org-enforceable ceiling).
+	MaxLifetime time.Duration `json:"maxLifetime,omitempty"`
+}
+
+// TokenGrant specifies access rights for a token.
+type TokenGrant struct {
+	// Resources: connector names or tags (e.g., "grafana", "tag:observability").
+	Resources []string `json:"resources,omitempty"`
+	// Tools: specific tool names (empty = all tools on the resources).
+	Tools []string `json:"tools,omitempty"`
+	// Effect: "allow", "ask", or "block".
+	Effect string `json:"effect"`
 }
 
 // TokenStatus reflects the observed state.

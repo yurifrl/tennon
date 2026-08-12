@@ -7,8 +7,10 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/yurifrl/tennon/domain"
 )
@@ -17,17 +19,25 @@ const defaultNamespace = "tennon"
 
 // Server is the HTTP management API.
 type Server struct {
-	store     domain.Store
-	executer  domain.ExecutionCompleter
-	log       *slog.Logger
+	store        domain.Store
+	executer     domain.ExecutionCompleter
+	tokenService *domain.TokenService
+	catalog      *domain.ToolCatalog
+	log          *slog.Logger
 }
 
 // New builds the API server.
-func New(store domain.Store, exec domain.ExecutionCompleter, log *slog.Logger) *Server {
+func New(store domain.Store, exec domain.ExecutionCompleter, tokenService *domain.TokenService, catalog *domain.ToolCatalog, log *slog.Logger) *Server {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Server{store: store, executer: exec, log: log}
+	return &Server{
+		store:        store,
+		executer:     exec,
+		tokenService: tokenService,
+		catalog:      catalog,
+		log:          log,
+	}
 }
 
 // Handler returns the API's HTTP handler with all routes mounted.
@@ -46,6 +56,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/executions/{id}", s.getExecution)
 	mux.HandleFunc("POST /api/v1/executions/{id}/approve", s.approveExecution)
 	mux.HandleFunc("POST /api/v1/executions/{id}/deny", s.denyExecution)
+	mux.HandleFunc("POST /api/v1/tokens/mint", s.mintToken)
+	mux.HandleFunc("DELETE /api/v1/tokens/{name}", s.revokeToken)
+	mux.HandleFunc("GET /api/v1/catalog/search", s.searchCatalog)
 	return mux
 }
 
@@ -231,4 +244,106 @@ func (s *Server) denyExecution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) mintToken(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name        string              `json:"name"`
+		Namespace   string              `json:"namespace,omitempty"`
+		Subject     domain.Subject      `json:"subject"`
+		Grants      []domain.TokenGrant `json:"grants,omitempty"`
+		TTL         string              `json:"ttl,omitempty"` // e.g., "1h", "30m"
+		MaxLifetime string              `json:"maxLifetime,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if req.Name == "" {
+		writeErr(w, http.StatusBadRequest, errors.New("name is required"))
+		return
+	}
+
+	// Parse TTL
+	ttl := time.Hour // default
+	if req.TTL != "" {
+		parsed, err := time.ParseDuration(req.TTL)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, errors.New("invalid TTL format"))
+			return
+		}
+		ttl = parsed
+	}
+
+	// Parse MaxLifetime
+	var maxLifetime time.Duration
+	if req.MaxLifetime != "" {
+		parsed, err := time.ParseDuration(req.MaxLifetime)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, errors.New("invalid maxLifetime format"))
+			return
+		}
+		maxLifetime = parsed
+	}
+
+	mintReq := domain.MintRequest{
+		Name:        req.Name,
+		Namespace:   req.Namespace,
+		Subject:     req.Subject,
+		Grants:      req.Grants,
+		TTL:         ttl,
+		MaxLifetime: maxLifetime,
+	}
+
+	resp, err := s.tokenService.Mint(r.Context(), mintReq)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"token":     resp.Token,
+		"secretKey": resp.SecretKey, // Shown only once
+	})
+}
+
+func (s *Server) revokeToken(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		namespace = defaultNamespace
+	}
+
+	if err := s.tokenService.Revoke(r.Context(), namespace, name); err != nil {
+		s.storeErr(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) searchCatalog(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		writeErr(w, http.StatusBadRequest, errors.New("query parameter 'q' is required"))
+		return
+	}
+
+	limit := 20
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		var parsedLimit int
+		if _, err := fmt.Sscanf(limitStr, "%d", &parsedLimit); err != nil {
+			writeErr(w, http.StatusBadRequest, errors.New("invalid limit parameter"))
+			return
+		}
+		limit = parsedLimit
+	}
+
+	results := s.catalog.Search(domain.SearchRequest{
+		Query: query,
+		Limit: limit,
+	})
+
+	writeJSON(w, http.StatusOK, map[string]any{"items": results})
 }
