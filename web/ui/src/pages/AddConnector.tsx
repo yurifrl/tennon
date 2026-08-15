@@ -16,7 +16,7 @@ export default function AddConnector() {
     setSubmitting(true)
 
     const payload = {
-      kind: 'Connector',
+      kind: 'TennonConnector',
       metadata: { name },
       spec: {
         runtime: {
