@@ -12,6 +12,11 @@ import (
 	"github.com/yurifrl/tennon/store"
 )
 
+// mockToolProvider implements domain.ToolProvider for testing.
+type mockToolProvider struct{}
+
+func (m *mockToolProvider) Tools() []domain.Tool { return nil }
+
 // mockExecuter implements domain.ExecutionCompleter for testing.
 type mockExecuter struct{}
 
@@ -26,7 +31,9 @@ func (m *mockExecuter) GetExecution(ctx context.Context, execID string) (*domain
 
 func TestCreateConnector_KindNormalization(t *testing.T) {
 	st := store.NewMemory()
-	srv := New(st, &mockExecuter{}, nil)
+	tokenSvc := domain.NewTokenService(st)
+	catalog := domain.NewToolCatalog(&mockToolProvider{})
+	srv := New(st, &mockExecuter{}, tokenSvc, catalog, nil)
 	handler := srv.Handler()
 
 	tests := []struct {
