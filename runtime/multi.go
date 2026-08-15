@@ -68,7 +68,9 @@ func NewFromConfig(cfg Config) (domain.Runtime, error) {
 	case "docker":
 		return NewMulti(NewRemote(), NewDocker()), nil
 	case "kubernetes":
-		return nil, fmt.Errorf("runtime: kubernetes backend not yet implemented (roadmap phase 1/2)")
+		// Kubernetes backend requires a live cluster; in offline mode this will fail.
+		// Use NewKubernetesWithClient in tests.
+		return nil, fmt.Errorf("runtime: kubernetes backend requires cluster configuration (use NewKubernetesWithClient)")
 	default:
 		return nil, fmt.Errorf("runtime: unknown backend %q", cfg.Backend)
 	}

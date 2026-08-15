@@ -31,7 +31,9 @@ func NewFromConfig(cfg Config) (domain.Store, error) {
 		}
 		return NewPostgres(context.Background(), cfg.DSN)
 	case "kubernetes":
-		return nil, fmt.Errorf("store: kubernetes backend not yet implemented (roadmap phase 2)")
+		// Kubernetes backend requires a live cluster; in offline mode this will fail.
+		// Use controller-runtime's fake client in tests.
+		return nil, fmt.Errorf("store: kubernetes backend requires cluster configuration (use NewKubernetesWithClient)")
 	default:
 		return nil, fmt.Errorf("store: unknown backend %q", cfg.Backend)
 	}
