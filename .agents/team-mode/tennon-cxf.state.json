@@ -1,0 +1,55 @@
+{
+ "raised": {},
+ "accomplished": [
+  {
+   "id": "tennon-cxf.5",
+   "title": "Phase 5: tctl embedded MCP server (mcp serve)",
+   "at": "2026-08-06T20:07:23Z"
+  },
+  {
+   "id": "tennon-cxf.3",
+   "title": "Phase 2: OIDC auth (Google/Okta) + service tokens",
+   "at": "2026-08-06T20:07:22Z"
+  },
+  {
+   "id": "tennon-cxf.2",
+   "title": "Phase 2: Postgres store backend",
+   "at": "2026-08-06T20:07:21Z"
+  },
+  {
+   "id": "tennon-cxf.4",
+   "title": "Phase 1 follow-ups: global /mcp aggregate + docker runtime e2e",
+   "at": "2026-08-06T20:10:29Z"
+  },
+  {
+   "id": "tennon-cxf.7",
+   "title": "Phase 3: Authorization \u2014 Policy compiled to Cedar (allow/ask/block)",
+   "at": "2026-08-06T20:13:28Z"
+  },
+  {
+   "id": "tennon-cxf.11",
+   "title": "Phase 5: Vite/React web UI embedded via go:embed",
+   "at": "2026-08-06T20:40:17Z"
+  },
+  {
+   "id": "tennon-cxf.6",
+   "title": "Phase 1.1: spec connectors (OpenAPI + GraphQL) + OAuthApp",
+   "at": "2026-08-08T21:27:46Z"
+  },
+  {
+   "id": "tennon-cxf.9",
+   "title": "Phase 5: Approvals \u2014 pause/resume human-in-the-loop",
+   "at": "2026-08-08T21:41:25Z"
+  }
+ ],
+ "epic": "tennon-cxf",
+ "session": "019fd827-5d31-7652-a7d2-58e183235103",
+ "updated": "2026-08-11T21:51:21Z",
+ "counts": {
+  "active": 2,
+  "review": 1,
+  "clarify": 0,
+  "done": 8
+ },
+ "lastLlmCheck": "2026-08-11T21:37:31Z"
+}

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tennon — Phase 1 Showcase</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#30363d;
+    --ink:#e6edf3; --muted:#9aa7b4; --accent:#58a6ff; --green:#3fb950;
+    --amber:#d29922; --code:#0b0f14; --pill:#21262d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.6}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+  header{border-bottom:1px solid var(--line);padding-bottom:1.5rem;margin-bottom:2rem}
+  h1{font-size:2.2rem;margin:0 0 .25rem;letter-spacing:-.02em}
+  h2{font-size:1.35rem;margin:2.5rem 0 1rem;letter-spacing:-.01em;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+  h3{font-size:1.05rem;margin:1.4rem 0 .5rem}
+  .tag{display:inline-block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+       padding:.2rem .55rem;border-radius:999px;background:var(--pill);color:var(--muted);border:1px solid var(--line)}
+  .tag.ship{background:rgba(63,185,80,.12);color:var(--green);border-color:rgba(63,185,80,.35)}
+  .tag.soon{background:rgba(210,153,34,.12);color:var(--amber);border-color:rgba(210,153,34,.35)}
+  .lede{color:var(--muted);font-size:1.1rem;max-width:70ch}
+  .grid{display:grid;gap:1rem}
+  @media(min-width:720px){.grid.cols-2{grid-template-columns:1fr 1fr}.grid.cols-3{grid-template-columns:1fr 1fr 1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1.1rem 1.2rem}
+  .card h3{margin-top:0;display:flex;align-items:center;gap:.5rem}
+  .card p{margin:.35rem 0 0;color:var(--muted);font-size:.95rem}
+  code,pre{font-family:"SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{background:var(--pill);padding:.1rem .35rem;border-radius:.3rem;font-size:.86em;color:#d2e3ff}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;overflow:auto;
+      font-size:.85rem;line-height:1.55}
+  pre .c{color:#6e7781}
+  pre .p{color:var(--green)}
+  ul.clean{list-style:none;padding:0;margin:.4rem 0}
+  ul.clean li{padding:.28rem 0 .28rem 1.5rem;position:relative;color:var(--muted)}
+  ul.clean li::before{content:"›";position:absolute;left:.3rem;color:var(--accent)}
+  ul.check li::before{content:"✓";color:var(--green)}
+  ul.soon li::before{content:"○";color:var(--amber)}
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:.5rem;margin:1rem 0}
+  .step{flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+        padding:.7rem .8rem;text-align:center}
+  .step .n{font-size:.7rem;color:var(--accent);font-weight:700}
+  .step .t{font-size:.9rem;margin-top:.2rem}
+  .step .d{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+  .arrow{align-self:center;color:var(--muted);font-size:1.1rem}
+  .layers{display:flex;flex-direction:column;gap:.4rem;margin:1rem 0}
+  .layer{border:1px solid var(--line);border-radius:8px;padding:.6rem .9rem;background:var(--panel)}
+  .layer .lname{font-weight:600}
+  .layer .lpk{color:var(--muted);font-size:.85rem;font-family:ui-monospace,monospace}
+  .l0{border-left:3px solid #8957e5}.l1{border-left:3px solid #58a6ff}
+  .l2{border-left:3px solid #3fb950}.l3{border-left:3px solid #d29922}
+  .rule{font-size:.85rem;color:var(--muted);font-style:italic;margin:.5rem 0 0}
+  footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+  .kbd{color:#d2e3ff}
+  .note{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);border-radius:8px;padding:.7rem 1rem;
+        font-size:.9rem;color:var(--muted);margin:1rem 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="tag ship">Phase 1 shipped</span>
+  <h1>Tennon</h1>
+  <p class="lede">The Kubernetes-native control plane and proxy for Model Context Protocol (MCP)
+  servers. Register an MCP server once, and every agent calls its tools through one URL — with the
+  server's credential injected server-side and never handed to the caller.</p>
+</header>
+
+<section>
+  <h2>What's built today</h2>
+  <p class="lede" style="font-size:1rem">Phase 1 of the roadmap is implemented and verified end-to-end:
+  <strong>register a connector, reconcile it, and proxy its tools at <code>/mcp/&lt;name&gt;</code> using the
+  connector's rendered credential — never exposing that credential to the caller.</strong></p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>🔌 Per-connector MCP proxy</h3>
+      <p>Every connector is reachable at <code>/mcp/&lt;name&gt;</code> over MCP streamable-HTTP. An agent
+      points a standard MCP client straight at the URL — no sidecar, no npm package.</p>
+    </div>
+    <div class="card">
+      <h3>🔐 Credentials stay put</h3>
+      <p>Header/env values carry <code>{{secret:name.key}}</code> templates, rendered in-process at call
+      time and injected into the upstream. The caller sends no token and never sees one.</p>
+    </div>
+    <div class="card">
+      <h3>🧰 Tool prefixing &amp; filtering</h3>
+      <p>Upstream tools are re-exposed with a configurable <code>exposePrefix</code> and scoped by
+      <code>allow</code>/<code>deny</code> globs — deny wins over allow.</p>
+    </div>
+    <div class="card">
+      <h3>♻️ Controller reconcile loop</h3>
+      <p>A store-driven controller watches connectors, drives the data plane, discovers tools, and
+      writes back <code>status.phase</code> / <code>discoveredTools</code> / <code>url</code>.</p>
+    </div>
+    <div class="card">
+      <h3>🗄️ Pluggable storage</h3>
+      <p>In-memory and SQLite backends today, behind one <code>domain.Store</code> port with
+      get / list / watch semantics — same objects on every backend.</p>
+    </div>
+    <div class="card">
+      <h3>🖥️ One binary + CLI + API</h3>
+      <p>The <code>tennon</code> server (controller + API + proxy + embedded UI) and the <code>tctl</code>
+      CLI, wired at a single Uber-FX composition root. REST API; secret data is write-only.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>The per-request proxy flow</h2>
+  <p class="lede" style="font-size:1rem">What happens on every tool call from an agent:</p>
+  <div class="flow">
+    <div class="step"><div class="n">1</div><div class="t">Authenticate</div><div class="d">bearer → subject</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">2</div><div class="t">Authorize</div><div class="d">decision per tool</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">3</div><div class="t">Render credential</div><div class="d">secret → header, in-process</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">4</div><div class="t">Route</div><div class="d">strip prefix</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">5</div><div class="t">Forward</div><div class="d">to upstream MCP</div></div>
+  </div>
+  <div class="note">In Phase 1, step&nbsp;1 resolves to a local subject and step&nbsp;2 is an allow-all
+  default — both sit behind ports (<code>IdentityVerifier</code>, <code>Authorizer</code>) so real OIDC
+  (Phase&nbsp;2) and Cedar-compiled policy (Phase&nbsp;3) drop in without changing the proxy.</div>
+</section>
+
+<section>
+  <h2>Architecture — packages only call down</h2>
+  <div class="layers">
+    <div class="layer l3"><span class="lname">cmd/</span> &nbsp;<span class="lpk">cmd/tennon (FX composition root), cmd/tctl</span></div>
+    <div class="layer l1"><span class="lname">delivery</span> &nbsp;<span class="lpk">api · proxy · controller · cli</span></div>
+    <div class="layer l2"><span class="lname">infrastructure</span> &nbsp;<span class="lpk">store · runtime · secret · auth</span></div>
+    <div class="layer l0"><span class="lname">domain</span> &nbsp;<span class="lpk">core types + port interfaces — imports nothing outward</span></div>
+  </div>
+  <p class="rule">The dependency rule: a package may import only packages in a lower layer. <code>domain</code>
+  is pure Go (stdlib only); when a lower layer needs upward behaviour it defines an interface the higher
+  layer implements (e.g. the controller drives the proxy through <code>domain.Router</code>). Enforced by
+  <code>hack/check-layers.sh</code> in <code>task check</code>.</p>
+</section>
+
+<section>
+  <h2>Run it yourself</h2>
+  <h3>1 · Build</h3>
+  <pre><span class="c"># builds ./bin/tennon and ./bin/tctl</span>
+task build</pre>
+
+  <h3>2 · Start a mock MCP upstream (to try the flow)</h3>
+  <pre>go run ./hack/mockmcp --addr 127.0.0.1:9090</pre>
+
+  <h3>3 · Run the control plane (solo / local, in-memory store)</h3>
+  <pre>./bin/tennon --store memory --runtime remote \
+  --api-addr 127.0.0.1:8080 --proxy-addr 127.0.0.1:8081</pre>
+
+  <h3>4 · Register a credentialed connector</h3>
+  <pre><span class="c"># the credential lives with the connector — callers never receive it</span>
+export TENNON_API=http://127.0.0.1:8080
+./bin/tctl secret create grafana-creds --from-literal token=$GRAFANA_TOKEN
+./bin/tctl connector add grafana \
+  --remote http://127.0.0.1:9090/mcp \
+  --header "Authorization=Bearer {{secret:grafana-creds.token}}" \
+  --expose-prefix grafana_ --allow "get_*" --tag observability
+./bin/tctl connector list
+<span class="p">#  grafana   remote   Ready   /mcp/grafana</span></pre>
+
+  <p class="lede" style="font-size:.98rem">An agent then points its MCP client at
+  <code>http://127.0.0.1:8081/mcp/grafana</code>. The proxy injects the connector's credential
+  server-side, so the agent holds no secret. For persistence, swap
+  <code>--store sqlite --store-path tennon.db</code>.</p>
+</section>
+
+<section>
+  <h2>Verified, not asserted</h2>
+  <ul class="clean check">
+    <li>End-to-end proxy test: mock MCP upstream proxied — <code>delete_all</code> filtered by allow-list,
+      <code>get_status</code> exposed as <code>grafana_get_status</code>, credential injected upstream, caller holds no secret.</li>
+    <li>Unit tests across <code>domain</code>, <code>store</code> (memory + SQLite), and <code>secret</code>.</li>
+    <li>Live binary smoke: <code>tctl</code> + API + controller + proxy — the mock tool returned <code>status: ok</code>.</li>
+    <li>Layering check (<code>hack/check-layers.sh</code>) and <code>go vet</code> clean via <code>task ci</code>.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="tag soon">Roadmap</span> &nbsp;Not yet built</h2>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Phase 1.1 — Spec connectors</h3>
+      <p>Compile tools in-process from an OpenAPI spec (<code>OpenApiConnector</code>) or GraphQL endpoint
+      (<code>GraphqlConnector</code>); <code>OAuthApp</code> + minted token (Google as the proof).</p>
+    </div>
+    <div class="card">
+      <h3>Phase 2 — Storage &amp; authentication</h3>
+      <p>Postgres and Kubernetes/etcd backends; OIDC login (Google, Okta); service tokens; secret
+      rendering from references.</p>
+    </div>
+    <div class="card">
+      <h3>Phase 3 — Authorization</h3>
+      <p><code>Policy</code> CRD compiled to Cedar, evaluated in-process; additive, most-restrictive-wins;
+      allow / ask / block, live-reloaded.</p>
+    </div>
+    <div class="card">
+      <h3>Phase 4 — Tokenless identity &amp; catalog</h3>
+      <p>Trust-based machine identity (K8s ServiceAccount, SPIFFE, OIDC JWT, cloud); fine-grained tokens;
+      unified tool catalog with intent search.</p>
+    </div>
+    <div class="card">
+      <h3>Phase 5 — Approvals &amp; web UI</h3>
+      <p>Pause/resume executions (human-in-the-loop); the click-driven Vite/React console; the CLI's
+      embedded MCP server for programmatic agent access.</p>
+    </div>
+    <div class="card">
+      <h3>Runtime backends</h3>
+      <p>Kubernetes Pods with runtimeClass / NetworkPolicy / KubeArmor isolation; the stdio→streamable-HTTP
+      bridge (Supergateway). Docker runtime exists but is lightly exercised.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Tennon is pre-1.0 and under active design; APIs and CRD schemas may change. This page describes only
+  code that exists in the repository as of Phase&nbsp;1. Full documentation lives under <code>docs/</code>.
+</footer>
+
+</div>
+</body>
+</html>

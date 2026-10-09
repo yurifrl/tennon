@@ -1,0 +1,1 @@
+{"nodes": [{"id": "mcp_auth_spec", "label": "Authenticated MCP URL Spec", "file_type": "document", "source_file": "hack/pocs/mcp-auth/SPEC.md"}], "edges": [{"source": "mcp_auth_spec", "target": "arch_readme", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "hack/pocs/mcp-auth/SPEC.md"}], "hyperedges": []}

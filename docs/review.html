@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tennon Review — Concepts & Decisions</title>
+<style>
+  :root{--bg:#0d0f14;--card:#141821;--line:#28303f;--ink:#e6e9ef;--mut:#9aa4b5;--dim:#6b7587;--acc:#00c29f;--code:#e6c07b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 18px 120px}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  h1{font-size:18px;margin:0;font-weight:800}
+  .count{color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums}
+  .bar{height:4px;background:var(--line);border-radius:999px;overflow:hidden;margin-bottom:22px}
+  .bar>i{display:block;height:100%;background:var(--acc);transition:width .25s}
+  .kind{display:inline-block;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:8px}
+  .kind.dec{color:var(--code)}
+  h2{font-size:24px;margin:0 0 14px;font-weight:800;line-height:1.25}
+  .plain{background:rgba(0,194,159,.07);border-left:4px solid var(--acc);border-radius:8px;padding:12px 14px;margin:0 0 18px;color:var(--ink)}
+  .plain b{color:var(--acc)}
+  .orig{color:var(--mut);font-size:15px;white-space:pre-wrap}
+  .orig code{color:var(--code);background:#090b10;padding:1px 5px;border-radius:5px;font-size:13px}
+  .src{color:var(--dim);font-size:12px;margin-top:16px}
+  textarea{width:100%;margin-top:22px;background:#090b10;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:12px;font:15px -apple-system,sans-serif;min-height:84px;outline:none;resize:vertical}
+  textarea:focus{border-color:var(--acc)}
+  .nav{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);padding:16px 18px;display:flex;justify-content:center}
+  .navin{width:100%;max-width:760px;display:flex;gap:10px;align-items:center}
+  button{font:600 14px -apple-system,sans-serif;border-radius:10px;padding:11px 18px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  button:hover{border-color:var(--acc)}
+  button:disabled{opacity:.35;cursor:default;border-color:var(--line)}
+  button.save{background:var(--acc);color:#04121a;border-color:transparent}
+  button.next{margin-left:auto}
+  .toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:var(--acc);color:#04121a;font:600 13px -apple-system,sans-serif;padding:9px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+  .toast.show{opacity:1}
+  .done{text-align:center;padding:60px 0;color:var(--mut)}
+  kbd{background:#090b10;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font:12px ui-monospace,monospace;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tennon — Concepts &amp; Decisions Review</h1>
+    <span class="count" id="count"></span>
+  </header>
+  <div class="bar"><i id="prog"></i></div>
+  <div id="card"></div>
+  <textarea id="ta" placeholder="Your comment on this piece… (⌘/Ctrl+Enter saves)"></textarea>
+</div>
+<div class="nav"><div class="navin">
+  <button id="prev">← Back</button>
+  <button class="save" id="save">Save comment</button>
+  <button class="next" id="next">Next →</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// Throwaway, ad-hoc review deck. Content lifted from docs/02-concepts.md and docs/arch/*.
+// Comments POST to the existing /api/comment endpoint (server.ts), appended to comments.md.
+const CARDS = [
+ {k:'concept',t:'Connector',src:'concepts.md',
+  plain:'A <b>connector</b> is one registered tool provider: how to reach it, where its tool list comes from, and the credential it uses. It is the unit agents connect to at <code>/mcp/&lt;name&gt;</code>.',
+  o:`Three CRD kinds specialize it:
+• TennonConnector — an MCP server. No image required: runtime picks container image, npx, uvx, or a remote endpoint. npx/uvx/stdio are wrapped with Supergateway and exposed over Streamable HTTP (no SSE). Every locally-run MCP runs in a tightly jailed container.
+• OpenApiConnector — an OpenAPI/REST service (e.g. Google = Gmail + Calendar + Drive). Tools compiled from the spec, run in-process.
+• GraphqlConnector — a GraphQL endpoint; tools compiled from introspection, run in-process.`},
+
+ {k:'concept',t:'Credentials & accounts',src:'concepts.md',
+  plain:'The credential lives <b>on the connector itself</b>, not in a separate object. Same provider, different credentials = <b>multiple connectors</b>.',
+  o:`Grafana example — two TennonConnectors:
+• grafana-read → read-only token, exposes get_* / search_* / list_*
+• grafana-write → admin token, exposes everything, write tools approval-gated
+Each is reachable at its own URL and governed independently. A connector reads its credential from a Kubernetes Secret named tennon-<connector-name> — either an api-key/header value or an OAuth grant.`},
+
+ {k:'concept',t:'OAuth app',src:'concepts.md',
+  plain:'A reusable OAuth client. Register a provider (e.g. Google) <b>once</b>, then connect many accounts against it — each connector requests its own scopes.',
+  o:`The client secret and minted tokens live in a Kubernetes Secret, never inline. Backed by the OAuthApp resource.`},
+
+ {k:'concept',t:'Tool',src:'concepts.md',
+  plain:'A single callable exposed by a connector, e.g. <code>github_create_pull_request</code>.',
+  o:`Tools have input/output JSON schemas and can be flagged sensitive (requiring approval). Tennon indexes every tool from every connector into one searchable catalog.`},
+
+ {k:'concept',t:'Tag',src:'concepts.md',
+  plain:'A label on a connector (<code>code</code>, <code>infra</code>, <code>sensitive</code>). Tags are a <b>sharing and policy primitive</b>.',
+  o:`Grant access by tag and any new connector carrying that tag is automatically included. Tags also drive default approval behavior (e.g. sensitive → require approval).`},
+
+ {k:'concept',t:'Subject',src:'concepts.md',
+  plain:'Who or what is making a call. The authorization model matches on these kinds.',
+  o:`• User — authenticated via OIDC (Google or Okta)
+• Group — from the identity provider's groups claim
+• EmailDomain — everyone at example.com
+• ServiceAccount — a machine identity
+• Token — a machine identity`},
+
+ {k:'concept',t:'Policy',src:'concepts.md',
+  plain:'Maps subjects to what they may do with tools: <b>allow</b>, <b>ask</b>, or <b>block</b>. Connectors carry no access of their own.',
+  o:`Authored in two places, both compiling to one rule primitive:
+• Policy — per-connector sharing + org-wide guardrails/defaults.
+• Role — reusable grants assigned to users, groups, or service accounts.
+They resolve together: grants are additive, and a global guardrail can only tighten a grant (force ask or block), never loosen it.`},
+
+ {k:'concept',t:'Service account & token',src:'concepts.md',
+  plain:'An org-owned machine identity that outlives its creator. Authenticates two ways.',
+  o:`• Tokenless (preferred): a trust relationship (OIDC, K8s ServiceAccount, SPIFFE, cloud instance identity). No secret stored; Tennon mints a short-lived credential per call.
+• Fine-grained token: a GitHub-style token scoped to resources × tools × effect × expiry, short-lived, re-minted on expiry.`},
+
+ {k:'concept',t:'Execution & approval',src:'concepts.md',
+  plain:'A single tool call flowing through the proxy. Sensitive calls <b>pause</b> for a human decision, then resume.',
+  o:`When a tool requires approval (or needs auth), the execution pauses and becomes a first-class object with an id, subject, target tool, and arguments. A human approves/denies from the Web UI or via API/CLI. Pending approvals have a timeout.`},
+
+ {k:'decision',t:'One self-contained Go binary',src:'arch/02-architecture.md',
+  plain:'The server (controller + API + proxy + <b>embedded web UI</b>) ships as <b>one static binary</b>. No build step, no repo required.',
+  o:`A solo user runs one binary and gets the API, proxy, and UI. Larger deployments can optionally run the UI as a separate front tier, but nothing requires it. tctl is a separate CLI binary, a thin client over the same API.`},
+
+ {k:'decision',t:'Everything is a CRD — no single YAML',src:'arch/02-architecture.md',
+  plain:'Config is <b>not</b> one YAML file. Every object is modeled as a Kubernetes Custom Resource. You never write YAML — the UI/CLI translate clicks into resources.',
+  o:`The UI and the CRD create each other: anything created in the UI is written as a CRD object, and any CRD applied out-of-band appears in the UI — two faces of the same object, not a copy. Config and audit share one store (no separate events database).`},
+
+ {k:'decision',t:'Pluggable backing store',src:'arch/02-architecture.md',
+  plain:'The <b>same object model</b> runs on SQLite for one person and Postgres/Kubernetes for a team — without changing what the objects are.',
+  o:`Desired state is persisted in a pluggable backend: Kubernetes/etcd, Postgres, or SQLite. The same CRD types are reused everywhere — on Postgres/SQLite the store persists them as rows instead of going through the API server, but the schema and validation are identical.`},
+
+ {k:'decision',t:'The proxy IS the MCP surface',src:'arch/02-architecture.md',
+  plain:'Agents connect <b>directly to the proxy</b> over streamable-HTTP at a connector URL. There is <b>no separate agent-side package</b> to install.',
+  o:`The proxy authenticates the caller, applies policy, renders the connector's secret, and forwards the call. For clients that can only launch a local stdio command (Claude Code, Cursor), tctl ships its own MCP server (tctl mcp serve) that bridges to the hub — so the bridge is just the CLI you already have, not a distinct component.`},
+
+ {k:'decision',t:'Tokenless-first machine identity',src:'arch/04-technologies.md',
+  plain:'Machines authenticate by a <b>trust relationship</b>, not a stored secret, whenever possible. Fine-grained tokens are the fallback.',
+  o:`Tier 0 — tokenless (preferred): present a platform-signed document, Tennon mints a short-lived (~1h, non-renewable) credential. Sources: K8s ServiceAccount token (TokenReview), OIDC JWT (e.g. GitHub Actions), SPIFFE/SVID, cloud instance identity.
+Fallback — fine-grained token: GitHub-PAT-style, scoped, shown once, stored only as a hash, revocable.`},
+
+ {k:'decision',t:'Authorization compiled to Cedar',src:'arch/09-authorization.md',
+  plain:'The human-facing Policy/Role surfaces are <b>compiled to Cedar</b> and evaluated <b>in-process</b> on each call. You never write Cedar by hand.',
+  o:`Why Cedar: RBAC now, ABAC (conditions on args/time/rate) later, and analyzability to flag over-broad grants — all in-process, no extra stateful service, preserving the embeddable SQLite story.
+"ask" is modeled as a Cedar obligation (@advice("ask")): policy permits the call but tags it for approval; the proxy routes it to the approvals queue.`},
+
+ {k:'decision',t:'Why not OpenFGA / SpiceDB?',src:'arch/09-authorization.md',
+  plain:'Relationship engines win when permissions are a <b>deep relationship graph</b>. Tennon\'s needs are simpler, so Cedar fits better.',
+  o:`Tennon's needs are tool globs + group/tag membership + argument conditions, which Cedar handles in-process with no extra stateful service — preserving the embeddable SQLite story. If relationship inheritance becomes dominant, a relationship backend can be revisited.`},
+
+ {k:'decision',t:'Runtime mirrors the environment',src:'arch/02-architecture.md',
+  plain:'Where MCP servers actually run depends on the environment, but the <b>model is identical</b>.',
+  o:`• Local / single host: MCP servers run as Docker containers (Podman too). No cluster needed.
+• Kubernetes: MCP servers run as Pods driven by the TennonConnector CRD (runtimeClass, securityContext, NetworkPolicy, KubeArmor).
+Same objects, same proxy, same isolation knobs — only the thing that runs the container differs.`},
+
+ {k:'decision',t:'Everything is API-driven',src:'arch/02-architecture.md',
+  plain:'One controller, one API. Every surface (UI, CLI, your CI, kubectl) is a <b>client</b> of it. No private side doors.',
+  o:`Creating an MCP, minting a token, or editing a policy is the same API call (and the same resulting object) regardless of who initiates it — so validation, policy, and audit are uniform.`},
+
+ {k:'decision',t:'Roadmap — phased plan',src:'arch/10-roadmap.md',
+  plain:'Phases 1–3 establish the K8s-native proxy; 4–5 add catalog, approvals, and UI. Pre-1.0: APIs may change.',
+  o:`Phase 1 — Controller + per-MCP proxy: register an MCP, attach to an agent, agent calls its tools using the connector's credentials (never exposed to caller).
+Phase 1.1 — Spec connectors (integrations): same goal for OpenApiConnector/GraphqlConnector. Google is the proof of concept (OAuthApp + Discovery docs).
+Phase 2 — Storage backends & authentication (SQLite/Postgres/etcd, OIDC, service tokens).
+Phase 3 — Authorization (Policy → Cedar, live edits).
+Phase 4 — Tokenless identity & catalog.
+Phase 5 — Approvals & web UI.`},
+];
+
+let i = 0;
+const $ = s => document.querySelector(s);
+const card = $('#card'), ta = $('#ta'), toast = $('#toast');
+
+function render(){
+  if(i >= CARDS.length){
+    card.innerHTML = '<div class="done"><h2>That\'s everything 🎉</h2><p>You reviewed all '+CARDS.length+' pieces. Comments are saved to <code>comments.md</code>.</p></div>';
+    ta.style.display = 'none'; $('#next').disabled = true; $('#save').disabled = true;
+    $('#count').textContent = CARDS.length+' / '+CARDS.length;
+    $('#prog').style.width = '100%';
+    return;
+  }
+  const c = CARDS[i];
+  card.innerHTML =
+    '<span class="kind'+(c.k==='decision'?' dec':'')+'">'+(c.k==='decision'?'Decision':'Concept')+'</span>'+
+    '<h2></h2><div class="plain"></div><div class="orig"></div><div class="src">Source: docs/'+c.src+'</div>';
+  card.querySelector('h2').textContent = c.t;
+  card.querySelector('.plain').innerHTML = c.plain;
+  card.querySelector('.orig').innerHTML = c.o.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/`([^`]+)`/g,'<code>$1</code>');
+  ta.style.display = ''; ta.value = ''; $('#next').disabled = false; $('#save').disabled = false;
+  $('#count').textContent = (i+1)+' / '+CARDS.length;
+  $('#prog').style.width = (i/CARDS.length*100)+'%';
+  $('#prev').disabled = i===0;
+}
+
+function show(m){ toast.textContent = m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1700); }
+
+function save(){
+  const c = CARDS[i], comment = ta.value.trim();
+  if(!comment){ show('Comment is empty'); return; }
+  fetch('/api/comment',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({surface:'review',page:'/review.html#'+(i+1),context:(c.k==='decision'?'Decision':'Concept')+': '+c.t,original:c.o,comment,type:c.k,params:''})})
+    .then(r=>{if(!r.ok)throw 0; show('Saved ✓'); ta.value='';})
+    .catch(()=>show('Save failed'));
+}
+
+$('#next').onclick = ()=>{ if(i<CARDS.length){ i++; render(); window.scrollTo(0,0);} };
+$('#prev').onclick = ()=>{ if(i>0){ i--; render(); window.scrollTo(0,0);} };
+$('#save').onclick = save;
+ta.addEventListener('keydown', e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') save(); });
+document.addEventListener('keydown', e=>{
+  if(e.target===ta) return;
+  if(e.key==='ArrowRight') $('#next').click();
+  else if(e.key==='ArrowLeft') $('#prev').click();
+});
+render();
+</script>
+</body>
+</html>
