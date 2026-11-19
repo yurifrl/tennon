@@ -15,12 +15,24 @@ we follow, and how to propose changes.
 
 ## Development setup
 
-- Go 1.24+ for the server and CLI.
+- Go 1.26+ for the server and CLI.
 - Node 20+ for the web UI build.
 - For the Kubernetes backend: a local cluster (kind/minikube) and `kubectl`.
 - For local iteration without a cluster: run the controller with `--store=sqlite`.
 
-Build, run, and test commands live in the `Makefile` / package scripts; run `make help`.
+Build, run, and test commands live in `Taskfile.yml` (run `task --list`):
+
+```bash
+task build        # -> bin/tennon, bin/tctl
+task ci           # layering check + go vet + tests
+task test         # tests only
+task check        # layering rules only
+task docs         # build the docs pages and serve them at http://127.0.0.1:8800
+task docs:build   # rebuild the pages only; fails on any broken link
+```
+
+The docs site is published to <https://yurifrl.github.io/tennon/> from `main` by
+`.github/workflows/docs.yml`.
 
 ## Conventions
 

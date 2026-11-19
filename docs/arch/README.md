@@ -41,7 +41,7 @@ Requirements this implies:
   provider for team identity and groups.)
 - **Granular sharing.** Sharing can be the whole connector or a subset of its tools —
   scoped to the group, and optionally gated by approval for sensitive tools. It is
-  authored in a [`Policy`](../README.md#policy) (connectors carry no access of their own). See
+  authored in a [`Policy`](../README.md#policy-1) (connectors carry no access of their own). See
   [Authorization](../README.md#authorization).
 
 ### Example shape
@@ -78,7 +78,7 @@ spec:
 
 In Cedar terms this becomes a `permit(principal in Group::"okta:observability", action ==
 Action::"call", resource in Connector::"grafana")` with the owner's credential resolved by the
-proxy at call time. See [Authentication](../README.md#authentication) and [Authorization](../README.md#authorization).
+proxy at call time. See [Authentication](../README.md#authentication-2) and [Authorization](../README.md#authorization).
 
 
 # Architecture
@@ -176,7 +176,7 @@ environment:
   KubeArmor policy) and reconciles them like any operator.
 
 Either way the model is identical — the same objects, the same proxy, the same isolation
-knobs (see [Runtime & Isolation](#runtime--isolation)); only the thing that runs the
+knobs (see [Runtime & Isolation](#runtime-amp-isolation)); only the thing that runs the
 container differs (Docker engine vs the kube scheduler).
 
 ## Everything is API-driven
@@ -250,7 +250,7 @@ that violates them should fail.
    lives higher up, it declares an **interface** it owns; the higher layer implements it.
    This is the only way control flows "up" — through an abstraction the callee defines.
 4. **One composition root.** Concrete implementations are wired together in exactly one
-   place (`cmd/`), using [Uber FX](#dependency-injection--uber-fx). No package
+   place (`cmd/`), using [Uber FX](#dependency-injection-uber-fx). No package
    constructs its own dependencies from global state.
 5. **Secrets never cross a boundary they shouldn't.** No credential value appears in a type
    that leaves the controller (API responses, logs, status). The structure makes this
@@ -298,11 +298,11 @@ Reading the diagram top-to-bottom, every arrow points **down**:
 - **Infrastructure (`store`, `runtime`, `secret`).** Concrete implementations of domain
   ports. `store` persists CRD objects (etcd/Postgres/SQLite — see
   [Storage backends](../README.md#storage-backends)). `runtime` starts/stops MCP workloads (Docker or Pods —
-  see [Runtime & Isolation](#runtime--isolation)). `secret` resolves and renders
+  see [Runtime & Isolation](#runtime-amp-isolation)). `secret` resolves and renders
   credentials. Each imports `domain` only.
 - **Delivery / adapters (`api`, `proxy`, `controller`, `cli`).** Translate the outside world
   into domain calls. `api` is REST/JSON; `proxy` is the MCP data plane; `controller`
-  reconciles CRDs ([Kubebuilder](#operator-framework--kubebuilder)); `cli` is
+  reconciles CRDs ([Kubebuilder](#operator-framework-kubebuilder)); `cli` is
   the client + embedded MCP server. They import `domain` and the infrastructure ports — never
   each other.
 - **`cmd/` (top).** `main` per binary. Builds the FX graph: chooses which `Store`/`Runtime`
@@ -418,7 +418,7 @@ Constraints every technology choice is measured against:
    keep the [call-down-only rule](#the-dependency-rule) enforceable.
 5. **Short-lived, tokenless-first identity.** Auth tech must support OIDC (humans) and
    trust-based machine identity (K8s SA, SPIFFE, cloud), with fine-grained tokens only as a
-   fallback (see [Authentication](../README.md#authentication)).
+   fallback (see [Authentication](../README.md#authentication-2)).
 6. **MCP over streamable-HTTP.** The proxy speaks MCP over streamable-HTTP; no SSE.
 
 ---
@@ -444,7 +444,7 @@ Constraints every technology choice is measured against:
 
 ### Dependency injection — Uber FX
 
-FX is the wiring for the [composition root](#cmd-top). Each binary's
+FX is the wiring for the [composition root](#the-dependency-rule). Each binary's
 `main` builds an `fx.App` from provider functions; no package constructs its own
 dependencies. FX's `OnStart`/`OnStop` hooks own process lifecycle so the HTTP server, the
 controller manager, and runtime backends start and drain in dependency order.
@@ -515,7 +515,7 @@ sequenceDiagram
    **subject**, email, and **groups**.
 4. **Groups drive sharing.** A policy granted to an Okta group resolves membership from the
    claim at request time — joiners/leavers gain/lose access with no policy edit. See
-   [Authentication](../README.md#authentication) and [Authorization](../README.md#authorization).
+   [Authentication](../README.md#authentication-2) and [Authorization](../README.md#authorization).
 
 ### A service account uses a token (machine identity)
 
@@ -543,7 +543,7 @@ Authorization: Bearer <oidc-access-token | minted-tokenless-credential | mh_svc_
 ```
 
 The proxy authenticates, resolves the subject, and hands off to
-[Authorization](../README.md#authorization). See [Tokens & Identity](../README.md#tokens--identity) for the
+[Authorization](../README.md#authorization). See [Tokens & Identity](../README.md#tokens-amp-identity) for the
 full model.
 
 
@@ -664,7 +664,7 @@ types land, then flip `crds.install=false` to make self-install the default.
 # Connector Extensibility (design note)
 
 > Design decision for how Tennon supports new and provider-specific connectors. Captures the
-> options considered and the chosen path. See [Spec Connectors](../README.md#spec-connectors-openapi--graphql) for the
+> options considered and the chosen path. See [Spec Connectors](../README.md#spec-connectors-openapi-amp-graphql) for the
 > mechanics this builds on.
 
 ## The question
@@ -781,7 +781,7 @@ sequenceDiagram
 ```
 
 1. **Authenticate** the caller (OIDC token, tokenless-minted credential, or service token)
-   to a subject. See [Authentication](../README.md#authentication).
+   to a subject. See [Authentication](../README.md#authentication-2).
 2. **Authorize** against the in-memory Cedar policy. See [Authorization](../README.md#authorization).
 3. **Render the upstream credential** in-cluster and inject it into the upstream MCP. The
    caller never sees it.
@@ -890,9 +890,9 @@ the status reports) is the [Capability Enforcement design](#capability-enforceme
 
 ### Filesystem access (what it can see/write)
 - Read-only root; only declared mounts are present.
-- Repo mounts attach a [Repo](#repository-server-obsidian-vault-as-a-structured-api--design-note) (design note) volume as `read` or
+- Repo mounts attach a [Repo](#repository-server-obsidian-vault-as-a-structured-api-design-note) (design note) volume as `read` or
   `read-write`; that is the only way an MCP touches shared files. (See the Repository Server
-  note, see [Repository Server](#repository-server-obsidian-vault-as-a-structured-api--design-note).)
+  note, see [Repository Server](#repository-server-obsidian-vault-as-a-structured-api-design-note).)
 
 ## Config knobs (per MCP)
 
@@ -917,7 +917,7 @@ Surfaced on the `TennonConnector` spec (set via the UI, no YAML required):
 
 # Capability Enforcement (Design)
 
-Architectural design for how a [Capability Profile](../README.md#sandbox--access-capability-profiles) — the user's
+Architectural design for how a [Capability Profile](../README.md#sandbox-amp-access-capability-profiles) — the user's
 plain-language intent — becomes real enforcement on whatever the cluster provides. This is
 the **container capability plane**, distinct from request authorization (`Policy`).
 
@@ -1037,7 +1037,7 @@ no change to the profile vocabulary users write.
   [Authorization](../README.md#authorization) (`Policy` → Cedar/OPA), enforced in the proxy.
 - It complements, not replaces, the kernel sandbox: gVisor/Kata is the boundary the container
   runs inside; KubeArmor/Cilium constrain behavior within it.
-- See [Runtime & Isolation](#runtime--isolation) for the broader runtime picture and the
+- See [Runtime & Isolation](#runtime-amp-isolation) for the broader runtime picture and the
   transport (Supergateway, Streamable HTTP only).
 
 
@@ -1068,7 +1068,7 @@ an `OAuthApp`.
 - `OAuthApp` + minted token rendered into the call; multiple accounts = multiple connectors.
 - **Done when:** a Google `OpenApiConnector` is registered, attached to an agent, and the agent
   calls a Gmail/Calendar tool using the OAuth credential. See
-  [Spec Connectors](../README.md#spec-connectors-openapi--graphql).
+  [Spec Connectors](../README.md#spec-connectors-openapi-amp-graphql).
 
 ## Phase 2 — Storage backends & authentication
 - Pluggable store: Kubernetes/etcd, Postgres, SQLite (same CRD types).
@@ -1100,8 +1100,8 @@ an `OAuthApp`.
 
 ## Beyond
 - Workflows, per-execution scratch storage, richer audit/usage analytics, and additional
-  trust types as needed. See the design notes ([requirements](#tennon--core-requirements),
-  [repository server](#repository-server-obsidian-vault-as-a-structured-api--design-note), [token & identity](#token--identity--reference-and-ideas)).
+  trust types as needed. See the design notes ([requirements](#tennon-core-requirements),
+  [repository server](#repository-server-obsidian-vault-as-a-structured-api-design-note), [token & identity](#token-amp-identity-reference-and-ideas)).
 
 
 # Repository Server (Obsidian vault as a structured API) — Design Note
@@ -1301,7 +1301,7 @@ authentication. This is a reference + scratchpad, not a final design. It pulls f
 Tailscale OAuth clients, Teleport's certificate/tokenless model, and GitHub fine-grained
 tokens, then sketches how Tennon could combine them.
 
-Driving requirements (see [requirements.md](#tennon--core-requirements)):
+Driving requirements (see [requirements.md](#tennon-core-requirements)):
 - **R1** — works for one person and a whole team.
 - **R2** — set up a credentialed MCP (e.g. Grafana) and share it with an Okta team, without
   exposing the credential.
@@ -1417,7 +1417,7 @@ copied shared secret. How each system realizes it:
 The tiered model these notes converge on (Tier 0 tokenless service account + trusted
 relationship, Tier 1 fine-grained token fallback, tags as the sharing primitive, and the
 Grafana → Okta R2 flow) is the canonical design. It is documented in
-[Tokens & Identity](../README.md#tokens--identity) and is not repeated here.
+[Tokens & Identity](../README.md#tokens-amp-identity) and is not repeated here.
 
 ---
 

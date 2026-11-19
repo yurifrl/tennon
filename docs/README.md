@@ -35,15 +35,15 @@ from a click-through web UI that translates to Kubernetes custom resources behin
 - [Web UI](#web-ui) — the click-through console.
 - [CLI](#cli) — `tennon` and `tctl` from the terminal.
 - [API](#api) — the HTTP surface.
-- [Spec Connectors (OpenAPI & GraphQL)](#spec-connectors-openapi--graphql) — compile tools from a spec.
-- [Capability Profiles](#sandbox--access-capability-profiles) — what an MCP container may do.
+- [Spec Connectors (OpenAPI & GraphQL)](#spec-connectors-openapi-amp-graphql) — compile tools from a spec.
+- [Capability Profiles](#sandbox-amp-access-capability-profiles) — what an MCP container may do.
 - [Catalog Features](#catalog-features-executor-inspired) — catalog capabilities.
 
 ### Access & security
-- [Authentication](#authentication) — OIDC (Google, Okta) and machine trust.
+- [Authentication](#authentication-2) — OIDC (Google, Okta) and machine trust.
 - [Authorization](#authorization) — policies, Cedar, allow / ask / block.
-- [Users & Roles](#users--roles) — human identity and role packaging.
-- [Tokens & Identity](#tokens--identity) — tokenless trust + fine-grained tokens.
+- [Users & Roles](#users-amp-roles) — human identity and role packaging.
+- [Tokens & Identity](#tokens-amp-identity) — tokenless trust + fine-grained tokens.
 - [Security model](#security-model) — secret handling, revocation, audit.
 
 ### Reference & operating
@@ -116,7 +116,7 @@ No users found — first-run bootstrap.
   → Or run: tctl open
 ```
 
-Open that URL (or run `tctl open`), then create your first [User](#users--roles). The token
+Open that URL (or run `tctl open`), then create your first [User](#users-amp-roles). The token
 expires in 1h or the moment the first user exists. After that, sign in with Google or Okta.
 
 ## 2. Add a credentialed connector (Grafana)
@@ -165,7 +165,7 @@ client discovers Tennon's authorization server, registers itself (RFC 7591), run
 authorization-code + PKCE flow against your IdP, and caches the token — reused silently on
 every later call and across **every** MCP behind that URL. Tennon injects each upstream's own
 credential server-side, so you never hold it. This is the flow proven in
-`hack/pocs/mcp-auth/` and documented in [Authentication](#authentication).
+`hack/pocs/mcp-auth/` and documented in [Authentication](#authentication-2).
 
 Stdio clients bridge to the URL with `mcp-remote` — same shape as the Notion example:
 
@@ -198,7 +198,7 @@ Clients that speak MCP over Streamable HTTP natively need just the URL — no he
 ```
 
 **Non-interactive (CI, agents like Hermes):** there's no browser, so use
-[tokenless trust](#tokens--identity) (the workload's platform identity) or pass a minted
+[tokenless trust](#tokens-amp-identity) (the workload's platform identity) or pass a minted
 token as an `Authorization` header.
 
 ## 5. Try a tool, see an approval
@@ -209,7 +209,7 @@ UI (or `tctl resume`).
 
 ## Next steps
 
-- Mint a [granular token or set up tokenless trust](#tokens--identity).
+- Mint a [granular token or set up tokenless trust](#tokens-amp-identity).
 - Tune [Authorization](#authorization).
 
 
@@ -229,7 +229,7 @@ clients over the MCP protocol at `/mcp/<name>`. Three CRD kinds specialize it:
   `runtime` picks how it starts — a **container** image (e.g. `ghcr.io/github/github-mcp-server`),
   an **npx** package (`npx @scope/mcp-server`), a **uvx** package (`uvx some-mcp`), or a
   **remote** endpoint reached directly over MCP **Streamable HTTP**. Package (`npx`/`uvx`)
-  and stdio servers are wrapped with [Supergateway](arch/README.md#runtime--isolation) and exposed over
+  and stdio servers are wrapped with [Supergateway](arch/README.md#runtime-amp-isolation) and exposed over
   Streamable HTTP too — SSE is not used. Every locally-run MCP runs in a tightly jailed container.
 - **`OpenApiConnector`** — an OpenAPI/REST service, or several grouped into one connector
   (e.g. Google = Gmail + Calendar + Drive + Docs). Tools are compiled from the spec and run in-process.
@@ -297,11 +297,11 @@ These are the subject kinds the authorization model matches on: `User`, `Group`,
 A **policy** maps subjects to what they may do with tools: **allow**, **ask**,
 or **block**. Rules are authored in two places, both compiling to one rule primitive:
 
-- **`Policy`** — most policy lives here ([`Policy`](#policy)): per-connector sharing
+- **`Policy`** — most policy lives here ([`Policy`](#policy-1)): per-connector sharing
   (who may use a specific MCP and which of its tools) plus org-wide guardrails and defaults
   (e.g. "all `sensitive` tools require approval"). Connectors carry no access of their own.
 - **Role** — identity-side packaging: reusable grants assigned to users, groups, or service
-  accounts (see [Users & Roles](#users--roles)).
+  accounts (see [Users & Roles](#users-amp-roles)).
 
 They resolve together: grants are additive, and a global guardrail can only **tighten** a
 grant (force ask or block), never loosen it. See [Authorization](#authorization).
@@ -317,7 +317,7 @@ authenticates one of two ways:
 - **Fine-grained token:** a GitHub-style token scoped to resources × tools × effect × expiry,
   short-lived and re-minted on expiry.
 
-See [Tokens & Identity](#tokens--identity).
+See [Tokens & Identity](#tokens-amp-identity).
 
 ## Execution & approval
 
@@ -350,7 +350,7 @@ and tools and jumps between pages.
 
 ## Sign in
 
-OIDC only — **Google** or **Okta** (see [Authentication](#authentication)). Machines do not
+OIDC only — **Google** or **Okta** (see [Authentication](#authentication-2)). Machines do not
 use the UI; they authenticate tokenless or with tokens.
 
 ## Layout
@@ -392,7 +392,7 @@ The **New Token** screen offers two issuance methods:
   short lifetime. A plain-English "What this allows" panel previews the grant.
 
 Both translate to resources ([`ServiceAccount`](#serviceaccount) /
-[`Token`](#token) / [`Policy`](#policy)) — shown to you as controls, not
+[`Token`](#token) / [`Policy`](#policy-1)) — shown to you as controls, not
 YAML.
 
 ## Design principle
@@ -537,7 +537,7 @@ Send a bearer credential, exactly as agents do at the proxy:
 Authorization: Bearer <oidc-access-token | service-token | tokenless-minted-credential>
 ```
 
-See [Authentication](#authentication) for how humans (OIDC: Google/Okta) and machines
+See [Authentication](#authentication-2) for how humans (OIDC: Google/Okta) and machines
 (tokenless trust or fine-grained tokens) obtain one. The API enforces the same
 [authorization](#authorization) as everything else.
 
@@ -659,7 +659,7 @@ The only Google-specific *code* is the Discovery→OpenAPI converter. Everything
   classification on those presets, driving the UI's grouping and warnings.
 
 Multiple Google accounts (work, personal) are simply two connectors with two Secrets — there
-is no connection sub-resource. See [Connectors](#connectors).
+is no connection sub-resource. See [Connectors](#connectors-1).
 
 ## Runtime contrast
 
@@ -668,12 +668,12 @@ is no connection sub-resource. See [Connectors](#connectors).
 | Tools | compiled from a spec | discovered by connecting |
 | Runs | in-process, no Pod | a jailed container/Pod |
 | Scaling | n/a (stateless HTTP) | `replicas` / native HPA |
-| Sandbox | nothing to jail | [Capability Profile](#sandbox--access-capability-profiles) |
+| Sandbox | nothing to jail | [Capability Profile](#sandbox-amp-access-capability-profiles) |
 
 This is why spec connectors carry no `runtime` or `scaling` block, and why most integrations
 should be a spec connector when an API offers a spec — there is far less to run and secure.
 
-See also: [Custom Resources](#custom-resources-crds) · [Authentication](#authentication) ·
+See also: [Custom Resources](#custom-resources-crds) · [Authentication](#authentication-2) ·
 [Connector Extensibility](arch/README.md#connector-extensibility-design-note).
 
 
@@ -808,7 +808,7 @@ sequenceDiagram
   (subject, email) and **groups** from the provider's `groups` claim.
 - **Groups drive sharing.** Granting a policy to an Okta group means membership is resolved
   from the claim at request time — joiners/leavers gain/lose access with no policy edit.
-  This is the basis of the [share-with-a-team](#3-share-it-with-an-okta-team)
+  This is the basis of the [share-with-a-team](#_3-share-it-with-an-okta-team)
   flow.
 
 Configure providers under **Admin → Identity Providers** in the UI; the schema is the
@@ -823,13 +823,13 @@ against a configured trust rule and mints a short-lived credential. Nothing to l
 
 The supported trust types (OIDC JWT, Kubernetes ServiceAccount token, SPIFFE/SVID, and cloud
 instance identity) and full examples live in
-[Tokens & Identity](#tier-0--tokenless-preferred).
+[Tokens & Identity](#tier-0-tokenless-preferred).
 
 ## Machines — fine-grained tokens (fallback)
 
 When tokenless is not possible, mint a fine-grained, short-lived token (GitHub-PAT-style)
 bound to a subject and scoped to resources × tools × effect × expiry. See
-[Tokens & Identity](#tokens--identity).
+[Tokens & Identity](#tokens-amp-identity).
 
 ## Connecting a client — one login for every MCP
 
@@ -909,8 +909,8 @@ tctl login            # browser/device flow → cached token (once, for all MCPs
 
 ### Non-interactive (CI, agents)
 
-When there's no browser, authenticate the workload with [tokenless trust](#tokens--identity)
-(its platform identity) or pass a [minted token](#tokens--identity) as a header. The
+When there's no browser, authenticate the workload with [tokenless trust](#tokens-amp-identity)
+(its platform identity) or pass a [minted token](#tokens-amp-identity) as a header. The
 `add-mcp` helper writes either form:
 
 ```bash
@@ -1123,7 +1123,7 @@ story. If relationship inheritance becomes dominant, a relationship backend can 
 
 For a solo user there are typically no groups: rules bind directly to the user or a single
 service account. Adding a team is additive — grant a connector to a group — with no
-change to the model. See [Requirements](arch/README.md#tennon--core-requirements) (design note).
+change to the model. See [Requirements](arch/README.md#tennon-core-requirements) (design note).
 
 
 # Users & Roles
@@ -1134,7 +1134,7 @@ envelope, stored in the backend and editable as YAML. There are two condition se
 role — `allow` and `deny` — and **deny always overrides allow**.
 
 This page is the human-facing guide; the schemas live in [CRDs](#user). For machine
-identities (CI, agents) use [`ServiceAccount`/`Token`](#tokens--identity) instead.
+identities (CI, agents) use [`ServiceAccount`/`Token`](#tokens-amp-identity) instead.
 
 ## First access: the bootstrap token
 
@@ -1163,7 +1163,7 @@ the [`Role`](#roles)s in `spec.roles`. Users come in two flavors:
   tctl create -f joe.yaml
   ```
 
-- **SSO users** — created automatically at login from an [identity provider](#authentication).
+- **SSO users** — created automatically at login from an [identity provider](#authentication-2).
   Their OIDC claims populate `spec.traits` (notably `groups`), and roles are assigned by the
   identity provider's [`claimsToRoles`](#identityprovider) mapping.
 
@@ -1272,8 +1272,8 @@ the backend object is gone, and the `tennon.io/keep: "true"` annotation keeps th
 object when you remove the CR. This mirrors Teleport's `resources.teleport.dev` operator,
 where `tctl`/Terraform and the Kubernetes Operator are two front doors to one backend.
 
-See also: [Authentication](#authentication) · [Authorization](#authorization) ·
-[Tokens & Identity](#tokens--identity) · [CRDs](#user).
+See also: [Authentication](#authentication-2) · [Authorization](#authorization) ·
+[Tokens & Identity](#tokens-amp-identity) · [CRDs](#user).
 
 
 # Tokens & Identity
@@ -1365,7 +1365,7 @@ token = (resources: connectors / tags)
 
 ## Open design questions
 
-See the design note [token-identity-reference](arch/README.md#token--identity--reference-and-ideas) for the
+See the design note [token-identity-reference](arch/README.md#token-amp-identity-reference-and-ideas) for the
 research these decisions are based on and remaining choices (bearer tokens vs mTLS certs,
 which trust types ship first, default TTLs).
 
@@ -1458,7 +1458,7 @@ but differ in how tools are produced and where they run:
 | **GraphqlConnector** | compiled from a GraphQL endpoint | in-process |
 
 How spec connectors are built, authenticated, versioned, and how provider-specific cases like
-Google are handled is covered in [Spec Connectors](#spec-connectors-openapi--graphql); the strategy for new
+Google are handled is covered in [Spec Connectors](#spec-connectors-openapi-amp-graphql); the strategy for new
 and special connectors is in [Connector Extensibility](arch/README.md#connector-extensibility-design-note).
 
 **Credentials by convention.** A connector reads a Kubernetes `Secret` named
@@ -1468,7 +1468,7 @@ simply **two connectors** with two Secrets — there is no separate connection o
 
 **Who may use a connector** — and which calls require approval — is **not** part of the
 connector. A connector defines only how to reach the upstream and which tools it exposes;
-authorization lives entirely in org-wide [`Policy`](#policy) and identity-side
+authorization lives entirely in org-wide [`Policy`](#policy-1) and identity-side
 [`Role`](#role) grants, evaluated by [Authorization](#authorization).
 
 ### TennonConnector
@@ -1508,7 +1508,7 @@ Notes:
 
 - `runtime` is exactly one of `container`, `stdio`, `remote`, or `host` (expose a whole
   machine). Container and stdio MCPs run in a tightly jailed sandbox; stdio servers are
-  bridged to Streamable HTTP by Supergateway — see [Runtime & Isolation](arch/README.md#runtime--isolation).
+  bridged to Streamable HTTP by Supergateway — see [Runtime & Isolation](arch/README.md#runtime-amp-isolation).
 - `scaling` is `replicas` (passthrough to the Deployment) or `autoscale` (the controller
   emits a native `HorizontalPodAutoscaler`). There is no scale-to-zero. Omitted ⇒
   `replicas: 1`.
@@ -1572,7 +1572,7 @@ status:
 
 A **registered, reusable OAuth client**. One app serves every connector whose upstream hits
 the same OAuth endpoint — you register Google once, then credential personal and work
-connectors against it. The client secret is a [Secrets](#secrets) reference, never inline.
+connectors against it. The client secret is a [Secrets](#secrets-1) reference, never inline.
 
 ```yaml
 apiVersion: tennon.io/v1alpha1
@@ -1681,13 +1681,13 @@ A group from this provider
 is addressed everywhere as `<provider-name>:<group-value>` — e.g. the Okta `observability`
 group is `okta:observability` in a connector's `access`, a `Role`'s templating, and a `Policy`
 subject (`{ kind: Group, provider: okta, match: observability }`). See
-[Authentication](#authentication) and [Users & Roles](#users--roles).
+[Authentication](#authentication-2) and [Users & Roles](#users-amp-roles).
 
 ## User
 
 A human identity. Mirrors Teleport's model: users are stored in the backend **and** fully
 expressible as resources. **Local users** are created with `tctl users add` or by applying
-the YAML; **SSO users** are created at login from an [identity provider](#authentication) —
+the YAML; **SSO users** are created at login from an [identity provider](#authentication-2) —
 their OIDC claims populate `spec.traits` and an entry under `spec.identities`. A user has no
 permissions of its own; everything comes from the [`Role`](#role)s in `spec.roles`.
 
@@ -1755,7 +1755,7 @@ Verbs are `list, create, read, update, delete` (or `*`); resource kinds include
 `connector, role, user, token, serviceAccount, identityProvider, policy, secret, capabilityProfile`.
 Trait templating mirrors Teleport: `{{internal.<trait>}}` for local user traits and
 `{{external.<claim>}}` for SSO claims, interpolated into `tools`, label selectors, etc. The
-data-plane `tools` grants and a [`Policy`](#policy)'s rules **compile to the same rule
+data-plane `tools` grants and a [`Policy`](#policy-1)'s rules **compile to the same rule
 primitive** (see [Authorization](#the-rule)); they differ only in who authors
 them and why — a `Role` packages grants on the identity side and assigns them to subjects,
 while a `Policy` holds org-wide guardrails.
@@ -1804,7 +1804,7 @@ spec:
     renewable: false
 ```
 
-See [Tokens & Identity](#tokens--identity).
+See [Tokens & Identity](#tokens-amp-identity).
 
 ## Token
 
@@ -1836,7 +1836,7 @@ Declares, in plain intent, **what an MCP container is allowed to do** (network, 
 processes, sandbox). Default-deny: anything not listed is blocked. The controller compiles
 it to enforcer-native objects depending on what the cluster has — starting with **Cilium**
 for egress, KubeArmor for process/file, and gVisor for the sandbox. Users author this via the
-UI/CLI; see the user guide [Sandbox & Access](#sandbox--access-capability-profiles) and the
+UI/CLI; see the user guide [Sandbox & Access](#sandbox-amp-access-capability-profiles) and the
 [design doc](arch/README.md#capability-enforcement-design).
 
 ```yaml
@@ -2043,7 +2043,7 @@ delivered and versioned.
 
 Agents connect **directly** to `/mcp/<connector>` over Streamable HTTP, or — for clients that
 launch a stdio command — via the CLI's MCP server (`tctl mcp serve --transport stdio`).
-See [Getting Started](#4-connect-an-agent).
+See [Getting Started](#_4-connect-an-agent).
 
 ## Upgrades
 
@@ -2160,7 +2160,7 @@ tennon --store=sqlite --store-path=./tennon.db ...
   the web UI already signed in (mirrors executor's `executor open`).
 - Same flow on the cluster backend: the bootstrap token is logged by the controller pod
   (`kubectl logs deploy/tennon`).
-- After bootstrap you wire up an [identity provider](#authentication) and/or create
+- After bootstrap you wire up an [identity provider](#authentication-2) and/or create
   [`User`](#user)/[`Role`](#role) resources; the bootstrap path is then
   permanently closed for that store.
 
@@ -2202,12 +2202,24 @@ we follow, and how to propose changes.
 
 ## Development setup
 
-- Go 1.24+ for the server and CLI.
+- Go 1.26+ for the server and CLI.
 - Node 20+ for the web UI build.
 - For the Kubernetes backend: a local cluster (kind/minikube) and `kubectl`.
 - For local iteration without a cluster: run the controller with `--store=sqlite`.
 
-Build, run, and test commands live in the `Makefile` / package scripts; run `make help`.
+Build, run, and test commands live in `Taskfile.yml` (run `task --list`):
+
+```bash
+task build        # -> bin/tennon, bin/tctl
+task ci           # layering check + go vet + tests
+task test         # tests only
+task check        # layering rules only
+task docs         # build the docs pages and serve them at http://127.0.0.1:8800
+task docs:build   # rebuild the pages only; fails on any broken link
+```
+
+The docs site is published to <https://yurifrl.github.io/tennon/> from `main` by
+`.github/workflows/docs.yml`.
 
 ## Conventions
 
@@ -2248,7 +2260,7 @@ By contributing you agree your contributions are licensed under the Apache Licen
 ### How is Tennon different from connecting an MCP server directly?
 
 A direct connection means per-server config in every client, credentials often sitting
-client-side, and no central authorization. Tennon gives you one per-connector endpoint, central [authentication](#authentication) and
+client-side, and no central authorization. Tennon gives you one per-connector endpoint, central [authentication](#authentication-2) and
 [authorization](#authorization), credentials that stay server-side, and human approvals on
 sensitive tools. See [The MCP Proxy](arch/README.md#the-mcp-proxy).
 
@@ -2280,7 +2292,7 @@ leaving the team gain or lose access automatically.
 ### What identity providers are supported?
 
 OIDC, with **Google** and **Okta** as first-class providers for human login. Machines use
-[tokenless trust](#tokens--identity) (OIDC JWT, Kubernetes ServiceAccount, SPIFFE, cloud
+[tokenless trust](#tokens-amp-identity) (OIDC JWT, Kubernetes ServiceAccount, SPIFFE, cloud
 identity) or fine-grained tokens.
 
 ### What does "tokenless" mean?
@@ -2288,7 +2300,7 @@ identity) or fine-grained tokens.
 The machine proves its identity with a platform-signed document (e.g. a GitHub Actions OIDC
 token or a Kubernetes ServiceAccount token) instead of a stored secret. Tennon validates it
 against a trust rule and mints a short-lived credential per call. Nothing to leak. See
-[Tokens & Identity](#tokens--identity).
+[Tokens & Identity](#tokens-amp-identity).
 
 ### Does it work for just me?
 
@@ -2312,7 +2324,7 @@ the UI (or via `tctl resume`), then it continues or is rejected. See
 [Cedar](https://www.cedarpolicy.com/) is an open-source policy language and authorization
 engine (from AWS). It gives RBAC now, ABAC (conditions) later, and analyzability to catch
 over-broad grants — all in-process, with no extra stateful service, preserving the embeddable
-SQLite story. You author [`Policy`](#policy); Cedar is the compilation target. See
+SQLite story. You author [`Policy`](#policy-1); Cedar is the compilation target. See
 [Authorization](#authorization).
 
 ### Is it production ready?

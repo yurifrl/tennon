@@ -36,7 +36,7 @@
   window.$docsify = {
     name: 'Tennon',
     nameLink: '#/',
-    repo: '',
+    repo: 'yurifrl/tennon',
     loadSidebar: true,
     auto2top: true,
     subMaxLevel: 2,
@@ -82,6 +82,11 @@
     }, window.$docsify.plugins || []);
   }
 </script>
-<script src="_review/annotate.js"></script>
+<!-- review-comment overlay: local `task docs` server only (it owns /api/comment) -->
+<script>
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+    document.body.appendChild(Object.assign(document.createElement("script"), { src: "_review/annotate.js" }));
+  }
+</script>
 </body>
 </html>

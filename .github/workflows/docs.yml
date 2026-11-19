@@ -1,0 +1,56 @@
+name: docs
+
+# Builds the Docsify site from docs/ (failing on any broken link) and publishes it to
+# GitHub Pages at https://yurifrl.github.io/tennon/. Pull requests build only.
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", ".github/workflows/docs.yml"]
+  pull_request:
+    paths: ["docs/**", ".github/workflows/docs.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Build pages and check links
+        run: bun docs/_review/build_docs.ts
+
+      - name: Assemble site
+        # Ship the rendered site only: no review tooling, review notes, research notes,
+        # or the NN-*.md sources that are already concatenated into the README.md pages.
+        run: |
+          rsync -a \
+            --exclude '_review/' --exclude 'comments.md' --exclude 'review.html' \
+            --exclude 'references-studies/' --exclude '[0-9]*.md' \
+            docs/ _site/
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

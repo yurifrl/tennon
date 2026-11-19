@@ -50,7 +50,7 @@ Constraints every technology choice is measured against:
 
 ### Dependency injection — Uber FX
 
-FX is the wiring for the [composition root](project-structure.md#cmd-top). Each binary's
+FX is the wiring for the [composition root](project-structure.md#the-dependency-rule). Each binary's
 `main` builds an `fx.App` from provider functions; no package constructs its own
 dependencies. FX's `OnStart`/`OnStop` hooks own process lifecycle so the HTTP server, the
 controller manager, and runtime backends start and drain in dependency order.
