@@ -8,8 +8,8 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "express": "^4.21.2",
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "express": "^4.22.3",
     "jose": "^5.9.6"
   }
 }
