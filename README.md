@@ -16,28 +16,6 @@ never exposing that credential to the caller.** Later phases (spec connectors, p
 storage/auth, Cedar authorization, tokenless identity, approvals, and the React UI) are tracked
 in Beads (`bd ready`).
 
-## Layout
-
-The code follows the call-down-only layering in
-[`docs/arch/03-project-structure.md`](docs/arch/03-project-structure.md); a package may import
-only packages in a lower layer, and `domain` imports nothing outward.
-
-```
-cmd/tennon   server binary: controller + API + proxy + embedded web UI (FX composition root)
-cmd/tctl     CLI binary: a client over the API
-domain/      core types + port interfaces (Store, Runtime, SecretRenderer, Authorizer, …)
-store/       domain.Store: in-memory + SQLite backends
-runtime/     domain.Runtime: remote + docker
-secret/      domain.SecretRenderer: resolves {{secret:name.key}} at call time
-auth/        identity verifier + authorizer (phase-1 permissive defaults)
-controller/  reconciles connectors into the data plane via domain.Router
-api/         REST/JSON management surface
-proxy/       MCP streamable-HTTP data plane (per-connector /mcp/<name>)
-web/         embedded UI (placeholder until phase 5)
-```
-
-`hack/check-layers.sh` enforces the layering rules and is wired into `task check`.
-
 ## Quickstart
 
 ```bash
